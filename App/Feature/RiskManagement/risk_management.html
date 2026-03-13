@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}資金與風險管理 - Stock AI Filter PRO{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/feature/RiskManagement/risk_management.css?v=1.5">
+{% endblock %}
+
+{% block content %}
+{% include "RiskManagement/risk_management_fragment.html" %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/feature/RiskManagement/function_block/params_block.js?v=1.0"></script>
+<script src="/feature/RiskManagement/function_block/overview_block.js?v=1.0"></script>
+<script src="/feature/RiskManagement/function_block/portfolio_block.js?v=1.1"></script>
+<script src="/feature/RiskManagement/risk_management.js?v=1.0"></script>
+{% endblock %}

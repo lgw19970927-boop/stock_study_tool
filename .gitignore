@@ -1,0 +1,15 @@
+secrets/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.db
+*.sqlite3
+.env
+.DS_Store
+Thumbs.db
+reference/extracted/
+*.zip
+*.sql
+App/Feature/Screening/pattern/models/*.pt

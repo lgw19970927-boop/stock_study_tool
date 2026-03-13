@@ -1,0 +1,525 @@
+<!-- Screening 已由 base.html 全域載入 CSS -->
+
+
+
+<!-- ══════════════════════════════════════════════
+     Screening 頁面內容（與原版完全相同）
+     外層 sidebar 由獨立 CSS 控制（非 GoldenLayout）
+     內層右側兩個面板（stock-list / chart）由 GoldenLayout 管理
+══════════════════════════════════════════════ -->
+<div class="page-content active" id="page-screening" style="display: flex; width: 100%; height: 100%;">
+
+    <!-- 左側 Sidebar（獨立 CSS，☰ 漢堡收合） -->
+    <aside class="sidebar" id="app-sidebar">
+        <!-- Part 0: 市場與時間篩選 -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <path d="M12 1v6m0 6v6"></path>
+                        <path d="M4.22 4.22l4.24 4.24m0 5.08l-4.24 4.24"></path>
+                        <path d="M19.78 4.22l-4.24 4.24m0 5.08l4.24 4.24"></path>
+                    </svg>
+                    分析時間範圍
+                </h2>
+            </div>
+            <div class="filter-section">
+                <label class="filter-label">時間區段</label>
+                <div class="time-range-group">
+                    <button type="button" class="time-range-btn" data-range="1D">1D</button>
+                    <button type="button" class="time-range-btn" data-range="1W">1W</button>
+                    <button type="button" class="time-range-btn active" data-range="1M">1M</button>
+                    <button type="button" class="time-range-btn" data-range="3M">3M</button>
+                    <button type="button" class="time-range-btn" data-range="6M">6M</button>
+                    <button type="button" class="time-range-btn" data-range="1Y">1Y</button>
+                    <button type="button" class="time-range-btn" data-range="custom">自訂</button>
+                </div>
+                <div class="custom-date-range" id="customDateRange" style="display: none;">
+                    <div class="date-input-group">
+                        <label>開始日期</label>
+                        <input type="date" class="date-input" id="startDate">
+                    </div>
+                    <div class="date-input-group">
+                        <label>結束日期</label>
+                        <input type="date" class="date-input" id="endDate">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 股票篩選器 Tab 容器 -->
+        <div class="tabs-wrapper">
+            <div class="tabs-header">
+                <h3 class="tabs-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    股票篩選器
+                </h3>
+                <div class="tab-buttons">
+                    <button type="button" class="tab-btn active" data-tab="filter-design">篩選</button>
+                    <button type="button" class="tab-btn" data-tab="my-strategies">我的策略</button>
+                </div>
+            </div>
+
+            <!-- Tab 1: 篩選 -->
+            <div id="filter-design-tab" class="tab-content active">
+                <!-- A. 市場與頻率 -->
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            市場與頻率
+                        </h2>
+                    </div>
+                    <div class="filter-section">
+                        <label class="filter-label">市場範圍</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" class="market-select" value="listed"> Listed Stocks(上市股票)
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" class="market-select" value="otc"> OTC Stocks(上櫃股票)
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" class="market-select" value="ipo"> IPO Stocks(興櫃股票)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <label class="filter-label">篩選頻率</label>
+                        <div class="frequency-group">
+                            <label class="radio-item"><input type="radio" name="frequency" value="daily"> 每日</label>
+                            <label class="radio-item"><input type="radio" name="frequency" value="weekly"> 每周</label>
+                            <label class="radio-item"><input type="radio" name="frequency" value="monthly"> 每月</label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- B. 指標篩選 -->
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            </svg>
+                            指標篩選
+                        </h2>
+                        <span class="badge">Part 1</span>
+                    </div>
+                    <div class="filter-section">
+                        <div class="section-header">
+                            <label class="filter-label">技術指標</label>
+                            <button type="button" class="btn btn-sm btn-primary" id="addIndicator">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                新增指標
+                            </button>
+                        </div>
+                        <div id="indicatorList" class="indicator-list"></div>
+                    </div>
+                </section>
+
+                <!-- C. 型態篩選 -->
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                            </svg>
+                            型態篩選
+                        </h2>
+                        <span class="badge badge-purple">Part 2</span>
+                    </div>
+                    <div class="filter-section">
+                        <label class="filter-label">識別型態</label>
+                        <div class="pattern-grid">
+                            <label class="pattern-card">
+                                <input type="checkbox" name="pattern" value="consolidation">
+                                <div class="pattern-icon">
+                                    <svg width="40" height="30" viewBox="0 0 40 30">
+                                        <line x1="5" y1="15" x2="35" y2="15" stroke="currentColor" stroke-width="2"
+                                            stroke-dasharray="3,2" />
+                                        <polyline points="5,12 10,18 15,13 20,17 25,14 30,16 35,13" fill="none"
+                                            stroke="currentColor" stroke-width="2" />
+                                    </svg>
+                                </div>
+                                <span>盤整區</span>
+                            </label>
+                            <label class="pattern-card">
+                                <input type="checkbox" name="pattern" value="w_bottom">
+                                <div class="pattern-icon">
+                                    <svg width="40" height="30" viewBox="0 0 40 30">
+                                        <polyline points="5,8 12,25 20,12 28,25 35,8" fill="none" stroke="currentColor"
+                                            stroke-width="2" />
+                                    </svg>
+                                </div>
+                                <span>W 底</span>
+                            </label>
+                            <label class="pattern-card">
+                                <input type="checkbox" name="pattern" value="head_shoulders_top">
+                                <div class="pattern-icon">
+                                    <svg width="40" height="30" viewBox="0 0 40 30">
+                                        <polyline points="5,20 10,12 15,18 20,5 25,18 30,12 35,20" fill="none"
+                                            stroke="currentColor" stroke-width="2" />
+                                    </svg>
+                                </div>
+                                <span>頭肩頂</span>
+                            </label>
+                            <label class="pattern-card">
+                                <input type="checkbox" name="pattern" value="head_shoulders_bottom">
+                                <div class="pattern-icon">
+                                    <svg width="40" height="30" viewBox="0 0 40 30">
+                                        <polyline points="5,10 10,18 15,12 20,25 25,12 30,18 35,10" fill="none"
+                                            stroke="currentColor" stroke-width="2" />
+                                    </svg>
+                                </div>
+                                <span>頭肩底</span>
+                            </label>
+                            <label class="pattern-card">
+                                <input type="checkbox" name="pattern" value="triangle">
+                                <div class="pattern-icon">
+                                    <svg width="40" height="30" viewBox="0 0 40 30">
+                                        <line x1="5" y1="8" x2="35" y2="15" stroke="currentColor" stroke-width="1.5"
+                                            stroke-dasharray="2,2" />
+                                        <line x1="5" y1="22" x2="35" y2="15" stroke="currentColor" stroke-width="1.5"
+                                            stroke-dasharray="2,2" />
+                                        <polyline points="5,12 12,20 18,10 24,18 30,14" fill="none"
+                                            stroke="currentColor" stroke-width="2" />
+                                    </svg>
+                                </div>
+                                <span>三角收斂</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <label class="filter-label">識別靈敏度</label>
+                        <div class="range-wrapper">
+                            <input type="range" class="range-input" min="0" max="100" value="75" id="sensitivityRange">
+                            <div class="range-labels">
+                                <span>低</span>
+                                <span class="range-value" id="sensitivityValue">75%</span>
+                                <span>高</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <label class="filter-label">時間週期設定</label>
+                        <div style="display: flex; gap: 12px; align-items: flex-end;">
+                            <div style="flex: 2; display: flex; gap: 8px;">
+                                <div style="flex: 1;">
+                                    <label class="filter-label"
+                                        style="font-size: 12px; margin-bottom: 4px;">最小長度</label>
+                                    <input type="number" class="select-input" id="patternBarsMin" value="20" min="5"
+                                        max="200">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label class="filter-label"
+                                        style="font-size: 12px; margin-bottom: 4px;">最大長度</label>
+                                    <input type="number" class="select-input" id="patternBarsMax" value="60" min="5"
+                                        max="200">
+                                </div>
+                            </div>
+                            <div style="flex: 1;">
+                                <label class="filter-label" style="font-size: 12px; margin-bottom: 4px;">時間間隔</label>
+                                <select class="select-input" id="patternTimeInterval">
+                                    <option value="1min">1分鐘</option>
+                                    <option value="3min">3分鐘</option>
+                                    <option value="5min">5分鐘</option>
+                                    <option value="15min">15分鐘</option>
+                                    <option value="30min">30分鐘</option>
+                                    <option value="1H">1小時</option>
+                                    <option value="4H">4小時</option>
+                                    <option value="1D" selected>日線</option>
+                                    <option value="1W">週線</option>
+                                    <option value="1M">月線</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                            例如：檢測<span id="barsMinPreview">20</span>根~<span id="barsMaxPreview">60</span>根(<span
+                                id="intervalPreview">日線</span>)
+                        </div>
+                    </div>
+                </section>
+
+                <!-- D. 策略命名 -->
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                                </path>
+                            </svg>
+                            策略命名
+                        </h2>
+                    </div>
+                    <div class="filter-section">
+                        <label class="filter-label">策略名稱</label>
+                        <input type="text" class="select-input" id="strategyName" placeholder="輸入策略名稱">
+                    </div>
+                </section>
+
+                <!-- 操作按鈕 -->
+                <div class="button-group">
+                    <button type="button" class="btn btn-ghost btn-block" id="saveOverwriteStrategy">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        儲存並覆寫
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-block" id="saveStrategy">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        儲存為新策略
+                    </button>
+                    <button type="button" class="btn btn-primary btn-block" id="runFilter">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        執行篩選
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 2: 我的策略 -->
+            <div id="my-strategies-tab" class="tab-content" style="display: none;">
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M9 11l3 3L22 4"></path>
+                                <path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                            已儲存的策略
+                        </h2>
+                    </div>
+                    <div class="filter-section">
+                        <div id="strategiesList" class="strategies-list"></div>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-block" id="runFilterFromStrategy">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        執行篩選
+                    </button>
+                </section>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 右側主內容區（純 CSS Flexbox 佈局，與原版一致） -->
+    <!-- TODO [P1-Step2]: GoldenLayout v2 實作後，此區改為 <div id="goldenLayoutContainer"> -->
+    <div class="content-area">
+
+        <!-- 結果統計列 -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-value" id="totalStocks">0</span>
+                <span class="stat-label">篩選結果</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value positive" id="gainers">0</span>
+                <span class="stat-label">今日上漲</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value negative" id="losers">0</span>
+                <span class="stat-label">今日下跌</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="dataInsufficient" style="color: var(--warning, #f59e0b);">0</span>
+                <span class="stat-label">⚠️ 資料不足</span>
+            </div>
+            <div class="stat-divider"></div>
+            <button type="button" class="btn btn-ghost btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                匯出 CSV
+            </button>
+        </div>
+
+        <!-- 股票列表 -->
+        <div class="stock-list-container">
+            <div class="list-header">
+                <div class="col-symbol">股票代碼</div>
+                <div class="col-name">公司名稱</div>
+                <div class="col-price">現價</div>
+                <div class="col-change">漲跌幅</div>
+                <div class="col-volume">成交額</div>
+                <div class="col-pattern">篩選標籤</div>
+            </div>
+            <div class="stock-list" id="stockList">
+                <!-- 進度條（執行中顯示） -->
+                <div id="screeningProgressArea"
+                    style="display:none; padding: 40px 24px; align-items:center; justify-content:center;">
+                    <div style="width:100%; max-width:480px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span id="progressStageText" style="color:var(--text-primary); font-size:13px;">&#9203;
+                                正在篩選...</span>
+                            <span id="progressMatchedText"
+                                style="color:var(--accent, #00d4aa); font-size:12px; font-weight:600;">找到符合：0 支</span>
+                        </div>
+                        <div
+                            style="background:var(--border, #2a2a3e); border-radius:6px; height:6px; overflow:hidden; margin-bottom:8px;">
+                            <div id="progressFill"
+                                style="height:100%; width:0%; border-radius:6px; transition:width 0.3s ease; background: linear-gradient(90deg, #00d4aa, #7c3aed);">
+                            </div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span id="progressDetailText" style="color:var(--text-secondary); font-size:11px;">已分析 0 / 0
+                                支</span>
+                            <span id="progressPercent" style="color:var(--text-secondary); font-size:11px;">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 初始空白狀態 -->
+                <div class="empty-state" id="emptyState">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <p>設定篩選條件後點擊「執行篩選」</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- K線圖區域 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">
+                    <span class="chart-symbol" id="chartSymbol">--</span>
+                    <span class="chart-name" id="chartName">請選擇股票</span>
+                </div>
+                <div class="chart-controls">
+                    <!-- 時間週期切換 -->
+                    <div class="timeframe-group">
+                        <button type="button" class="timeframe-btn" data-tf="1m" title="1分鐘線">1min</button>
+                        <button type="button" class="timeframe-btn" data-tf="3m" title="3分鐘線">3min</button>
+                        <button type="button" class="timeframe-btn" data-tf="5m" title="5分鐘線">5min</button>
+                        <button type="button" class="timeframe-btn" data-tf="15m" title="15分鐘線">15min</button>
+                        <button type="button" class="timeframe-btn" data-tf="30m" title="30分鐘線">30min</button>
+                        <button type="button" class="timeframe-btn" data-tf="1h" title="1小時線">1H</button>
+                        <button type="button" class="timeframe-btn" data-tf="4h" title="4小時線">4H</button>
+                        <button type="button" class="timeframe-btn active" data-tf="1d" title="日線">1D</button>
+                        <button type="button" class="timeframe-btn" data-tf="1w" title="週線">1W</button>
+                        <button type="button" class="timeframe-btn" data-tf="1M" title="月線">1M</button>
+                        <button type="button" class="timeframe-btn" data-tf="1y" title="年線">1Y</button>
+                    </div>
+                    <!-- 型態標註開關 -->
+                    <div class="chart-options">
+                        <label class="toggle-switch toggle-switch-small">
+                            <input type="checkbox" id="patternAnnotationToggle" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">型態標註</span>
+                        </label>
+                    </div>
+                    <div class="chart-actions">
+                        <button type="button" id="btnShowIndicators" class="btn-icon" title="顯示指標">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            </svg>
+                        </button>
+                        <button type="button" id="btnChartSettings" class="btn-icon" title="圖表管理">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path
+                                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                                </path>
+                            </svg>
+                        </button>
+                        <button type="button" class="btn-icon" title="全螢幕">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <polyline points="9 21 3 21 3 15"></polyline>
+                                <line x1="21" y1="3" x2="14" y2="10"></line>
+                                <line x1="3" y1="21" x2="10" y2="14"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-wrapper" id="chartWrapper">
+                <div class="chart-placeholder">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <path d="M3 3v18h18" />
+                        <path d="M18 9l-5 5-4-4-3 3" />
+                    </svg>
+                    <p>選擇股票以顯示 K 線圖</p>
+                </div>
+                <div id="chart"></div>
+            </div>
+            <div class="chart-legend" id="chartLegend"></div>
+        </div>
+
+    </div><!-- end .content-area -->
+</div><!-- end #page-screening -->
+
+
+
+<!-- Screening 前端腳本（原版路徑改為 FastAPI Static 絕對 URL） -->
+<script src="/static/js/config.js"></script>
+<script src="/static/js/app.js"></script>
+
+<!-- 核心工具模組 -->
+<script src="/static/js/utils/indicatorRegistry.js"></script>
+<script src="/static/js/utils/chartRenderer.js"></script>
+<script src="/static/js/utils/chartIndicators.js"></script>
+
+<!-- 指標模組 -->
+<script src="/feature/Screening/indicators/sma.js"></script>
+<script src="/feature/Screening/indicators/bollinger.js"></script>
+<script src="/feature/Screening/indicators/volume.js"></script>
+<script src="/feature/Screening/indicators/amount.js"></script>
+
+<!-- 功能模組 -->
+<script src="/feature/Screening/function_block/market_block.js"></script>
+<script src="/feature/Screening/function_block/time_range_block.js"></script>
+<script src="/feature/Screening/function_block/pattern_block.js"></script>
+<script src="/feature/Screening/function_block/indicator_block.js"></script>
+<script src="/feature/Screening/chartController.js"></script>
+
+<!-- 策略管理器與主控制 -->
+<script src="/feature/Screening/strategyManager.js?v=1.1"></script>
+<script src="/feature/Screening/screening.js?v=1.1"></script>
+
+<!-- 圖表設定彈窗 -->
+<script src="/feature/Screening/templates/ChartSettingsModalTemplate.js"></script>
+<script src="/feature/Screening/templates/ColorPickerTemplate.js"></script>
+<script src="/feature/Screening/chartSettingsModal.js"></script>
+
+<!-- TODO [P1-Step2]: GoldenLayout v2 實作後取消此行註解
+<script src="/static/js/layout-screening.js"></script>
+-->

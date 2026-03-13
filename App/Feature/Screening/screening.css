@@ -1,0 +1,316 @@
+/* Strategy Screening Page Specific Styles */
+
+.config-pill-btn {
+    padding: 6px 4px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.config-pill-btn.active {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: rgba(0, 212, 170, 0.1);
+}
+
+.condition-row {
+    display: grid;
+    grid-template-columns: 80px 60px 80px 80px 60px 40px;
+    gap: 8px;
+    align-items: center;
+}
+
+.condition-row select,
+.condition-row input {
+    width: 100%;
+    padding: 4px;
+    font-size: 11px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 4px;
+}
+
+/* Strategy Card Styles */
+.strategy-card {
+    position: relative;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+}
+
+.strategy-card:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-elevated);
+}
+
+.strat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.strat-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.strat-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.strat-content {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    /* Ensure consistent line height */
+}
+
+.strat-line {
+    margin-bottom: 4px;
+    /* Consistent margin for all lines */
+    white-space: normal;
+    /* Allow branding text to wrap per user request */
+    overflow: visible;
+    display: block;
+    /* Ensure block behavior */
+}
+
+.strat-indicator-text {
+    /* Removed special color to match other lines per user request */
+    /* color: #58a6ff; */
+}
+
+/* Hover Actions (Top Right) */
+.strat-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: var(--bg-elevated);
+    padding-left: 8px;
+    border-radius: 4px;
+}
+
+.strategy-card:hover .strat-actions {
+    opacity: 1;
+}
+
+/* Action Buttons */
+.action-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+    border-color: var(--border-color);
+}
+
+.action-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* More Toggle (Bottom Right) */
+.strat-more {
+    text-align: right;
+    margin-top: 4px;
+}
+
+.strat-more-link {
+    color: var(--accent-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.strat-more-link:hover {
+    text-decoration: underline;
+}
+
+/* Hidden Details */
+.strat-details {
+    display: none;
+    /* margin/padding removed to fix gap between preview and details */
+}
+
+.strat-details.open {
+    display: block;
+}
+
+/* Mobile tweaks */
+@media (max-width: 450px) {
+    .condition-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+    }
+
+    .btn-delete-row {
+        grid-column: span 2;
+        text-align: center;
+    }
+}
+
+/* Center Market and Frequency Groups (User Request) */
+/* Center Market and Frequency Groups (User Request: Reverted to Left) */
+.checkbox-group,
+.frequency-group {
+    display: flex;
+    justify-content: flex-start;
+    /* Reverted to Left */
+    gap: 12px;
+    margin: 0;
+    width: 100%;
+}
+
+/* Override for screening page specific container if needed */
+#filter-design-tab .filter-section {
+    text-align: left;
+}
+
+.filter-label {
+    text-align: left;
+    margin-left: 0;
+}
+
+#filter-design-tab .checkbox-group,
+#filter-design-tab .frequency-group {
+    justify-content: flex-start;
+}
+
+/* Fix Checkmark Alignment (User Request: Move black checkmark right, no !important) */
+/* Re-implementing custom checkbox to ensure control */
+#filter-design-tab .checkbox-item input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-tertiary);
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+    margin: 0;
+}
+
+#filter-design-tab .checkbox-item input[type="checkbox"]:checked {
+    background-color: #5cecbd;
+    /* The green color */
+    border-color: #5cecbd;
+}
+
+/* The Checkmark */
+#filter-design-tab .checkbox-item input[type="checkbox"]::after {
+    content: "";
+    width: 5px;
+    height: 9px;
+    border: solid black;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-left: 2px;
+    /* Nudge Right */
+    margin-bottom: 1px;
+    /* Visual balance */
+    display: none;
+}
+
+
+#filter-design-tab .checkbox-item input[type="checkbox"]:checked::after {
+    display: block;
+}
+
+/* Strategy Active State */
+.strategy-card.active {
+    border-color: var(--accent-primary);
+    background: rgba(0, 212, 170, 0.05);
+    /* Slight tint */
+    box-shadow: 0 0 0 1px var(--accent-primary);
+}
+
+/* ===== Screening Results Horizontal Scrollbar ===== */
+/* 讓外層容器支援水平滑動 */
+.stock-list-container {
+    overflow-x: auto;
+}
+
+/* 確保表頭和列表的最小寬度，避免擠壓 */
+.list-header,
+.stock-item {
+    min-width: 800px;
+}
+
+/* 防止篩選標籤被擠壓斷行 */
+.pattern-tag {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* --- 捲軸美化 (深色融合) --- */
+
+/* 外層水平捲軸 */
+.stock-list-container::-webkit-scrollbar {
+    height: 8px;
+    width: 6px;
+}
+
+.stock-list-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.stock-list-container::-webkit-scrollbar-thumb {
+    background-color: var(--bg-hover);
+    border-radius: 4px;
+}
+
+.stock-list-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-muted);
+}
+
+/* 內層垂直捲軸 */
+.stock-list::-webkit-scrollbar {
+    width: 6px;
+    height: 8px;
+}
+
+.stock-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.stock-list::-webkit-scrollbar-thumb {
+    background-color: var(--bg-hover);
+    border-radius: 3px;
+}
+
+.stock-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-muted);
+}
+
+/* 修正原生白光角落 */
+::-webkit-scrollbar-corner {
+    background-color: var(--bg-primary);
+}

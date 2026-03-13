@@ -1,0 +1,72 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: stock-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_USER: stockapp
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
+      TZ: Asia/Taipei
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # 01: 建立 Schema 與資料表（必定掛載）
+      - ./App/Env/mysql/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      # 02: 還原 market_data 備份（執行 migrate 後才會存在，初次啟動可忽略）
+      - ./App/Env/data/seed_market_data.sql:/docker-entrypoint-initdb.d/02_seed_market_data.sql
+      # 03: 還原 user_data 備份（執行 migrate 後才會存在，初次啟動可忽略）
+      - ./App/Env/data/seed_user_data.sql:/docker-entrypoint-initdb.d/03_seed_user_data.sql
+    secrets:
+      - mysql_root_password
+      - mysql_user_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: ./App/Env/fastapi/Dockerfile
+    container_name: stock-fastapi
+    environment:
+      APP_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_USER: stockapp
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
+      SECRET_KEY_FILE: /run/secrets/secret_key
+      TZ: Asia/Taipei
+    volumes:
+      - ./App:/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    secrets:
+      - mysql_user_password
+      - secret_key
+
+  nginx:
+    image: nginx:alpine
+    container_name: stock-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./App/Env/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./App/Static:/static
+    depends_on:
+      - fastapi
+
+volumes:
+  mysql_data:
+
+secrets:
+  mysql_root_password:
+    file: ./secrets/mysql_root_password.txt
+  mysql_user_password:
+    file: ./secrets/mysql_user_password.txt
+  secret_key:
+    file: ./secrets/secret_key.txt

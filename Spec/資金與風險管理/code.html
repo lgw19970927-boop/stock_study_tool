@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-TW"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#00ffa2",
+                        "background-light": "#f5f8f7",
+                        "background-dark": "#0f231c",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>資金與風險管理 - Trading Platform</title>
+</head>
+<body class="bg-[#050c0a] dark:bg-[#050c0a] font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="bg-[#0f171c] border-b border-white/5 sticky top-0 z-50">
+<div class="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
+<div class="flex items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#00ffa2] text-2xl">trending_up</span>
+<h1 class="text-lg font-bold tracking-tight text-white flex items-center">
+                Stock <span class="text-[#00ffa2] ml-1.5">AI Filter</span>
+<span class="ml-1 text-[10px] px-1 rounded-sm bg-gradient-to-r from-[#00ffa2] to-[#7c3aed] text-white font-bold">PRO</span>
+</h1>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<nav class="hidden lg:flex items-center gap-1">
+<a class="px-3 py-2 text-[13px] font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-lg text-[#00ffa2]">filter_alt</span>股票篩選
+            </a>
+<a class="px-3 py-2 text-[13px] font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-lg">show_chart</span>模擬交易回測
+            </a>
+<a class="px-3 py-2 text-[13px] font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-lg">equalizer</span>策略比較
+            </a>
+<a class="px-4 py-2 text-[13px] font-bold text-[#00ffa2] bg-[#00ffa2]/10 rounded-md flex items-center gap-2 border border-[#00ffa2]/20 shadow-[0_0_15px_rgba(0,255,162,0.15)]" href="#">
+<span class="material-symbols-outlined text-lg">account_balance_wallet</span>資金與風險管理
+            </a>
+<a class="px-3 py-2 text-[13px] font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-lg">add</span>開啟頁面
+            </a>
+</nav>
+<div class="flex items-center gap-1 ml-4 border-l border-white/10 pl-4">
+<button class="p-2 text-slate-400 hover:text-white">
+<span class="material-symbols-outlined text-xl">search</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-white relative">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#0f171c]"></span>
+</button>
+<div class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center border border-white/10 ml-2">
+<span class="material-symbols-outlined text-slate-300 text-lg">person</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-[1440px] mx-auto px-6 py-8">
+<!-- Risk Settings Header Section -->
+<div class="flex justify-end mb-4">
+<button class="flex items-center gap-2 text-xs text-slate-400 hover:text-primary">
+<span class="material-symbols-outlined text-sm">download</span> 匯出 CSV
+    </button>
+</div><section class="mb-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-primary/5 border border-primary/10 p-6 rounded-xl">
+<div>
+<h2 class="text-2xl font-bold mb-2">風險參數設定</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm">定義您的核心風險胃納，系統將自動計算建議倉位。</p>
+</div>
+<div class="flex flex-wrap gap-4">
+<div class="flex flex-col gap-1.5 min-w-[200px]">
+<label class="text-xs font-semibold uppercase tracking-wider text-slate-500">初始資金 (Capital)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-primary font-bold text-sm">$</span>
+<input class="w-full bg-background-light dark:bg-[#1a352b] border-slate-200 dark:border-primary/20 rounded-lg pl-8 pr-4 py-2 focus:ring-primary focus:border-primary text-sm font-medium" type="text" value="1,000,000"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5 min-w-[200px]">
+<label class="text-xs font-semibold uppercase tracking-wider text-slate-500">單筆停損 (Risk per Trade)</label>
+<div class="relative">
+<input class="w-full bg-background-light dark:bg-[#1a352b] border-slate-200 dark:border-primary/20 rounded-lg px-4 py-2 focus:ring-primary focus:border-primary text-sm font-medium" type="text" value="1.0"/>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-primary font-bold text-sm">%</span>
+</div>
+</div>
+<button class="bg-primary text-background-dark font-bold px-6 py-2 rounded-lg hover:brightness-110 transition-all self-end">
+                        更新計算
+                    </button>
+</div>
+</div>
+</section>
+<!-- Real-time Risk Overview Cards -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+<!-- Card 1 -->
+<div class="bg-slate-50 dark:bg-[#1a352b]/40 border border-slate-200 dark:border-primary/10 p-5 rounded-xl">
+<div class="flex justify-between items-start mb-4">
+<span class="text-sm font-medium text-slate-500">帳戶總風險</span>
+<span class="material-symbols-outlined text-primary/60">shield</span>
+</div>
+<div class="flex flex-col">
+<span class="text-2xl font-bold">1.75%</span>
+<span class="text-xs text-primary mt-1 font-medium">低風險範圍</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-slate-50 dark:bg-[#1a352b]/40 border border-slate-200 dark:border-primary/10 p-5 rounded-xl">
+<div class="flex justify-between items-start mb-4">
+<span class="text-sm font-medium text-slate-500">全失敗停損總金額</span>
+<span class="material-symbols-outlined text-red-400/60">trending_down</span>
+</div>
+<div class="flex flex-col">
+<span class="text-2xl font-bold">-$32,000</span>
+<span class="text-xs text-slate-400 mt-1">最大潛在虧損</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-slate-50 dark:bg-[#1a352b]/40 border border-slate-200 dark:border-primary/10 p-5 rounded-xl">
+<div class="flex justify-between items-start mb-4">
+<span class="text-sm font-medium text-slate-500">停損後總倉金額</span>
+<span class="material-symbols-outlined text-primary/60">account_balance_wallet</span>
+</div>
+<div class="flex flex-col">
+<span class="text-2xl font-bold">$968,000</span>
+<span class="text-xs text-slate-400 mt-1">預期剩餘價值</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-slate-50 dark:bg-[#1a352b]/40 border border-slate-200 dark:border-primary/10 p-5 rounded-xl">
+<div class="flex justify-between items-start mb-4">
+<span class="text-sm font-medium text-slate-500">資金使用率</span>
+<span class="material-symbols-outlined text-primary/60">pie_chart</span>
+</div>
+<div class="flex flex-col"><span class="text-2xl font-bold">24.6%</span>
+<div class="w-full bg-slate-200 dark:bg-primary/10 h-1.5 rounded-full mt-2">
+<div class="bg-primary h-full rounded-full" style="width: 24.6%"></div>
+</div></div>
+</div>
+</section>
+<!-- Portfolio Risk Management Table -->
+<section class="bg-slate-50 dark:bg-[#1a352b]/20 border border-slate-200 dark:border-primary/10 rounded-xl overflow-hidden">
+<div class="px-6 py-4 border-b border-slate-200 dark:border-primary/10 flex items-center justify-between">
+<h3 class="font-bold text-lg">投資組合風險明細</h3>
+<button class="flex items-center gap-2 text-sm font-medium text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-sm">add</span> 新增持股
+        </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-[11px] border-collapse min-w-[1200px]">
+<thead>
+<tr class="bg-slate-100 dark:bg-[#1a352b]/60 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider"><th class="px-3 py-3 border-r border-white/5">持股 (Ticker)</th>
+<th class="px-3 py-3 border-r border-white/5">買入均價</th>
+<th class="px-3 py-3 border-r border-white/5">預計倉位比例</th>
+<th class="px-3 py-3 border-r border-white/5">停損價位1</th>
+<th class="px-3 py-3 border-r border-white/5">停損價位2</th>
+<th class="px-3 py-3 border-r border-white/5 bg-primary/5">平均停損%數</th>
+<th class="px-3 py-3 border-r border-white/5 bg-primary/5">控制停損後購買股數</th>
+<th class="px-3 py-3 border-r border-white/5 bg-primary/5">控制風險後倉位比例</th>
+<th class="px-3 py-3 border-r border-white/5">平倉出場價位1</th>
+<th class="px-3 py-3 border-r border-white/5">平倉出場價位2</th>
+<th class="px-3 py-3 border-r border-white/5">平倉出場1倉位</th>
+<th class="px-3 py-3 border-r border-white/5">平倉出場2倉位</th>
+<th class="px-3 py-3 border-r border-white/5 bg-primary/5">單筆實際平均損益%數</th>
+<th class="px-3 py-3 bg-primary/10 text-primary">倉位潛在風險</th></tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-primary/10"><tr class="hover:bg-primary/5 transition-colors border-b border-primary/5">
+<td class="px-3 py-3 font-bold"><input class="w-20 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold focus:ring-1 focus:ring-primary" value="2330.TW"/></td>
+<td class="px-3 py-3"><input class="w-14 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="780"/></td>
+<td class="px-3 py-3"><input class="w-12 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="15.0"/></td>
+<td class="px-3 py-3"><input class="w-14 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="741"/></td>
+<td class="px-3 py-3"><input class="w-14 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="730"/></td>
+<td class="px-3 py-3 text-red-400 text-center font-medium bg-primary/5">5.75%</td>
+<td class="px-3 py-3 font-bold text-center bg-primary/5">192</td>
+<td class="px-3 py-3 text-center bg-primary/5">14.8%</td>
+<td class="px-3 py-3"><input class="w-14 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="850"/></td>
+<td class="px-3 py-3"><input class="w-14 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="900"/></td>
+<td class="px-3 py-3"><input class="w-12 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="50"/></td>
+<td class="px-3 py-3"><input class="w-12 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="50"/></td>
+<td class="px-3 py-3 text-primary text-center font-medium bg-primary/5">+12.2%</td>
+<td class="px-3 py-3 font-bold text-primary text-center bg-primary/10">0.85%</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors border-b border-primary/5">
+<td class="px-3 py-3 font-bold"><input class="w-20 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold focus:ring-1 focus:ring-primary" value="NVDA.US"/></td>
+<td class="px-3 py-3"><input class="w-14 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="850"/></td>
+<td class="px-3 py-3"><input class="w-12 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="10.0"/></td>
+<td class="px-3 py-3"><input class="w-14 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="782"/></td>
+<td class="px-3 py-3"><input class="w-14 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="760"/></td>
+<td class="px-3 py-3 text-red-400 text-center font-medium bg-primary/5">9.2%</td>
+<td class="px-3 py-3 font-bold text-center bg-primary/5">117</td>
+<td class="px-3 py-3 text-center bg-primary/5">9.8%</td>
+<td class="px-3 py-3"><input class="w-14 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="950"/></td>
+<td class="px-3 py-3"><input class="w-14 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="1000"/></td>
+<td class="px-3 py-3"><input class="w-12 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="60"/></td>
+<td class="px-3 py-3"><input class="w-12 bg-[#1a352b]/50 border-slate-700 rounded px-1 py-0.5 text-center" value="40"/></td>
+<td class="px-3 py-3 text-primary text-center font-medium bg-primary/5">+14.5%</td>
+<td class="px-3 py-3 font-bold text-primary text-center bg-primary/10">0.90%</td>
+</tr></tbody>
+<tfoot>
+<tr class="bg-slate-100/50 dark:bg-[#1a352b]/40 font-bold"><td class="px-3 py-4 text-right" colspan="7">合計/平均</td>
+<td class="px-3 py-4 text-center text-primary">24.6%</td>
+<td colspan="4"></td>
+<td class="px-3 py-4 text-center bg-primary/5">+13.35%</td>
+<td class="px-3 py-4 text-center text-primary bg-primary/10">1.75%</td></tr>
+</tfoot>
+</table>
+</div>
+</section>
+<!-- Tooltip/Info Section -->
+<div class="mt-8 space-y-4">
+<!-- Formula Callout -->
+<!-- General Risk Warning -->
+<div class="flex items-start gap-3 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#1a352b]/20 p-4 rounded-lg">
+<span class="material-symbols-outlined text-primary text-sm">warning</span>
+<p class="text-xs leading-relaxed">
+<span class="font-bold text-slate-900 dark:text-slate-100">風險提示：</span> 
+            上述計算係基於您輸入的停損百分比與單筆風險承受度。請務必考量市場滑價與流動性風險。系統建議之倉位僅供參考，不構成任何形式之投資建議或保證。
+        </p>
+</div>
+</div>
+</main>
+<footer class="mt-auto py-8 border-t border-slate-200 dark:border-primary/10">
+<div class="max-w-[1440px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="flex items-center gap-2 opacity-50">
+<span class="material-symbols-outlined text-sm">auto_graph</span>
+<span class="text-xs">AlphaTrade Pro Suite © 2024</span>
+</div>
+<div class="flex gap-6 text-xs text-slate-500">
+<a class="hover:text-primary" href="#">服務條款</a>
+<a class="hover:text-primary" href="#">隱私權政策</a>
+<a class="hover:text-primary" href="#">風險揭露</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,25 @@
+[
+  {
+    "type": "sma",
+    "timeframe": "1d",
+    "period": "日K",
+    "range": "當前值",
+    "presets": [],
+    "custom": [
+      {
+        "t1": "MA",
+        "v1": "20",
+        "op": "gt",
+        "t2": "MA",
+        "v2": "50"
+      }
+    ],
+    "conditions": [
+      {
+        "left": "MA20",
+        "operator": ">",
+        "right": "MA50"
+      }
+    ]
+  }
+]

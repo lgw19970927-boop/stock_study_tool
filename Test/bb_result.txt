@@ -1,0 +1,16 @@
+[測試] === Bollinger Bands (20, 2) 真實資料跨邏輯比對測試 ===
+本測試將由系統核心函數計算的結果，與腳本內獨立撰寫的母體標準差公式 (TradingView 標準) 進行精確度比對
+
+   代號                                                                                      名稱         日期    收盤價 系統_UPPER 獨立_UPPER 系統_MIDDLE 獨立_MIDDLE 系統_LOWER 獨立_LOWER
+    A                                                 Agilent Technologies, Inc. Common Stock 2026-02-27 121.38 135.2724 135.2724  127.2695  127.2695 119.2666 119.2666
+   AA                                                         Alcoa Corporation Common Stock  2026-02-27  62.08  64.7880  64.7880   60.3665   60.3665  55.9450  55.9450
+  AAA                                          Alternative Access First Priority CLO Bond ETF 2026-02-27  25.03  25.0430  25.0430   24.9380   24.9380  24.8330  24.8330
+ AAAA                                                 Amplius Aggressive Asset Allocation ETF 2026-02-27  28.01  28.3013  28.3013   27.9637   27.9637  27.6261  27.6261
+ AAAC                                                                    Columbia AAA CLO ETF 2026-02-27  20.10  20.1216  20.1216   20.0778   20.0778  20.0340  20.0340
+ AAAU                                                  Goldman Sachs Physical Gold ETF Shares 2026-02-27  51.92  52.4013  52.4013   49.4640   49.4640  46.5267  46.5267
+ AACB                                    Artius II Acquisition Inc. - Class A Ordinary Shares 2026-02-27  10.34  10.3941  10.3941   10.3503   10.3503  10.3065  10.3065
+AACBU                                                      Artius II Acquisition Inc. - Units 2026-02-27  10.60  10.7050  10.7050   10.6350   10.6350  10.5650  10.5650
+ AACG ATA Creativity Global - American Depositary Shares, each representing two common shares 2026-02-27   1.02   1.0600   1.0600    0.9310    0.9310   0.8020   0.8020
+
+[提示]：您可以現在開啟 TradingView，選擇上方任一股票，設定日K線及 BOLL(20, 2)。
+      將游標移至表格對應的「日期」，觀察 TradingView 上的數值是否與「系統_」欄位完全一致！

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Stock AI Filter PRO{% endblock %}</title>
+    <meta name="description" content="專業美股篩選與回測工具，支援技術指標篩選與型態辨識">
+
+    <!-- 原有 CSS（加上 v=1.1 強制清除快取） -->
+    <link rel="stylesheet" href="/static/css/styles.css?v=1.1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- 全域載入各分頁 CSS（避免 HTMX 動態載入時樣式遺失） -->
+    <link rel="stylesheet" href="/feature/Screening/screening.css">
+    <link rel="stylesheet" href="/feature/Screening/chart-settings-modal.css">
+    <link rel="stylesheet" href="/feature/RiskManagement/risk_management.css">
+
+    <!-- TODO [P1-Step2]: GoldenLayout v2 實作時補回 CDN
+    <link rel="stylesheet" href="https://unpkg.com/golden-layout@2.6.0/dist/css/goldenlayout-base.css">
+    <link rel="stylesheet" href="https://unpkg.com/golden-layout@2.6.0/dist/css/themes/goldenlayout-dark-theme.css">
+    -->
+
+    <!-- Lightweight Charts（K線圖） -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js"></script>
+
+    <!-- Tailwind CSS（僅用於新建的 header 元件） -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="m-0 p-0 overflow-hidden">
+
+    <!-- ══════════════════════════════════════════════
+         TradingView 風格 Header（單一列）
+         - 左：漢堡 ☰ + Logo
+         - 中：HTMX 分頁標籤（含 × 關閉、＋ 重開）
+         - 右：無齒輪（已移除）
+    ══════════════════════════════════════════════ -->
+    <header id="app-header" class="flex items-stretch border-b select-none"
+        style="background:#161b22; border-color:#30363d; height:54px;">
+
+        <!-- 左側：漢堡 + Logo -->
+        <!-- 左側固定區：漢堡 + Logo，垂直置中 -->
+        <div class="flex items-center gap-2 px-4 flex-shrink-0">
+            <button id="sidebarToggle" title="展開/收合側欄"
+                onclick="window.LayoutManager && window.LayoutManager.toggleSidebar()"
+                class="p-1.5 rounded hover:bg-white/10 transition-colors text-gray-400 hover:text-white flex-shrink-0">
+                <!-- 漢堡三條線 -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round">
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+            </button>
+
+            <!-- Logo -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <!-- SVG logo: 26x26 -->
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+                    <path d="M4 24L10 16L16 20L22 10L28 14" stroke="url(#grad)" stroke-width="3" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <defs>
+                        <linearGradient id="grad" x1="4" y1="24" x2="28" y2="14">
+                            <stop offset="0%" stop-color="#00d4aa" />
+                            <stop offset="100%" stop-color="#7c3aed" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <!-- brand-text -->
+                <span
+                    style="font-family:'Inter',sans-serif; font-size:1.25rem; font-weight:700; color:#f0f6fc; letter-spacing:-0.5px; white-space:nowrap;">
+                    Stock AI Filter
+                    <span style="background:linear-gradient(135deg,#00d4aa 0%,#7c3aed 100%);
+                             -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+                             background-clip:text;
+                             font-size:0.75rem; font-weight:600;
+                             vertical-align:super;">PRO</span>
+                </span>
+            </div>
+        </div><!-- /.左側固定區 -->
+
+        <!-- Spacer to push tabs to the right -->
+        <div class="flex-1"></div>
+
+        <!-- 分頁標籤區：靠右，緊貼 header 底部，無額外 padding -->
+        <div id="tabArea" class="flex items-stretch" style="height:100%;">
+            <!-- 分頁由 layout.js 動態生成 -->
+        </div>
+
+        <!-- ＋ 重新開啟分頁（有分頁關閉時顯示） -->
+        <div id="addTabContainer" class="hidden relative flex items-center px-2" style="flex-shrink:0;">
+            <button id="addTabBtn" class="flex items-center gap-1 px-2 py-1 rounded text-sm text-gray-400
+                           hover:text-white hover:bg-white/10 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span class="text-xs">開啟頁面</span>
+            </button>
+            <!-- 下拉：顯示可重開的分頁 -->
+            <div id="addTabMenu"
+                class="hidden absolute right-0 top-full mt-1 z-50 min-w-40 rounded shadow-xl py-1 whitespace-nowrap"
+                style="background:#1e222d; border:1px solid #363a46;">
+            </div>
+        </div>
+
+    </header>
+
+    <!-- ══════════════════════════════════════════════
+         主內容區（#content）
+         HTMX 分頁切換時只更新此區域
+    ══════════════════════════════════════════════ -->
+    <main id="content" style="height: calc(100vh - 54px); overflow: hidden;">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- TODO [P1-Step2]: GoldenLayout v2 實作時補回 JS
+    <script src="https://unpkg.com/golden-layout@2.6.0/dist/bundle/umd/goldenlayout.min.js"></script>
+    -->
+
+    <!-- 全域 layout.js（header tab 管理 + GoldenLayout 初始化） -->
+    <script src="/static/js/layout.js?v=1.6"></script>
+
+    {% block extra_scripts %}{% endblock %}
+
+</body>
+
+</html>

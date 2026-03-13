@@ -1,0 +1,346 @@
+/**
+ * App/Feature/RiskManagement/risk_management.css
+ * 資金與風險管理分頁 — 專屬樣式
+ * 配色對齊全域 styles.css CSS 變數（--bg-primary / --accent-primary 等）
+ *
+ * 高度策略說明：
+ *   - main#content 維持 display:block（不修改，避免影響 Screening 排版）
+ *   - F5 直接載入：#risk-page 是 main 的直接子元素，用 height:100% 填滿
+ *   - HTMX 動態載入：layout.js 建立 pane div（height:100%; display:flex），
+ *     [data-pane-id="risk_management"] 設定為 flex-direction:column，
+ *     #risk-page 在 pane 內用 flex:1 撐滿
+ */
+
+/* ── HTMX 動態建立的 pane 容器 ── */
+[data-pane-id="risk_management"] {
+    height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* ── 頁面根容器 ──
+   F5 直接載入時是 main(block) 的直接子元素 → height:100%
+   HTMX 載入時在 pane(flex column) 內 → flex:1
+   兩種寫法同時設定，瀏覽器依上下文擇一生效 */
+#risk-page {
+    height: 100%;
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#risk-page .risk-main {
+    flex: 1;
+    width: 100%;
+    padding: 1.25rem 1.5rem 1.5rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* ── 卡片基礎 ── */
+#risk-page .rm-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    margin-bottom: 0.85rem;
+}
+
+/* 表格卡片撐滿剩餘空間 */
+#risk-page .rm-card.rm-table-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 0;
+    min-height: 0;
+}
+
+#risk-page .rm-card.rm-table-card>div.rm-table-scroll {
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+}
+
+/* ── 輸入框（全域參數區） ── */
+#risk-page input[type="text"],
+#risk-page input[type="number"] {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0.38rem 0.55rem;
+    font-size: 0.82rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: var(--font-family);
+}
+
+#risk-page input[type="text"]:focus,
+#risk-page input[type="number"]:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.1);
+}
+
+/* ── 前綴 / 後綴 ── */
+#risk-page .rm-input-wrap {
+    position: relative;
+}
+
+#risk-page .rm-input-prefix {
+    position: absolute;
+    left: 0.55rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-primary);
+    font-weight: 700;
+    font-size: 0.82rem;
+    pointer-events: none;
+}
+
+#risk-page .rm-input-suffix {
+    position: absolute;
+    right: 0.55rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-primary);
+    font-weight: 700;
+    font-size: 0.82rem;
+    pointer-events: none;
+}
+
+#risk-page input.has-prefix {
+    padding-left: 1.4rem !important;
+}
+
+#risk-page input.has-suffix {
+    padding-right: 1.4rem !important;
+}
+
+/* ── 按鈕 ── */
+#risk-page .btn-primary {
+    background: var(--accent-primary);
+    color: #000;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 1.1rem;
+    font-size: 0.85rem;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+}
+
+#risk-page .btn-primary:hover {
+    filter: brightness(1.1);
+    box-shadow: var(--shadow-glow);
+}
+
+#risk-page .btn-outline {
+    background: transparent;
+    color: var(--accent-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.85rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+}
+
+#risk-page .btn-outline:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+}
+
+#risk-page .btn-danger {
+    background: transparent;
+    color: var(--color-danger);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 0.18rem 0.45rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+#risk-page .btn-danger:hover {
+    background: rgba(248, 81, 73, 0.15);
+}
+
+/* ── 概覽卡片 ── */
+#risk-page .rm-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.85rem;
+    margin-bottom: 0.85rem;
+}
+
+@media (max-width: 900px) {
+    #risk-page .rm-overview-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 540px) {
+    #risk-page .rm-overview-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+#risk-page .rm-ov-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.1rem;
+}
+
+#risk-page .rm-ov-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+#risk-page .rm-ov-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#risk-page .rm-ov-sub {
+    font-size: 0.75rem;
+    margin-top: 0.2rem;
+    color: var(--text-muted);
+}
+
+/* ── 進度條 ── */
+#risk-page .rm-progress {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--bg-hover);
+    overflow: hidden;
+    margin-top: 0.35rem;
+}
+
+#risk-page .rm-progress-bar {
+    height: 100%;
+    border-radius: 9999px;
+    background: var(--accent-gradient);
+    transition: width 0.4s ease;
+}
+
+/* ── 表格 ── */
+#risk-page table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#risk-page thead tr {
+    background: var(--bg-tertiary);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+#risk-page th,
+#risk-page td {
+    padding: 0.5rem 0.65rem;
+    border-right: 1px solid var(--border-subtle);
+    white-space: nowrap;
+}
+
+#risk-page th:last-child,
+#risk-page td:last-child {
+    border-right: none;
+}
+
+#risk-page tbody tr {
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background 0.15s;
+}
+
+#risk-page tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+#risk-page tfoot tr {
+    background: var(--bg-tertiary);
+    font-weight: 700;
+}
+
+/* 計算欄 / 風險欄高亮 */
+#risk-page .col-calc {
+    background: rgba(0, 212, 170, 0.04);
+}
+
+#risk-page .col-risk {
+    background: rgba(0, 212, 170, 0.08);
+}
+
+/* 表格內輸入框 */
+#risk-page .rm-row-input {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 4px !important;
+    color: var(--text-primary) !important;
+    padding: 0.28rem 0.4rem !important;
+    font-size: 0.78rem !important;
+    transition: border-color 0.15s !important;
+}
+
+#risk-page .rm-row-input:focus {
+    border-color: var(--accent-primary) !important;
+    outline: none !important;
+}
+
+/* ── 色彩工具 ── */
+#risk-page .text-primary {
+    color: var(--accent-primary);
+}
+
+#risk-page .text-danger {
+    color: var(--color-danger);
+}
+
+#risk-page .text-warn {
+    color: var(--color-warning);
+}
+
+#risk-page .text-muted {
+    color: var(--text-muted);
+}
+
+/* ── 提示區塊 ── */
+#risk-page .rm-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 0.775rem;
+    color: var(--text-secondary);
+    margin-top: 0.75rem;
+}

@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+pydantic
+mysql-connector-python
+pandas
+numpy
+yfinance
+requests
+ultralytics
+opencv-python-headless
+pillow
+mplfinance
+matplotlib
