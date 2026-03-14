@@ -1,10 +1,10 @@
 """
-App/Lib/data_sync/backup_mysql.py
+App/Feature/data_sync/data_sync/backup_mysql.py
 備份工具 — 僅備份 user_data schema
 透過 docker exec 呼叫容器內的 mysqldump，不需在 host 安裝 MySQL Client。
 
 使用方式：
-    from App.Lib.data_sync.backup_mysql import backup_user_data
+    from App.Feature.data_sync.data_sync.backup_mysql import backup_user_data
     backup_user_data()
 """
 import subprocess
@@ -21,13 +21,13 @@ MYSQL_PASSWORD  = os.environ.get("MYSQL_PASSWORD",  "stockapp_password")
 
 # 專案根目錄 = 此檔案往上四層（data_sync → Lib → App → project root）
 PROJECT_ROOT   = Path(__file__).resolve().parents[3]
-BACKUP_DIR     = PROJECT_ROOT / "App" / "Env" / "data"
+BACKUP_DIR     = PROJECT_ROOT / "Env" / "mysql" / "seed"
 USER_DATA_FILE = BACKUP_DIR / "seed_user_data.sql"
 
 
 def backup_user_data() -> None:
     """
-    將 MySQL user_data schema 備份至 App/Env/data/seed_user_data.sql。
+    將 MySQL user_data schema 備份至 Env/mysql/seed/seed_user_data.sql。
     透過 `docker exec` 呼叫容器內的 mysqldump，覆寫舊備份檔。
     """
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
@@ -79,8 +79,8 @@ def backup_user_data() -> None:
 
 def backup_market_data() -> None:
     """
-    將 MySQL market_data schema 備份至 App/Env/data/seed_market_data.sql。
-    此函式由爬蟲（sync_market_data.py）在 incremental_update /
+    將 MySQL market_data schema 備份至 Env/mysql/seed/seed_market_data.sql。
+    此函數由爾蹫（sync_market_data.py）在 incremental_update /
     progressive_backfill 完成後自動呼叫。
     """
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)

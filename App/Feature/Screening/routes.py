@@ -113,7 +113,7 @@ async def filter_stocks_stream(
 
     async def event_stream():
         try:
-            from ...Lib.db import get_market_cursor
+            from ...Feature.data_sync.db import get_market_cursor
 
             with get_market_cursor() as cursor:
                 # 取得大盤基準日 (以資料庫最新的一筆 K 線時間為準)

@@ -87,3 +87,48 @@
      local_start = int(max(0, (effective_x1 / effective_width) * chunk_len))
      local_end   = int(min(chunk_len, (effective_x2 / effective_width) * chunk_len))
      ```
+##  伍、 標註工具 (LabelImg) 實戰教學
+
+LabelImg 能將你手動畫的框轉為 YOLO 看得懂的 `.txt` 座標檔。
+
+### 1. 安裝與資料夾準備
+* 在終端機輸入：`pip install labelImg`
+* 準備資料夾：
+  * `dataset_images/`：存放所有 K 線大圖。
+  * `dataset_labels/`：建立空資料夾，存放產出的標籤。
+  * `classes.txt`：在 labels 資料夾內建立純文字檔，寫入型態名稱（一行一個，如 `box_pattern`, `vcp`）。
+
+### 2. 啟動與核心設定 (🔥 極度重要)
+1. 終端機輸入 `labelImg` 啟動。
+2. 點擊左側工具列的「PascalVOC」，**使其切換為「YOLO」**（否則模型無法讀取）。
+3. 點擊「Open Dir」選擇 `dataset_images`；點擊「Change Save Dir」選擇 `dataset_labels`。
+4. 點擊上方選單 View 勾選「Auto Save mode」（自動存檔）。
+
+### 3. 畫框 SOP 與快捷鍵
+* **`W` 鍵 (建立框框)**：精準拉框包住型態的起訖點與最高/最低價。放開後選擇對應類別。
+* **`D` 鍵 (下一張圖)**：自動存檔並跳下一張。（遇到無型態的背景圖，直接按 D 略過）。
+* **`A` 鍵 (上一張圖)**：回頭檢查或修改。
+* **`Delete` 鍵**：點選畫錯的框框刪除。
+
+### 4. 特殊型態標註技巧：VCP (波動收縮)
+* **包含成交量**：VCP 強調「量縮」，訓練圖下方**必須包含成交量柱狀圖**，YOLO 才能學到量能萎縮特徵。
+* **標註範圍**：左側起點從第一個最大的波峰（或波谷）開始，右側終點框到最後一次收縮準備突破（Pivot point）的 K 線。呈現漏斗狀特徵。
+
+---
+
+## 陸、 前端參數對接與實作
+
+前端的「辨識敏感度」拉桿（假設範圍 1-100），可直接映射為 YOLO 模型的信心水準門檻（Confidence Threshold, `conf`）。
+* **高敏感度**：調低 `conf` 門檻（寧可錯殺一百，抓出所有類似特徵）。
+* **低敏感度**：調高 `conf` 門檻（極度嚴格，只抓完美型態）。
+
+**Python 實作範例 (`service.py`)**：
+```python
+# 將前端敏感度 (1-100) 反向轉換為 YOLO 的信心門檻 (0.1 - 0.9)
+sensitivity = frontend_request.get('sensitivity', 50)
+confidence_threshold = max(0.1, min(0.9, 1.0 - (sensitivity / 100.0)))
+
+# 將動態門檻傳給 YOLO 模型
+results = model(image, conf=confidence_threshold)
+
+# 後續依照原本邏輯，抓出座標並換算 K 線長度...

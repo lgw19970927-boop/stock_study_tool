@@ -20,9 +20,9 @@ import logging
 import sys
 from datetime import datetime, timedelta
 
-from App.Lib.db import get_market_cursor
-from App.Lib.data_sync import config
-from App.Lib.data_sync.data_validator import validate_market_data
+from App.Feature.data_sync.db import get_market_cursor
+from App.Feature.data_sync.data_sync import config
+from App.Feature.data_sync.data_sync.data_validator import validate_market_data
 
 logger = logging.getLogger(__name__)
 
@@ -341,7 +341,7 @@ def incremental_update(interval: str = '1d') -> None:
     # ✅ 完成後自動備份 market_data
     logger.info("Incremental update done. Triggering market_data backup...")
     try:
-        from App.Lib.data_sync.backup_mysql import backup_market_data
+        from App.Feature.data_sync.data_sync.backup_mysql import backup_market_data
         backup_market_data()
     except Exception as e:
         logger.error(f"market_data backup failed: {e}")
@@ -380,7 +380,7 @@ def progressive_backfill(interval: str = '1h') -> None:
     # ✅ 完成後自動備份 market_data
     logger.info("Progressive backfill done. Triggering market_data backup...")
     try:
-        from App.Lib.data_sync.backup_mysql import backup_market_data
+        from App.Feature.data_sync.data_sync.backup_mysql import backup_market_data
         backup_market_data()
     except Exception as e:
         logger.error(f"market_data backup failed: {e}")

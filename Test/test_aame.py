@@ -5,7 +5,7 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
 from App.Feature.Screening.service import screen_single_stock
-from App.Lib.db import init_db
+from App.Feature.data_sync.db import init_db
 from App.config import Settings
 
 if __name__ == "__main__":

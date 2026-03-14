@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from .Screening import router as screening_router
 from .Backtesting import router as backtesting_router
 from .RiskManagement import router as risk_management_router
-from ..Lib.market_data import router as market_data_router
+from .data_sync.market_data import router as market_data_router
 
 
 def register_features(app: FastAPI) -> None:

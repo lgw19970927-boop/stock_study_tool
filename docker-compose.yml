@@ -12,11 +12,11 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       # 01: 建立 Schema 與資料表（必定掛載）
-      - ./App/Env/mysql/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./Env/mysql/init.sql:/docker-entrypoint-initdb.d/01_init.sql
       # 02: 還原 market_data 備份（執行 migrate 後才會存在，初次啟動可忽略）
-      - ./App/Env/data/seed_market_data.sql:/docker-entrypoint-initdb.d/02_seed_market_data.sql
+      - ./Env/mysql/seed/seed_market_data.sql:/docker-entrypoint-initdb.d/02_seed_market_data.sql
       # 03: 還原 user_data 備份（執行 migrate 後才會存在，初次啟動可忽略）
-      - ./App/Env/data/seed_user_data.sql:/docker-entrypoint-initdb.d/03_seed_user_data.sql
+      - ./Env/mysql/seed/seed_user_data.sql:/docker-entrypoint-initdb.d/03_seed_user_data.sql
     secrets:
       - mysql_root_password
       - mysql_user_password
@@ -29,7 +29,7 @@ services:
   fastapi:
     build:
       context: .
-      dockerfile: ./App/Env/fastapi/Dockerfile
+      dockerfile: ./Env/fastapi/Dockerfile
     container_name: stock-fastapi
     environment:
       APP_ENV: development
@@ -38,8 +38,10 @@ services:
       MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
       SECRET_KEY_FILE: /run/secrets/secret_key
       TZ: Asia/Taipei
+      MPLBACKEND: Agg
+      DISPLAY: ""
     volumes:
-      - ./App:/app
+      - .:/workspace
     depends_on:
       mysql:
         condition: service_healthy
@@ -48,6 +50,12 @@ services:
     secrets:
       - mysql_user_password
       - secret_key
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   nginx:
     image: nginx:alpine
@@ -55,10 +63,30 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./App/Env/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./Env/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./App/Static:/static
     depends_on:
-      - fastapi
+      fastapi:
+        condition: service_healthy
+
+  data_sync:
+    build:
+      context: .
+      dockerfile: ./Env/data_sync/Dockerfile
+    container_name: stock-data-sync
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: stockapp
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_user_password
+      TZ: Asia/Taipei
+    volumes:
+      - .:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      mysql:
+        condition: service_healthy
+    secrets:
+      - mysql_user_password
 
 volumes:
   mysql_data:

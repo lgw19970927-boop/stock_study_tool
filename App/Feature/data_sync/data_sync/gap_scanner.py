@@ -9,8 +9,8 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-from App.Lib.db import get_market_cursor
-from App.Lib.data_sync.sync_market_data import get_tickers_from_db, sync_market_data
+from App.Feature.data_sync.db import get_market_cursor
+from App.Feature.data_sync.data_sync.sync_market_data import get_tickers_from_db, sync_market_data
 
 logger = logging.getLogger(__name__)
 

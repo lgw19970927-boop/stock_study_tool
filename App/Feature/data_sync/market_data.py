@@ -10,7 +10,7 @@ import pandas as pd
 import logging
 
 from .db import get_market_cursor
-from ..Feature.models import MarketDataResponse, OHLCBar, StocksResponse, StockMeta
+from ..models import MarketDataResponse, OHLCBar, StocksResponse, StockMeta
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ async def get_kline_count(
 ):
     """獲取指定時間範圍內實際 K 線數量（MySQL 版）"""
     try:
-        from ..Feature.Screening.indicators.service import resolve_analysis_dates, interval_to_db_format, needs_resample, resample_prices
+        from ..Screening.indicators.service import resolve_analysis_dates, interval_to_db_format, needs_resample, resample_prices
 
         resolved_start, resolved_end = resolve_analysis_dates(
             time_range, analysis_start_date, analysis_end_date

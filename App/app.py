@@ -11,7 +11,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 from .config import get_config
-from .Lib.db import init_db
+from .Feature.data_sync.db import init_db
 from .Feature import register_features
 
 
