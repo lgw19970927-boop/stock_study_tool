@@ -31,7 +31,10 @@ services:
       context: .
       dockerfile: ./Env/fastapi/Dockerfile
     container_name: stock-fastapi
+    runtime: nvidia
     environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
       APP_ENV: development
       MYSQL_HOST: mysql
       MYSQL_USER: stockapp
