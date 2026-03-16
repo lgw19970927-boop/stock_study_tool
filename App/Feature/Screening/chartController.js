@@ -9,6 +9,8 @@ window.ChartController = {
     currentTimeframe: '1d',
     currentSymbol: null,
     isIndicatorsVisible: true, // 控制圖表指標是否顯示的開關
+    currentChartData: null,   // ✅ 保存最新 K 線資料供重渲染使用（不重新 fetch）
+    _resizeObserver: null,    // ✅ 用於正確銷毀 ResizeObserver（防記憶體洩漏）
 
     /**
      * 初始化圖表
@@ -18,6 +20,24 @@ window.ChartController = {
         if (!chartContainer) {
             console.error('[ChartController] 找不到圖表容器');
             return;
+        }
+
+        // ✅ Bug1 Destroy guard: 若舊 chart 實例存在，先完整銷毀以防記憶體洩漏
+        if (this.chart) {
+            try {
+                if (this._resizeObserver) {
+                    this._resizeObserver.disconnect();
+                    this._resizeObserver = null;
+                }
+                this.clearIndicatorSeries();
+                this.chart.remove();
+            } catch (e) {
+                console.warn('[ChartController] 銷毀舊圖表時發生錯誤:', e);
+            }
+            this.chart = null;
+            this.candleSeries = null;
+            this.currentChartData = null;
+            this.currentSymbol = null;
         }
 
         // ✅ Ensure chart is hidden on initialization
@@ -53,12 +73,25 @@ window.ChartController = {
         });
 
         // Handle Resize using ResizeObserver
-        const resizeObserver = new ResizeObserver(entries => {
+        this._resizeObserver = new ResizeObserver(entries => {
             if (entries.length === 0 || !entries[0].contentRect) return;
             const newRect = entries[0].contentRect;
-            this.chart.applyOptions({ width: newRect.width, height: newRect.height });
+            if (this.chart) this.chart.applyOptions({ width: newRect.width, height: newRect.height });
         });
-        resizeObserver.observe(chartContainer);
+        this._resizeObserver.observe(chartContainer);
+
+        // ✅ Feature B: crosshair 移動時更新指標控制列數值
+        this.chart.subscribeCrosshairMove(param => {
+            if (window.IndicatorTopBar) window.IndicatorTopBar.updateValues(param);
+        });
+
+        // ✅ 綁定型態標註 Toggle（每次 init 後重新綁定）
+        const patToggle = document.getElementById('patternAnnotationToggle');
+        if (patToggle) {
+            patToggle.onchange = (e) => {
+                if (window.PatternAnnotation) window.PatternAnnotation.setEnabled(e.target.checked);
+            };
+        }
 
         console.log('[ChartController] 圖表初始化完成');
     },
@@ -67,10 +100,19 @@ window.ChartController = {
      * 加載股票 K 線數據
      * @param {string} symbol - 股票代碼
      */
-    async loadStock(symbol) {
+    async loadStock(symbol, opts = {}) {
         // Hide placeholder, show chart
         document.querySelector('.chart-placeholder').style.display = 'none';
-        document.getElementById('chart').style.display = 'block';
+        const chartEl = document.getElementById('chart');
+        chartEl.style.display = 'block';
+
+        // ✅ Bug1: 確保圖表在容器顯示後有正確尺寸（修復隱藏容器導致的 0x0 初始化問題）
+        if (this.chart) {
+            this.chart.applyOptions({
+                width:  chartEl.clientWidth  || chartEl.offsetWidth  || 800,
+                height: chartEl.clientHeight || chartEl.offsetHeight || 500
+            });
+        }
 
         // Update Header
         document.getElementById('chartSymbol').textContent = symbol;
@@ -122,17 +164,79 @@ window.ChartController = {
             // 設置圖表數據
             this.candleSeries.setData(chartData);
 
+            // ✅ 保存 K 線資料供後續本地重渲染使用
+            this.currentChartData = chartData;
+
             console.log(`[ChartController] Loaded ${chartData.length} bars for ${symbol}`);
 
-            // ✅ 設置初始可視範圍為最近1年
-            this.setVisibleRangeToLastYear(chartData);
+            // ✅ Feature A: 依觸發方式決定初始視角
+            // fromFilterClick=true → 對齊 analysis_end_date；否則維持當前視角（切換 timeframe 等）
+            if (opts.fromFilterClick) {
+                this.setVisibleRangeToAnalysisEndDate(chartData);
+            } else {
+                this.setVisibleRangeToLastYear(chartData);
+            }
 
             // ✅ 渲染圖表指標
             this.renderIndicators(chartData);
 
+            // ✅ Feature C: 型態標註
+            if (window.PatternAnnotation) {
+                const stockData = window.state.lastResults
+                    ? window.state.lastResults.find(s => s.symbol === symbol)
+                    : null;
+                window.PatternAnnotation.setData(
+                    stockData?.patterns_found || [],
+                    chartData
+                );
+            }
+
+            // ✅ Feature B: 渲染指標控制列
+            if (window.IndicatorTopBar) window.IndicatorTopBar.render();
+
         } catch (error) {
             console.error('[ChartController] Failed to fetch K-line data:', error);
             alert(`載入 ${symbol} 數據失敗：${error.message}`);
+        }
+    },
+
+    /**
+     * ✅ Feature A: 設置初始可視範圍對齊 analysis_end_date
+     * 若 analysis_end_date 為空（快捷按鈕模式），fallback 到 setVisibleRangeToLastYear
+     * @param {Array} chartData - K 線數據
+     */
+    setVisibleRangeToAnalysisEndDate(chartData) {
+        if (!chartData || chartData.length === 0) return;
+
+        const endDateStr = window.state?.filters?.analysis_end_date || '';
+
+        if (!endDateStr) {
+            // 快捷按鈕模式：end_date = 今天，效果等同 setVisibleRangeToLastYear
+            this.setVisibleRangeToLastYear(chartData);
+            return;
+        }
+
+        // 將日期字串轉為 Unix timestamp（秒）
+        const endTimestamp = new Date(endDateStr + 'T00:00:00').getTime() / 1000;
+        if (isNaN(endTimestamp)) {
+            console.warn('[ChartController] setVisibleRangeToAnalysisEndDate: 無效日期，使用 fallback');
+            this.setVisibleRangeToLastYear(chartData);
+            return;
+        }
+
+        const oneYearInSeconds = 365 * 24 * 60 * 60;
+        const fromTimestamp = endTimestamp - oneYearInSeconds;
+
+        console.log(`[ChartController] setVisibleRangeToAnalysisEndDate: ${new Date(fromTimestamp * 1000).toISOString().split('T')[0]} → ${endDateStr}`);
+
+        try {
+            this.chart.timeScale().setVisibleRange({
+                from: fromTimestamp,
+                to: endTimestamp
+            });
+        } catch (e) {
+            console.warn('[ChartController] setVisibleRange 失敗，使用 fallback:', e);
+            this.setVisibleRangeToLastYear(chartData);
         }
     },
 
@@ -204,7 +308,7 @@ window.ChartController = {
     },
 
     /**
-     * ✅ 渲染圖表指標（通過註冊表）
+     * ✅ 渲染圖表指標（通過註冊表，讀取 SSOT 新結構）
      * @param {Array} chartData - K線數據
      */
     renderIndicators(chartData) {
@@ -218,44 +322,38 @@ window.ChartController = {
         // 清除舊的指標系列
         this.clearIndicatorSeries();
 
-        // 檢查指標總開關是否開啟
+        // ✅ Bug3: 指標總開關（顯示指標按鈕）
         if (!this.isIndicatorsVisible) {
             console.log('[ChartController] 指標顯示已關閉，停止渲染');
             return;
         }
 
-        // 渲染 SMA 指標（通過註冊表）
-        if (window.state.chartIndicators.MA && window.state.chartIndicators.MA.length > 0) {
-            window.state.chartIndicators.MA.forEach(ma => {
-                if (ma.visible) {
-                    const series = window.IndicatorRegistry.render(
-                        this.chart,
-                        chartData,
-                        'sma',
-                        ma
-                    );
-
-                    if (series) {
-                        ma.series = series;
-                        console.log(`[ChartController] ✅ 渲染 MA${ma.period}`);
-                    }
+        // ✅ SSOT: 渲染 MA 指標
+        const maState = window.state.chartIndicators.MA;
+        if (maState && maState.isGlobalEnabled && maState.lines && maState.lines.length > 0) {
+            maState.lines.forEach(ma => {
+                if (!ma.isEnabled) return;
+                const series = window.IndicatorRegistry.render(this.chart, chartData, 'sma', ma);
+                if (series) {
+                    ma.series = series;
+                    console.log(`[ChartController] ✅ 渲染 MA${ma.period}`);
                 }
             });
         }
 
-        // 渲染 Bollinger Bands（通過註冊表）
-        const boll = window.state.chartIndicators.BOLL;
-        if (boll && boll.visible) {
-            const series = window.IndicatorRegistry.render(
-                this.chart,
-                chartData,
-                'bollinger',
-                boll
-            );
-
+        // ✅ SSOT: 渲染 Bollinger Bands，依各線 isEnabled 決定是否保留
+        const bollState = window.state.chartIndicators.BOLL;
+        if (bollState && bollState.isGlobalEnabled) {
+            const series = window.IndicatorRegistry.render(this.chart, chartData, 'bollinger', bollState);
             if (series) {
-                boll.series = series;
-                console.log(`[ChartController] ✅ 渲染 BOLL(${boll.period},${boll.stdDev})`);
+                const lines = bollState.lines;
+                if (lines.upper.isEnabled)  lines.upper.series  = series.upper;
+                else if (series.upper)  { window.ChartRenderer.removeSeries(this.chart, series.upper);  }
+                if (lines.middle.isEnabled) lines.middle.series = series.middle;
+                else if (series.middle) { window.ChartRenderer.removeSeries(this.chart, series.middle); }
+                if (lines.lower.isEnabled)  lines.lower.series  = series.lower;
+                else if (series.lower)  { window.ChartRenderer.removeSeries(this.chart, series.lower);  }
+                console.log(`[ChartController] ✅ 渲染 BOLL(${bollState.period},${bollState.stdDev})`);
             }
         }
 
@@ -263,12 +361,26 @@ window.ChartController = {
     },
 
     /**
-     * ✅ 清除所有指標系列
+     * ✅ Bug3/Feature B: 使用現有 K 線資料重新渲染所有指標（不重新 fetch API）
+     * 供「顯示指標」按鈕、Chart Setting apply、top bar 互動使用
+     */
+    renderIndicatorsFromState() {
+        if (!this.currentChartData || this.currentChartData.length === 0) {
+            console.warn('[ChartController] renderIndicatorsFromState: 無 K 線資料');
+            return;
+        }
+        this.renderIndicators(this.currentChartData);
+        if (window.IndicatorTopBar) window.IndicatorTopBar.render();
+    },
+
+    /**
+     * ✅ 清除所有指標系列（SSOT 新結構）
      */
     clearIndicatorSeries() {
         // 清除 MA 系列
-        if (window.state.chartIndicators.MA) {
-            window.state.chartIndicators.MA.forEach(ma => {
+        const maState = window.state.chartIndicators.MA;
+        if (maState && maState.lines) {
+            maState.lines.forEach(ma => {
                 if (ma.series) {
                     window.ChartRenderer.removeSeries(this.chart, ma.series);
                     ma.series = null;
@@ -276,39 +388,29 @@ window.ChartController = {
             });
         }
 
-        // 清除 Bollinger 系列
-        const boll = window.state.chartIndicators.BOLL;
-        if (boll && boll.series) {
-            if (boll.series.upper) {
-                window.ChartRenderer.removeSeries(this.chart, boll.series.upper);
-            }
-            if (boll.series.middle) {
-                window.ChartRenderer.removeSeries(this.chart, boll.series.middle);
-            }
-            if (boll.series.lower) {
-                window.ChartRenderer.removeSeries(this.chart, boll.series.lower);
-            }
-            boll.series = {};
+        // 清除 Bollinger 系列（各線獨立儲存）
+        const bollState = window.state.chartIndicators.BOLL;
+        if (bollState && bollState.lines) {
+            ['upper', 'middle', 'lower'].forEach(key => {
+                const line = bollState.lines[key];
+                if (line && line.series) {
+                    window.ChartRenderer.removeSeries(this.chart, line.series);
+                    line.series = null;
+                }
+            });
         }
     },
 
     /**
-     * ✅ Phase 5: 切換是否顯示圖表管理設定的指標
+     * ✅ Bug3 Fix: 顯示指標總開關
+     * OFF → 清除畫布所有指標（不影響 modal 勾選狀態）
+     * ON  → 依 Chart Setting modal 的勾選狀態重渲染所有指標
      */
     toggleIndicatorsVisibility() {
-        console.log(`[ChartController] 【顯示指標】按鈕點擊... 目前狀態: ${this.isIndicatorsVisible}`);
-
-        // 切換顯示狀態
         this.isIndicatorsVisible = !this.isIndicatorsVisible;
-
-        // 重新渲染圖表
-        const currentSymbol = document.getElementById('chartSymbol').textContent;
-        if (currentSymbol && currentSymbol !== '--') {
-            this.loadStock(currentSymbol);
-            console.log(`[ChartController] 指標顯示狀態切換為: ${this.isIndicatorsVisible ? '開' : '關'}`);
-        } else {
-            console.warn('[ChartController] 無可用的股票符號，無法刷新指標');
-        }
+        console.log(`[ChartController] 指標顯示切換為: ${this.isIndicatorsVisible ? '開' : '關'}`);
+        // 使用現有 K 線資料重渲染，不重新 fetch API
+        this.renderIndicatorsFromState();
     },
 
     /**

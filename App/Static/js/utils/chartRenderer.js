@@ -37,33 +37,33 @@ window.ChartRenderer = {
      */
     renderBands(chart, upperData, middleData, lowerData, config) {
         const upper = chart.addLineSeries({
-            color: config.upperColor || '#f48fb1',
-            lineWidth: config.lineWidth || 1,
-            title: config.title ? `${config.title} Upper` : 'Upper',
-            lastValueVisible: false,
-            priceLineVisible: false
+            color:             config.upperColor  || '#f48fb1',
+            lineWidth:         config.upperLineWidth  || config.lineWidth || 1,
+            title:             config.title ? `${config.title} Upper`  : 'Upper',
+            lastValueVisible:  false,
+            priceLineVisible:  false
         });
 
         const middle = chart.addLineSeries({
-            color: config.middleColor || '#ce93d8',
-            lineWidth: config.lineWidth || 1,
-            title: config.title ? `${config.title} Middle` : 'Middle',
-            lastValueVisible: false,
-            priceLineVisible: false
+            color:             config.middleColor || '#ce93d8',
+            lineWidth:         config.middleLineWidth || config.lineWidth || 1,
+            title:             config.title ? `${config.title} Middle` : 'Middle',
+            lastValueVisible:  false,
+            priceLineVisible:  false
         });
 
         const lower = chart.addLineSeries({
-            color: config.lowerColor || '#f48fb1',
-            lineWidth: config.lineWidth || 1,
-            title: config.title ? `${config.title} Lower` : 'Lower',
-            lastValueVisible: false,
-            priceLineVisible: false
+            color:             config.lowerColor  || '#f48fb1',
+            lineWidth:         config.lowerLineWidth  || config.lineWidth || 1,
+            title:             config.title ? `${config.title} Lower`  : 'Lower',
+            lastValueVisible:  false,
+            priceLineVisible:  false
         });
 
         // ✅ 過濾掉 value 為 null 的數據點
-        const validUpper = upperData.filter(d => d.value !== null && d.value !== undefined);
+        const validUpper  = upperData.filter(d  => d.value !== null && d.value !== undefined);
         const validMiddle = middleData.filter(d => d.value !== null && d.value !== undefined);
-        const validLower = lowerData.filter(d => d.value !== null && d.value !== undefined);
+        const validLower  = lowerData.filter(d  => d.value !== null && d.value !== undefined);
 
         upper.setData(validUpper);
         middle.setData(validMiddle);
@@ -100,7 +100,13 @@ window.ChartRenderer = {
     removeSeries(chart, series) {
         if (series) {
             try {
-                chart.removeSeries(series);
+                // LightweightCharts v4.x: chart.removeSeries() 已移除，改用 series.remove()
+                if (typeof series.remove === 'function') {
+                    series.remove();
+                } else {
+                    // v3.x fallback
+                    chart.removeSeries(series);
+                }
             } catch (error) {
                 console.warn('[ChartRenderer] 移除 Series 失敗:', error);
             }

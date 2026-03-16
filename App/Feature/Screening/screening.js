@@ -58,10 +58,23 @@ window.state = {
             }
         }
     ],
-    // ✅ Phase 4: 圖表指標狀態（與篩選條件獨立）
+    // ✅ Phase 1 SSOT: 圖表指標狀態（與篩選條件完全獨立）
+    // 指標控制列 / Canvas / Modal 三者共讀同一份資料來源
     chartIndicators: {
-        MA: [],  // [{period: 20, color: '#ff5252', visible: true, series: null}, ...]
-        BOLL: null  // {period: 20, stdDev: 2, visible: true, series: {upper, middle, lower}}
+        MA: {
+            isGlobalEnabled: true,   // X 叉叉控制（整個 MA 群組）
+            lines: []                // [{period, color, lineWidth, opacity, isEnabled, series}]
+        },
+        BOLL: {
+            isGlobalEnabled: false,  // X 叉叉控制（整個 BOLL 群組）
+            period: 20,
+            stdDev: 2,
+            lines: {
+                middle: { color: '#ffb6c1', lineWidth: 1, opacity: 100, isEnabled: true, series: null },
+                upper:  { color: '#808080', lineWidth: 1, opacity: 100, isEnabled: true, series: null },
+                lower:  { color: '#00ffff', lineWidth: 1, opacity: 100, isEnabled: true, series: null }
+            }
+        }
     }
 };
 
@@ -95,10 +108,10 @@ window.ScreeningPage = {
     // ✅ Phase 1 重構：圖表初始化已移至 ChartController.init()
     // 此函數已移除，請使用 window.ChartController.init()
 
-    // ✅ Phase 1 重構：股票點擊已移至 ChartController.loadStock()
+    // ✅ Feature A: 傳遞 fromFilterClick=true，觸發視角對齊邏輯
     onStockClick: function (symbol) {
         if (window.ChartController) {
-            window.ChartController.loadStock(symbol);
+            window.ChartController.loadStock(symbol, { fromFilterClick: true });
         }
     },
 
@@ -701,11 +714,25 @@ window.ScreeningPage = {
 
 };
 
-// ====== HTMX 相容初始化邏輯 ======
-function initScreeningPage() {
-    if (document.getElementById('patternBarsMin')) {
-        window.ScreeningPage.init();
+// ====== HTMX 相容初始化邏輯（含防重複 flag）======
+
+// ✅ Bug1: 防重複初始化 flag
+window._screeningPageInit = false;
+
+// 当 HTMX 重新載入 screening 頁面內容時重設 flag
+// （DOM 快取顯示時不會觸發 afterSwap，故不會重初始化）
+document.addEventListener('htmx:afterSwap', function (evt) {
+    const path = evt.detail?.requestConfig?.path || '';
+    if (path.includes('/screening')) {
+        window._screeningPageInit = false;
     }
+});
+
+function initScreeningPage() {
+    if (window._screeningPageInit) return;
+    if (!document.getElementById('patternBarsMin')) return;
+    window._screeningPageInit = true;
+    window.ScreeningPage.init();
 }
 
 // 1. 正常全頁面載入

@@ -7,6 +7,9 @@ window.ChartSettingsModal = {
     // 臨時設定（彈窗編輯中）
     tempSettings: null,
 
+    // 指定要顯示的設定頁籍（由 open(target) 設置）
+    _renderTarget: null,
+
     // 色板選擇器狀態
     colorPicker: {
         isOpen: false,
@@ -15,25 +18,26 @@ window.ChartSettingsModal = {
         customColors: []
     },
 
-    // 預設 MA 配置
+    // 預設 MA 配置（匹配截圖：MA10/MA20 預設啟用）
     defaultMAConfig: [
-        { period: 5, color: '#ff0000', lineWidth: 1, opacity: 100, visible: true },   // 紅
-        { period: 10, color: '#ff8800', lineWidth: 1, opacity: 100, visible: true },  // 橙
-        { period: 20, color: '#ffff00', lineWidth: 1, opacity: 100, visible: true },  // 黃
-        { period: 50, color: '#00ff00', lineWidth: 1, opacity: 100, visible: true },  // 綠
-        { period: 150, color: '#0088ff', lineWidth: 1, opacity: 100, visible: true }, // 藍
-        { period: 200, color: '#8800ff', lineWidth: 1, opacity: 100, visible: true }  // 紫
+        { period: 5,   color: '#ff0000', lineWidth: 1, opacity: 100, isEnabled: false },
+        { period: 10,  color: '#ff8800', lineWidth: 1, opacity: 100, isEnabled: true  },
+        { period: 20,  color: '#ffff00', lineWidth: 1, opacity: 100, isEnabled: true  },
+        { period: 40,  color: '#0000ff', lineWidth: 1, opacity: 100, isEnabled: false },
+        { period: 50,  color: '#00ff00', lineWidth: 1, opacity: 100, isEnabled: false },
+        { period: 150, color: '#0088ff', lineWidth: 1, opacity: 100, isEnabled: false },
+        { period: 200, color: '#8800ff', lineWidth: 1, opacity: 100, isEnabled: false },
     ],
 
-    // 預設 BOLL 配置
+    // 預設 BOLL 配置（SSOT 新結構）
     defaultBOLLConfig: {
-        period: 50,
+        isGlobalEnabled: true,
+        period: 20,
         stdDev: 2,
-        visible: false,
         lines: {
-            middle: { color: '#ffb6c1', lineWidth: 1, opacity: 100 },  // 粉紅
-            upper: { color: '#c0c0c0', lineWidth: 1, opacity: 100 },   // 灰
-            lower: { color: '#00ffff', lineWidth: 1, opacity: 100 }    // 青
+            middle: { color: '#ffb6c1', lineWidth: 1, opacity: 100, isEnabled: true },
+            upper:  { color: '#808080', lineWidth: 1, opacity: 100, isEnabled: true },
+            lower:  { color: '#00ffff', lineWidth: 1, opacity: 100, isEnabled: true }
         }
     },
 
@@ -76,15 +80,27 @@ window.ChartSettingsModal = {
             }
         });
 
-        // 綁定左側指標切換事件
+        // 綁定左側指標切換事件（更新 tempSettings.isGlobalEnabled + 渲染設定面板）
         const maToggle = document.getElementById('ma-toggle');
         const bollToggle = document.getElementById('boll-toggle');
 
         if (maToggle) {
-            maToggle.addEventListener('change', () => this.renderSettings());
+            maToggle.addEventListener('change', () => {
+                if (this.tempSettings && this.tempSettings.MA) {
+                    this.tempSettings.MA.isGlobalEnabled = maToggle.checked;
+                }
+                this._renderTarget = maToggle.checked ? 'MA' : null;
+                this.renderSettings();
+            });
         }
         if (bollToggle) {
-            bollToggle.addEventListener('change', () => this.renderSettings());
+            bollToggle.addEventListener('change', () => {
+                if (this.tempSettings && this.tempSettings.BOLL) {
+                    this.tempSettings.BOLL.isGlobalEnabled = bollToggle.checked;
+                }
+                this._renderTarget = bollToggle.checked ? 'BOLL' : null;
+                this.renderSettings();
+            });
         }
 
         // 初始化色板選擇器
@@ -93,44 +109,69 @@ window.ChartSettingsModal = {
 
     /**
      * 打開彈窗
+     * @param {string|null} target - 'MA' | 'BOLL' | null，指定要顯示的設定頁籤
      */
-    open() {
-        console.log('[ChartSettingsModal] 打開彈窗');
+    open(target = null) {
+        console.log('[ChartSettingsModal] 打開彈窗', target ? `(target: ${target})` : '');
 
-        // 複製當前設定到臨時設定 (過濾掉帶有循環參考的 series 物件)
+        // ✅ SSOT: 從新結構讀取到 tempSettings
+        const maState   = window.state.chartIndicators.MA;
+        const bollState = window.state.chartIndicators.BOLL;
+
         this.tempSettings = {
-            MA: (window.state.chartIndicators.MA || []).map(ma => ({
-                period: ma.period,
-                color: ma.color,
-                lineWidth: ma.lineWidth,
-                opacity: ma.opacity,
-                visible: ma.visible
-            })),
-            BOLL: window.state.chartIndicators.BOLL ? {
-                period: window.state.chartIndicators.BOLL.period,
-                stdDev: window.state.chartIndicators.BOLL.stdDev,
-                visible: window.state.chartIndicators.BOLL.visible,
-                lines: window.state.chartIndicators.BOLL.lines ? JSON.parse(JSON.stringify(window.state.chartIndicators.BOLL.lines)) : undefined
+            MA: {
+                isGlobalEnabled: maState ? maState.isGlobalEnabled : true,
+                lines: (maState && maState.lines ? maState.lines : []).map(ma => ({
+                    period:    ma.period,
+                    color:     ma.color,
+                    lineWidth: ma.lineWidth,
+                    opacity:   ma.opacity,
+                    isEnabled: ma.isEnabled !== undefined ? ma.isEnabled : (ma.visible !== undefined ? ma.visible : true)
+                }))
+            },
+            BOLL: bollState ? {
+                isGlobalEnabled: bollState.isGlobalEnabled,
+                period:  bollState.period,
+                stdDev:  bollState.stdDev,
+                lines:   bollState.lines ? JSON.parse(JSON.stringify(
+                    Object.fromEntries(Object.entries(bollState.lines).map(([k, v]) => [
+                        k, { color: v.color, lineWidth: v.lineWidth, opacity: v.opacity, isEnabled: v.isEnabled }
+                    ]))
+                )) : null
             } : null
         };
 
         // 如果沒有任何設定，使用預設值
-        if (this.tempSettings.MA.length === 0) {
-            this.tempSettings.MA = JSON.parse(JSON.stringify(this.defaultMAConfig));
+        if (!this.tempSettings.MA.lines || this.tempSettings.MA.lines.length === 0) {
+            this.tempSettings.MA.lines = JSON.parse(JSON.stringify(this.defaultMAConfig));
         }
-        if (!this.tempSettings.BOLL) {
+        if (!this.tempSettings.BOLL || !this.tempSettings.BOLL.lines) {
             this.tempSettings.BOLL = JSON.parse(JSON.stringify(this.defaultBOLLConfig));
         }
 
         // 設定左側勾選狀態
-        const maToggle = document.getElementById('ma-toggle');
+        const maToggle   = document.getElementById('ma-toggle');
         const bollToggle = document.getElementById('boll-toggle');
 
-        if (maToggle) maToggle.checked = this.tempSettings.MA.length > 0;
-        if (bollToggle) bollToggle.checked = this.tempSettings.BOLL && this.tempSettings.BOLL.visible;
+        if (maToggle)   maToggle.checked   = this.tempSettings.MA.isGlobalEnabled && this.tempSettings.MA.lines.length > 0;
+        if (bollToggle) bollToggle.checked = !!(this.tempSettings.BOLL && this.tempSettings.BOLL.isGlobalEnabled);
+
+        // ✅ Feature B: target 指定時，強制顯示對應設定頁
+        if (target === 'BOLL') {
+            if (bollToggle) bollToggle.checked = true;
+            if (this.tempSettings.BOLL) this.tempSettings.BOLL.isGlobalEnabled = true;
+            this._renderTarget = 'BOLL';
+        } else if (target === 'MA') {
+            if (maToggle) maToggle.checked = true;
+            if (this.tempSettings.MA) this.tempSettings.MA.isGlobalEnabled = true;
+            this._renderTarget = 'MA';
+        } else {
+            this._renderTarget = null;
+        }
 
         // 渲染右側設定面板
         this.renderSettings();
+        this._renderTarget = null; // 渲染完成後清除
 
         // 顯示彈窗
         const modal = document.getElementById('chartSettingsModal');
@@ -155,15 +196,27 @@ window.ChartSettingsModal = {
      * 渲染設定面板
      */
     renderSettings() {
-        const maToggle = document.getElementById('ma-toggle');
+        const maToggle   = document.getElementById('ma-toggle');
         const bollToggle = document.getElementById('boll-toggle');
-        const container = document.getElementById('settingsPanelContainer');
+        const container  = document.getElementById('settingsPanelContainer');
 
         if (!container) return;
 
-        // 確定要顯示哪個面板
-        const showMA = maToggle && maToggle.checked;
+        const showMA   = maToggle   && maToggle.checked;
         const showBOLL = bollToggle && bollToggle.checked;
+
+        // ✅ Feature B: _renderTarget 指定時優先顯示對應頁籍
+        const target = this._renderTarget;
+        if (target === 'BOLL' && showBOLL) {
+            container.innerHTML = this.renderBOLLSettings();
+            this.bindBOLLEvents();
+            return;
+        }
+        if (target === 'MA' && showMA) {
+            container.innerHTML = this.renderMASettings();
+            this.bindMAEvents();
+            return;
+        }
 
         if (showMA) {
             container.innerHTML = this.renderMASettings();
@@ -187,7 +240,7 @@ window.ChartSettingsModal = {
      * 渲染 MA 設定面板
      */
     renderMASettings() {
-        const maLines = this.tempSettings.MA || [];
+        const maLines = (this.tempSettings.MA && this.tempSettings.MA.lines) ? this.tempSettings.MA.lines : [];
 
         let html = `
             <div class="settings-panel active">
@@ -232,11 +285,12 @@ window.ChartSettingsModal = {
      * 渲染單條 MA 線
      */
     renderMALine(ma, index) {
-        const opacity = ma.opacity ?? 100;
+        const opacity  = ma.opacity ?? 100;
+        const isEnabled = ma.isEnabled !== undefined ? ma.isEnabled : (ma.visible !== undefined ? ma.visible : true);
         return `
-            <div class="ma-line-item" data-index="${index}">
+            <div class="ma-line-item" data-index="${index}" data-period="${ma.period}">
                 <label>
-                    <input type="checkbox" ${ma.visible ? 'checked' : ''} onchange="window.ChartSettingsModal.toggleMAVisible(${index})">
+                    <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="window.ChartSettingsModal.toggleMAEnabled(${index})">
                     移動平均周期
                 </label>
                 <input type="number" value="${ma.period}" min="1" onchange="window.ChartSettingsModal.updateMAPeriod(${index}, this.value)">
@@ -259,22 +313,19 @@ window.ChartSettingsModal = {
      * 綁定 MA 事件
      */
     bindMAEvents() {
-        const btnAdd = document.getElementById('btnAddMA');
+        const btnAdd   = document.getElementById('btnAddMA');
         const btnReset = document.getElementById('btnResetMA');
 
-        if (btnAdd) {
-            btnAdd.addEventListener('click', () => this.addMALine());
-        }
-        if (btnReset) {
-            btnReset.addEventListener('click', () => this.resetMA());
-        }
+        if (btnAdd)   btnAdd.addEventListener('click',   () => this.addMALine());
+        if (btnReset) btnReset.addEventListener('click', () => this.resetMA());
     },
 
     /**
      * 新增 MA 線
      */
     addMALine() {
-        if (this.tempSettings.MA.length >= 10) {
+        const lines = this.tempSettings.MA.lines;
+        if (lines.length >= 10) {
             alert('最多只能添加 10 條 MA 線');
             return;
         }
@@ -283,13 +334,13 @@ window.ChartSettingsModal = {
         const colors = ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff', '#ff00ff', '#00ffff', '#ffffff', '#808080'];
         const newMA = {
             period: 5,
-            color: colors[this.tempSettings.MA.length % colors.length],
+            color: colors[lines.length % colors.length],
             lineWidth: 1,
             opacity: 100,
-            visible: true
+            isEnabled: true
         };
 
-        this.tempSettings.MA.push(newMA);
+        lines.push(newMA);
         this.renderSettings();
     },
 
@@ -297,7 +348,7 @@ window.ChartSettingsModal = {
      * 刪除 MA 線
      */
     removeMALine(index) {
-        this.tempSettings.MA.splice(index, 1);
+        this.tempSettings.MA.lines.splice(index, 1);
         this.renderSettings();
     },
 
@@ -306,7 +357,7 @@ window.ChartSettingsModal = {
      */
     resetMA() {
         if (confirm('確定要重置為預設 MA 配置嗎？')) {
-            this.tempSettings.MA = JSON.parse(JSON.stringify(this.defaultMAConfig));
+            this.tempSettings.MA.lines = JSON.parse(JSON.stringify(this.defaultMAConfig));
             this.renderSettings();
         }
     },
@@ -314,20 +365,25 @@ window.ChartSettingsModal = {
     /**
      * 更新 MA 參數
      */
-    toggleMAVisible(index) {
-        this.tempSettings.MA[index].visible = !this.tempSettings.MA[index].visible;
+    toggleMAEnabled(index) {
+        if (this.tempSettings.MA.lines[index]) {
+            this.tempSettings.MA.lines[index].isEnabled = !this.tempSettings.MA.lines[index].isEnabled;
+        }
     },
 
+    // 向下相容旧名稱
+    toggleMAVisible(index) { this.toggleMAEnabled(index); },
+
     updateMAPeriod(index, value) {
-        this.tempSettings.MA[index].period = parseInt(value, 10);
+        if (this.tempSettings.MA.lines[index]) this.tempSettings.MA.lines[index].period = parseInt(value, 10);
     },
 
     updateMALineWidth(index, value) {
-        this.tempSettings.MA[index].lineWidth = parseInt(value, 10);
+        if (this.tempSettings.MA.lines[index]) this.tempSettings.MA.lines[index].lineWidth = parseInt(value, 10);
     },
 
     updateMAOpacity(index, value) {
-        this.tempSettings.MA[index].opacity = parseInt(value, 10);
+        if (this.tempSettings.MA.lines[index]) this.tempSettings.MA.lines[index].opacity = parseInt(value, 10);
         // 更新顯示值
         const item = document.querySelector(`.ma-line-item[data-index="${index}"] .opacity-value`);
         if (item) item.textContent = value;
@@ -337,8 +393,10 @@ window.ChartSettingsModal = {
      * 打開色板選擇器（MA）
      */
     openColorPickerForMA(index) {
-        this.openColorPicker(this.tempSettings.MA[index].color, (color) => {
-            this.tempSettings.MA[index].color = color;
+        const lines = this.tempSettings.MA.lines;
+        if (!lines || !lines[index]) return;
+        this.openColorPicker(lines[index].color, (color) => {
+            lines[index].color = color;
             // 更新按鈕顏色
             const btn = document.querySelector(`.ma-line-item[data-index="${index}"] .color-picker-btn`);
             if (btn) btn.style.background = color;
@@ -346,21 +404,41 @@ window.ChartSettingsModal = {
     },
 
     /**
-     * 渲染 BOLL 設定面板
+     * 渲染 BOLL 設定面板（包含 MID/UPPER/LOWER 個別 checkbox）
      */
     renderBOLLSettings() {
         const boll = this.tempSettings.BOLL;
         if (!boll) return '';
+        const lines = boll.lines || {};
+        const buildLineRow = (key, label) => {
+            const l = lines[key] || {};
+            return `
+            <div class="boll-line-config" data-line="${key}">
+                <label style="display:flex;align-items:center;gap:4px;">
+                    <input type="checkbox" ${l.isEnabled ? 'checked' : ''}
+                           onchange="window.ChartSettingsModal.updateBOLLLineEnabled('${key}', this.checked)">
+                    <span>${label}</span>
+                </label>
+                <input type="number" value="${l.lineWidth || 1}" min="1" max="5" onchange="window.ChartSettingsModal.updateBOLLLineWidth('${key}', this.value)">
+                <button class="color-picker-btn" style="background: ${l.color || '#ffffff'};" onclick="window.ChartSettingsModal.openColorPickerForBOLL('${key}')"></button>
+                <input type="range" value="${l.opacity !== undefined ? l.opacity : 100}" min="0" max="100" oninput="window.ChartSettingsModal.updateBOLLOpacity('${key}', this.value)">
+                <span class="opacity-value">${l.opacity !== undefined ? l.opacity : 100}</span>
+            </div>`;
+        };
 
         return `
             <div class="settings-panel active">
                 <h3 class="settings-title">BOLL: 布林線</h3>
-                
+
                 <div class="settings-tabs">
                     <button class="settings-tab-btn active">指標設定</button>
                     <button class="settings-tab-btn" disabled>指標介紹</button>
                 </div>
-                
+
+                <div class="settings-actions">
+                    <button class="btn btn-sm btn-ghost" id="btnResetBOLL">重置</button>
+                </div>
+
                 <div class="boll-params">
                     <div class="param-row">
                         <label>計算週期</label>
@@ -371,29 +449,18 @@ window.ChartSettingsModal = {
                         <input type="number" value="${boll.stdDev}" step="0.1" min="0.1" id="bollStdDev">
                     </div>
                 </div>
-                
+
+                <div class="boll-lines-header">
+                    <span>參數名稱</span>
+                    <span>線寬</span>
+                    <span>顏色</span>
+                    <span>不透明度(%)</span>
+                </div>
+
                 <div class="boll-lines">
-                    <div class="boll-line-config" data-line="middle">
-                        <span>MID</span>
-                        <input type="number" value="${boll.lines.middle.lineWidth}" min="1" max="5" onchange="window.ChartSettingsModal.updateBOLLLineWidth('middle', this.value)">
-                        <button class="color-picker-btn" style="background: ${boll.lines.middle.color};" onclick="window.ChartSettingsModal.openColorPickerForBOLL('middle')"></button>
-                        <input type="range" value="${boll.lines.middle.opacity}" min="0" max="100" oninput="window.ChartSettingsModal.updateBOLLOpacity('middle', this.value)">
-                        <span class="opacity-value">${boll.lines.middle.opacity}</span>
-                    </div>
-                    <div class="boll-line-config" data-line="upper">
-                        <span>UPPER</span>
-                        <input type="number" value="${boll.lines.upper.lineWidth}" min="1" max="5" onchange="window.ChartSettingsModal.updateBOLLLineWidth('upper', this.value)">
-                        <button class="color-picker-btn" style="background: ${boll.lines.upper.color};" onclick="window.ChartSettingsModal.openColorPickerForBOLL('upper')"></button>
-                        <input type="range" value="${boll.lines.upper.opacity}" min="0" max="100" oninput="window.ChartSettingsModal.updateBOLLOpacity('upper', this.value)">
-                        <span class="opacity-value">${boll.lines.upper.opacity}</span>
-                    </div>
-                    <div class="boll-line-config" data-line="lower">
-                        <span>LOWER</span>
-                        <input type="number" value="${boll.lines.lower.lineWidth}" min="1" max="5" onchange="window.ChartSettingsModal.updateBOLLLineWidth('lower', this.value)">
-                        <button class="color-picker-btn" style="background: ${boll.lines.lower.color};" onclick="window.ChartSettingsModal.openColorPickerForBOLL('lower')"></button>
-                        <input type="range" value="${boll.lines.lower.opacity}" min="0" max="100" oninput="window.ChartSettingsModal.updateBOLLOpacity('lower', this.value)">
-                        <span class="opacity-value">${boll.lines.lower.opacity}</span>
-                    </div>
+                    ${buildLineRow('middle', 'MID')}
+                    ${buildLineRow('upper',  'UPPER')}
+                    ${buildLineRow('lower',  'LOWER')}
                 </div>
             </div>
         `;
@@ -405,15 +472,24 @@ window.ChartSettingsModal = {
     bindBOLLEvents() {
         const period = document.getElementById('bollPeriod');
         const stdDev = document.getElementById('bollStdDev');
+        const btnReset = document.getElementById('btnResetBOLL');
 
         if (period) {
             period.addEventListener('change', (e) => {
-                this.tempSettings.BOLL.period = parseInt(e.target.value, 10);
+                if (this.tempSettings.BOLL) this.tempSettings.BOLL.period = parseInt(e.target.value, 10);
             });
         }
         if (stdDev) {
             stdDev.addEventListener('change', (e) => {
-                this.tempSettings.BOLL.stdDev = parseFloat(e.target.value);
+                if (this.tempSettings.BOLL) this.tempSettings.BOLL.stdDev = parseFloat(e.target.value);
+            });
+        }
+        if (btnReset) {
+            btnReset.addEventListener('click', () => {
+                if (confirm('確定要重置 BOLL 配置嗎？')) {
+                    this.tempSettings.BOLL = JSON.parse(JSON.stringify(this.defaultBOLLConfig));
+                    this.renderSettings();
+                }
             });
         }
     },
@@ -421,12 +497,22 @@ window.ChartSettingsModal = {
     /**
      * 更新 BOLL 參數
      */
+    updateBOLLLineEnabled(line, value) {
+        if (this.tempSettings.BOLL && this.tempSettings.BOLL.lines[line]) {
+            this.tempSettings.BOLL.lines[line].isEnabled = value;
+        }
+    },
+
     updateBOLLLineWidth(line, value) {
-        this.tempSettings.BOLL.lines[line].lineWidth = parseInt(value, 10);
+        if (this.tempSettings.BOLL && this.tempSettings.BOLL.lines[line]) {
+            this.tempSettings.BOLL.lines[line].lineWidth = parseInt(value, 10);
+        }
     },
 
     updateBOLLOpacity(line, value) {
-        this.tempSettings.BOLL.lines[line].opacity = parseInt(value, 10);
+        if (this.tempSettings.BOLL && this.tempSettings.BOLL.lines[line]) {
+            this.tempSettings.BOLL.lines[line].opacity = parseInt(value, 10);
+        }
         const item = document.querySelector(`.boll-line-config[data-line="${line}"] .opacity-value`);
         if (item) item.textContent = value;
     },
@@ -443,37 +529,63 @@ window.ChartSettingsModal = {
     },
 
     /**
-     * 套用設定
+     * ✅ Bug2 Fix: 套用設定（先清除舊 series，再寫入 SSOT，公用 currentChartData 重渲染）
      */
     apply() {
         console.log('[ChartSettingsModal] 套用設定');
 
-        // 更新全域狀態
-        const maToggle = document.getElementById('ma-toggle');
+        // ✅ Bug2 修復: 先清除所有舊 series，避免覆寫後找不到舊 series 導致重複渲染
+        if (window.ChartController) {
+            window.ChartController.clearIndicatorSeries();
+        }
+
+        // ✅ SSOT: 寫入新結構到 window.state.chartIndicators
+        const maToggle   = document.getElementById('ma-toggle');
         const bollToggle = document.getElementById('boll-toggle');
 
-        if (maToggle && maToggle.checked) {
-            window.state.chartIndicators.MA = this.tempSettings.MA.filter(ma => ma.visible);
-        } else {
-            window.state.chartIndicators.MA = [];
-        }
+        window.state.chartIndicators.MA = {
+            isGlobalEnabled: !!(maToggle && maToggle.checked),
+            lines: (this.tempSettings.MA.lines || []).map(ma => ({
+                period:    ma.period,
+                color:     ma.color,
+                lineWidth: ma.lineWidth,
+                opacity:   ma.opacity,
+                isEnabled: ma.isEnabled !== undefined ? ma.isEnabled : true,
+                series:    null
+            }))
+        };
 
-        if (bollToggle && bollToggle.checked) {
+        if (bollToggle && bollToggle.checked && this.tempSettings.BOLL) {
+            const tBoll = this.tempSettings.BOLL;
             window.state.chartIndicators.BOLL = {
-                ...this.tempSettings.BOLL,
-                visible: true
+                isGlobalEnabled: true,
+                period:  tBoll.period,
+                stdDev:  tBoll.stdDev,
+                lines: {
+                    middle: { ...tBoll.lines.middle, series: null },
+                    upper:  { ...tBoll.lines.upper,  series: null },
+                    lower:  { ...tBoll.lines.lower,  series: null }
+                }
             };
         } else {
-            window.state.chartIndicators.BOLL = null;
+            // 將 BOLL isGlobalEnabled 設為 false，但保留其他設定（下次開啟精砀）
+            if (window.state.chartIndicators.BOLL) {
+                window.state.chartIndicators.BOLL.isGlobalEnabled = false;
+                // 清除 series 引用（已在上面 clearIndicatorSeries 處理）
+                ['upper', 'middle', 'lower'].forEach(k => {
+                    if (window.state.chartIndicators.BOLL.lines[k]) {
+                        window.state.chartIndicators.BOLL.lines[k].series = null;
+                    }
+                });
+            }
         }
 
-        // 保存到 localStorage
+        // ✅ 保存到 localStorage
         this.saveToLocalStorage();
 
-        // 重新渲染圖表
-        const currentSymbol = document.getElementById('chartSymbol').textContent;
-        if (currentSymbol && currentSymbol !== '--' && window.ChartController) {
-            window.ChartController.loadStock(currentSymbol);
+        // ✅ Bug3 / Feature B: 使用現有 K 線資料重渲染（不重新 fetch API）
+        if (window.ChartController) {
+            window.ChartController.renderIndicatorsFromState();
         }
 
         // 關閉彈窗
@@ -481,13 +593,22 @@ window.ChartSettingsModal = {
     },
 
     /**
-     * 保存到 localStorage
+     * ✅ SSOT: 保存到 localStorage
      */
     saveToLocalStorage() {
         try {
             const settings = {
-                MA: window.state.chartIndicators.MA,
+                MA:   window.state.chartIndicators.MA,
                 BOLL: window.state.chartIndicators.BOLL
+                    ? { isGlobalEnabled: window.state.chartIndicators.BOLL.isGlobalEnabled,
+                        period: window.state.chartIndicators.BOLL.period,
+                        stdDev: window.state.chartIndicators.BOLL.stdDev,
+                        lines:  Object.fromEntries(
+                            Object.entries(window.state.chartIndicators.BOLL.lines).map(
+                                ([k, v]) => [k, { color: v.color, lineWidth: v.lineWidth, opacity: v.opacity, isEnabled: v.isEnabled }]
+                            )
+                        )}
+                    : null
             };
             localStorage.setItem('chartIndicators', JSON.stringify(settings));
             console.log('[ChartSettingsModal] 設定已保存至 localStorage');
@@ -497,17 +618,60 @@ window.ChartSettingsModal = {
     },
 
     /**
-     * 從 localStorage 載入
+     * ✅ SSOT: 從 localStorage 載入（含舊格式 migration）
      */
     loadFromLocalStorage() {
         try {
             const saved = localStorage.getItem('chartIndicators');
-            if (saved) {
-                const settings = JSON.parse(saved);
-                window.state.chartIndicators.MA = settings.MA || [];
-                window.state.chartIndicators.BOLL = settings.BOLL || null;
-                console.log('[ChartSettingsModal] 已從 localStorage 載入設定');
+            if (!saved) {
+                // ✅ 首次載入（沒有 localStorage）：使用預設 MA 配置（MA10/MA20 預設啟用）
+                window.state.chartIndicators.MA = {
+                    isGlobalEnabled: true,
+                    lines: JSON.parse(JSON.stringify(this.defaultMAConfig)).map(m => ({ ...m, series: null }))
+                };
+                console.log('[ChartSettingsModal] 首次載入，套用預設 MA 配置');
+                return;
             }
+            const settings = JSON.parse(saved);
+
+            // Migration: 舊格式 MA 為陣列（非 SSOT 結構）
+            if (Array.isArray(settings.MA)) {
+                window.state.chartIndicators.MA = {
+                    isGlobalEnabled: settings.MA.length > 0,
+                    lines: settings.MA.map(ma => ({
+                        period:    ma.period,
+                        color:     ma.color,
+                        lineWidth: ma.lineWidth || 1,
+                        opacity:   ma.opacity   || 100,
+                        isEnabled: ma.isEnabled !== undefined ? ma.isEnabled : (ma.visible !== undefined ? ma.visible : true),
+                        series:    null
+                    }))
+                };
+            } else if (settings.MA && settings.MA.lines) {
+                window.state.chartIndicators.MA = {
+                    ...settings.MA,
+                    lines: (settings.MA.lines || []).map(ma => ({ ...ma, series: null }))
+                };
+            }
+
+            // Migration: 舊格式 BOLL
+            if (settings.BOLL) {
+                const b = settings.BOLL;
+                if (b.lines && b.lines.middle) {
+                    window.state.chartIndicators.BOLL = {
+                        isGlobalEnabled: b.isGlobalEnabled !== undefined ? b.isGlobalEnabled : (b.visible !== undefined ? b.visible : false),
+                        period:  b.period  || 20,
+                        stdDev:  b.stdDev  || 2,
+                        lines: {
+                            middle: { ...b.lines.middle, series: null },
+                            upper:  { ...b.lines.upper,  series: null },
+                            lower:  { ...b.lines.lower,  series: null }
+                        }
+                    };
+                }
+            }
+
+            console.log('[ChartSettingsModal] 已從 localStorage 載入設定');
         } catch (error) {
             console.error('[ChartSettingsModal] 載入設定失敗:', error);
         }
@@ -679,12 +843,23 @@ window.ChartSettingsModal = {
     }
 };
 
-// ====== HTMX 相容初始化邏輯 ======
-window.initChartSettingsModal = function () {
-    if (document.getElementById('chartSettingsModal')) {
-        window.ChartSettingsModal.init();
-        window.ChartSettingsModal.loadFromLocalStorage();
+// ====== HTMX 相容初始化邏輯（含防重複 flag）======
+window._chartSettingsModalInit = false;
+
+// ✅ Bug1: 當 HTMX 重新載入 screening 頁面內容時重設 flag
+document.addEventListener('htmx:afterSwap', function (evt) {
+    const path = evt.detail?.requestConfig?.path || '';
+    if (path.includes('/screening')) {
+        window._chartSettingsModalInit = false;
     }
+});
+
+window.initChartSettingsModal = function () {
+    if (window._chartSettingsModalInit) return;
+    if (!document.getElementById('chartSettingsModal')) return;
+    window._chartSettingsModalInit = true;
+    window.ChartSettingsModal.init();
+    window.ChartSettingsModal.loadFromLocalStorage();
 };
 
 // 1. 正常全頁面載入

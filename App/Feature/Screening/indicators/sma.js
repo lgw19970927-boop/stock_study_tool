@@ -314,7 +314,7 @@ window.SMAIndicator = {
         return {
             renderType: 'line',
             color: config.color || '#ff5252',
-            lineWidth: 2,
+            lineWidth: config.lineWidth || 1,
             title: `MA${config.period || 20}`,
             priceScaleId: 'right'
         };

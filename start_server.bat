@@ -27,11 +27,11 @@ echo.
 
 echo.
 echo ============================================
-echo Starting containers...
+echo Preparing Environment...
 echo ============================================
 echo.
 
-REM Change to project directory and start docker-compose
+REM Change to project directory
 cd /d "%~dp0"
 
 if !errorlevel! neq 0 (
@@ -40,12 +40,17 @@ if !errorlevel! neq 0 (
     exit /b 1
 )
 
-echo Starting docker-compose with intelligent rebuild...
-echo (First run: builds images + starts containers)
-echo (Later runs: checks for code changes, rebuilds if needed)
+echo Stopping and removing existing containers (docker-compose down)...
+docker-compose down
+echo.
+
+echo Starting docker-compose...
+echo (Building images if needed and starting in background)
 echo.
 echo This may take 1-2 minutes on first run...
 echo.
+
+REM 這裡整合了你想要的 up -d，並保留 --build 以確保抓到最新程式碼
 docker-compose up --build -d
 
 if !errorlevel! neq 0 (
@@ -75,7 +80,7 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 echo.
 echo Expected containers (all should show "Up"):
-echo   ✓ stock-mysql    - Database server
+echo   ✓ stock-mysql     - Database server
 echo   ✓ stock-fastapi  - Application server
 echo   ✓ stock-nginx    - Web server (port 80)
 echo   ✓ stock-data-sync - Background scheduler

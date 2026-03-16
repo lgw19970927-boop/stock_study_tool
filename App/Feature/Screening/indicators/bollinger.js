@@ -389,16 +389,20 @@ window.BollingerIndicator = {
     },
 
     /**
-     * ✅ 獲取渲染配置（Phase 1 重構新增）
-     * @param {Object} config - 指標配置 {period: 20, stdDev: 2, ...}
+     * ✅ 獲取渲染配置（支援 SSOT 新結構的 per-band 顏色/線寬）
+     * @param {Object} config - 指標配置 {period, stdDev, lines: {upper, middle, lower}}
      * @returns {Object} 渲染配置
      */
     getRenderConfig: function (config) {
+        const lines = config.lines || {};
         return {
-            renderType: 'bands',
-            upperColor: '#ef5350',
-            middleColor: '#ffa726',
-            lowerColor: '#26a69a',
+            renderType:   'bands',
+            upperColor:   (lines.upper  && lines.upper.color)  || '#808080',
+            middleColor:  (lines.middle && lines.middle.color) || '#ffb6c1',
+            lowerColor:   (lines.lower  && lines.lower.color)  || '#00ffff',
+            upperLineWidth:  (lines.upper  && lines.upper.lineWidth)  || 1,
+            middleLineWidth: (lines.middle && lines.middle.lineWidth) || 1,
+            lowerLineWidth:  (lines.lower  && lines.lower.lineWidth)  || 1,
             lineWidth: 1,
             title: `BOLL(${config.period || 20},${config.stdDev || 2})`,
             priceScaleId: 'right'
