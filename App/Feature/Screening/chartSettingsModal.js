@@ -50,11 +50,11 @@ window.ChartSettingsModal = {
 
     // Feature 2: 預設型態顯示設定（shapeVisible/textVisible 分別控制型態與文字標示）
     defaultPatternConfig: {
-        head_shoulders_top:    { masterVisible: true, shapeVisible: true, textVisible: true, color: '#00d4aa', labelColor: '#ffffff', lineWidth: 1.5, opacity: 85 },
-        w_bottom:              { masterVisible: true, shapeVisible: true, textVisible: true, color: '#00d4aa', labelColor: '#ffffff', lineWidth: 1.5, opacity: 85 },
-        head_shoulders_bottom: { masterVisible: true, shapeVisible: true, textVisible: true, color: '#00d4aa', labelColor: '#ffffff', lineWidth: 1.5, opacity: 85 },
-        triangle:              { masterVisible: true, shapeVisible: true, textVisible: true, color: '#e8d5a3', labelColor: '#ffffff', lineWidth: 1.5, opacity: 85 },
-        consolidation:         { masterVisible: true, shapeVisible: true, textVisible: true, color: '#6090c8', labelColor: '#ffffff', lineWidth: 1,   opacity: 70 }
+        head_shoulders_top:    { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1.5, opacity: 85 },
+        w_bottom:              { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1.5, opacity: 85 },
+        head_shoulders_bottom: { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1.5, opacity: 85 },
+        triangle:              { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1.5, opacity: 85 },
+        consolidation:         { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1,   opacity: 70 }
     },
 
     // Feature 3: 預設常規設定
@@ -62,7 +62,7 @@ window.ChartSettingsModal = {
         showPriceLine:  true,
         tooltipMode:    'floating',   // 'floating' | 'crosshair' | 'hidden'
         chartType:      'candlestick',
-        bullStyle:      'hollow',     // 'hollow' | 'solid'
+        bullStyle:      'solid',      // 'hollow' | 'solid'
         bullColor:      '#26a69a',
         bearColor:      '#ef5350',
         bgTheme:        'dark'        // BUG1: 'dark' = 時尚暗黑, 'silver' = 淡雅銀灰
@@ -1144,6 +1144,8 @@ window.ChartSettingsModal = {
         if (window.ChartController && this._patternConfig) {
             window.ChartController.applyPatternConfig(this._patternConfig);
         }
+        // ✅ Bug2 Fix: 重新訂閱縮放事件，避免設定後型態標示未隨圖表縮放連動
+        if (window.PatternAnnotation) window.PatternAnnotation._subscribeRedraw();
 
         // ✅ Bug3 / Feature B: 使用現有 K 線資料重渲染（不重新 fetch API）
         if (window.ChartController) {
@@ -1243,6 +1245,11 @@ window.ChartSettingsModal = {
             if (settings.generalConfig) this._generalConfig = settings.generalConfig;
             if (settings.axisConfig)    this._axisConfig    = settings.axisConfig;
             if (settings.patternConfig) this._patternConfig = settings.patternConfig;
+
+            // ✅ Bug1/4 Fix: 如果圖表已存在，立即套用已載入的常規設定
+            if (settings.generalConfig && window.ChartController && window.ChartController.chart) {
+                window.ChartController.applyGeneralSettings(this._generalConfig);
+            }
         } catch (error) {
             console.error('[ChartSettingsModal] 載入設定失敗:', error);
         }

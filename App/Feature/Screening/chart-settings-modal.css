@@ -1248,3 +1248,103 @@
     font-style: italic;
     font-weight: 400;
 }
+
+/* ===== Fullscreen ===== */
+#chartWrapper:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg-primary, #0d0d1a);
+}
+#chartWrapper:fullscreen #chart {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* ===== Stop Filter Button (in progress area) ===== */
+.btn-stop-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border: 1px solid #ef5350;
+    border-radius: 6px;
+    background: transparent;
+    color: #ef5350;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.btn-stop-filter:hover {
+    background: #ef5350;
+    color: #fff;
+}
+
+/* ===== Stop Filter Dialog ===== */
+.stop-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.stop-dialog {
+    background: var(--bg-elevated, #1a1a2e);
+    border: 1px solid var(--border-color, #2a2a3e);
+    border-radius: 12px;
+    padding: 28px 32px;
+    max-width: 360px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+.stop-dialog-title {
+    margin: 0 0 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary, #e8e8f0);
+}
+.stop-dialog-body {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: var(--text-primary, #e8e8f0);
+}
+.stop-dialog-hint {
+    margin: 0 0 24px;
+    font-size: 12px;
+    color: var(--text-secondary, #8888aa);
+}
+.stop-dialog-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.btn-dialog-cancel {
+    padding: 8px 18px;
+    border: 1px solid var(--border-color, #2a2a3e);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary, #8888aa);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+.btn-dialog-cancel:hover {
+    border-color: var(--text-secondary, #8888aa);
+    color: var(--text-primary, #e8e8f0);
+}
+.btn-dialog-confirm {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    background: #ef5350;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.btn-dialog-confirm:hover {
+    background: #c62828;
+}

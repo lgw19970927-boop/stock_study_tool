@@ -103,6 +103,11 @@ window.ScreeningPage = {
             window.ChartController.init();
             window.ChartController.bindTimeframeButtons();
         }
+
+        // Feature1: 全螢幕功能
+        this.initFullscreen();
+        // Feature3: 側邊欄拖拉調整
+        this.initSidebarResize();
     },
 
     // ✅ Phase 1 重構：圖表初始化已移至 ChartController.init()
@@ -181,6 +186,14 @@ window.ScreeningPage = {
                 }
             });
         }
+
+        // Feature2: 停止篩選對話框按鈕
+        const btnStopFilter = document.getElementById('btnStopFilter');
+        if (btnStopFilter) btnStopFilter.addEventListener('click', () => this._showStopDialog());
+        const btnCancelStop = document.getElementById('btnCancelStop');
+        if (btnCancelStop) btnCancelStop.addEventListener('click', () => this._cancelStop());
+        const btnConfirmStop = document.getElementById('btnConfirmStop');
+        if (btnConfirmStop) btnConfirmStop.addEventListener('click', () => this._confirmStop());
 
     },
 
@@ -382,6 +395,8 @@ window.ScreeningPage = {
         }
 
         // 🎯 只有當所有阻擋驗證都通過後，才正式顯示「正在篩選」的進度條與清空畫面
+        this._isStopped = false;
+        this._currentEvtSrc = null;
         this._showProgress();
 
         try {
@@ -443,10 +458,14 @@ window.ScreeningPage = {
                 this._renderResults(patternResult.stocks, mergedStats);
             }
         } catch (err) {
-            console.error('runFilter 失敗:', err);
-            this._showError(err.message);
+            if (err.message !== 'STOPPED') {
+                console.error('runFilter 失敗:', err);
+                this._showError(err.message);
+            }
         } finally {
             this._hideProgress();
+            this._isStopped = false;
+            this._currentEvtSrc = null;
         }
     },
 
@@ -510,25 +529,36 @@ window.ScreeningPage = {
     _consumeSSE: async function (url, stageText) {
         return new Promise((resolve, reject) => {
             const evtSrc = new EventSource(url);
+            this._currentEvtSrc = evtSrc;
             evtSrc.onmessage = (e) => {
+                if (this._isStopped) {
+                    evtSrc.close();
+                    this._currentEvtSrc = null;
+                    reject(new Error('STOPPED'));
+                    return;
+                }
                 try {
                     const data = JSON.parse(e.data);
                     if (data.type === 'progress') {
                         this._updateProgressBar(data.current, data.total, data.matched, stageText);
                     } else if (data.type === 'done') {
                         evtSrc.close();
+                        this._currentEvtSrc = null;
                         resolve(data);
                     } else if (data.type === 'error') {
                         evtSrc.close();
+                        this._currentEvtSrc = null;
                         reject(new Error(data.message));
                     }
                 } catch (err) {
                     evtSrc.close();
+                    this._currentEvtSrc = null;
                     reject(err);
                 }
             };
             evtSrc.onerror = () => {
                 evtSrc.close();
+                this._currentEvtSrc = null;
                 reject(new Error('SSE 連線中斷'));
             };
         });
@@ -712,6 +742,107 @@ window.ScreeningPage = {
     // e.g. 'sma' -> window.SMAIndicator
     // e.g. 'bollinger' -> window.BollingerIndicator
     // Indicator Helper functions are now in ScreeningBlockIndicator
+
+    // ───────────────────────────────────────────────────────────
+    // Feature2: 停止篩選
+    // ───────────────────────────────────────────────────────────
+
+    stopFilter: function () {
+        this._isStopped = true;
+        if (this._currentEvtSrc) {
+            this._currentEvtSrc.close();
+            this._currentEvtSrc = null;
+        }
+    },
+
+    _showStopDialog: function () {
+        const dialog = document.getElementById('stopFilterDialog');
+        if (dialog) dialog.style.display = 'flex';
+    },
+
+    _cancelStop: function () {
+        const dialog = document.getElementById('stopFilterDialog');
+        if (dialog) dialog.style.display = 'none';
+    },
+
+    _confirmStop: function () {
+        const dialog = document.getElementById('stopFilterDialog');
+        if (dialog) dialog.style.display = 'none';
+        this.stopFilter();
+        this._hideProgress();
+    },
+
+    // ───────────────────────────────────────────────────────────
+    // Feature1: 全螢幕
+    // ───────────────────────────────────────────────────────────
+
+    initFullscreen: function () {
+        const btn = document.getElementById('btnFullscreen');
+        const wrapper = document.getElementById('chartWrapper');
+        if (!btn || !wrapper) return;
+
+        btn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                wrapper.requestFullscreen().catch(err => {
+                    console.warn('[Fullscreen] requestFullscreen failed:', err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            const isFull = !!document.fullscreenElement;
+            const iconIn  = document.getElementById('iconFullscreen');
+            const iconOut = document.getElementById('iconFullscreenExit');
+            if (iconIn)  iconIn.style.display  = isFull ? 'none' : '';
+            if (iconOut) iconOut.style.display = isFull ? '' : 'none';
+            // Resize LW chart to fill new dimensions
+            if (window.ChartController && window.ChartController.chart) {
+                setTimeout(() => {
+                    const el = document.getElementById('chartWrapper');
+                    if (el) window.ChartController.chart.applyOptions({
+                        width: el.clientWidth,
+                        height: el.clientHeight
+                    });
+                }, 100);
+            }
+        });
+    },
+
+    // ───────────────────────────────────────────────────────────
+    // Feature3: 側邊欄拖拉調整
+    // ───────────────────────────────────────────────────────────
+
+    initSidebarResize: function () {
+        const handle = document.getElementById('sidebarResizeHandle');
+        const sidebar = document.getElementById('app-sidebar');
+        const pageContent = document.getElementById('page-screening');
+        if (!handle || !sidebar || !pageContent) return;
+
+        handle.addEventListener('mousedown', (e) => {
+            const startX = e.clientX;
+            const startW = sidebar.getBoundingClientRect().width;
+            handle.classList.add('is-dragging');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+
+            const onMove = (ev) => {
+                const delta = ev.clientX - startX;
+                const newW = Math.max(200, Math.min(600, startW + delta));
+                pageContent.style.setProperty('--sidebar-w', newW + 'px');
+            };
+            const onUp = () => {
+                handle.classList.remove('is-dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+    },
 
 };
 

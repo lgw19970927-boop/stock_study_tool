@@ -71,9 +71,10 @@ window.ChartController = {
         // Add Candlestick Series — Bug4 Fix: 使用 hollow 樣式與 defaultGeneralConfig 一致
         // defaultGeneralConfig.bullStyle='hollow': 陽線空心描邊，陰線實心
         const initCfg = (window.ChartSettingsModal && window.ChartSettingsModal._generalConfig) || {};
-        const initBull = initCfg.bullColor || '#26a69a';
-        const initBear = initCfg.bearColor || '#ef5350';
-        const initStyle = initCfg.bullStyle || 'hollow';
+        const _defGenCfg = (window.ChartSettingsModal && window.ChartSettingsModal.defaultGeneralConfig) || {};
+        const initBull = initCfg.bullColor || _defGenCfg.bullColor || '#26a69a';
+        const initBear = initCfg.bearColor || _defGenCfg.bearColor || '#ef5350';
+        const initStyle = initCfg.bullStyle || _defGenCfg.bullStyle || 'solid';
         this.candleSeries = this.chart.addCandlestickSeries({
             upColor:         initStyle === 'solid' ? initBull : 'transparent',
             downColor:       initBear,

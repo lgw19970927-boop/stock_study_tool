@@ -249,12 +249,45 @@ body {
 }
 
 .page-content>.sidebar {
-    flex: 0 0 340px;
+    flex: 0 0 auto;
+    width: var(--sidebar-w, 340px);
+    min-width: 200px;
+    max-width: 600px;
 }
 
 .page-content>.content-area {
     flex: 1;
     overflow-y: auto;
+}
+
+/* ===== Sidebar Resize Handle ===== */
+.sidebar-resize-handle {
+    flex: 0 0 5px;
+    width: 5px;
+    cursor: col-resize;
+    background: transparent;
+    position: relative;
+    z-index: 10;
+    transition: background 0.15s;
+}
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle.is-dragging {
+    background: var(--accent, #00d4aa);
+}
+.sidebar-resize-handle::after {
+    content: '↔';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-muted);
+    font-size: 11px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.sidebar-resize-handle:hover::after {
+    opacity: 1;
 }
 
 /* ===== Sidebar ===== */
