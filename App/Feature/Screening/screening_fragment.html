@@ -444,12 +444,11 @@
                         </label>
                     </div>
                     <div class="chart-actions">
-                        <button type="button" id="btnShowIndicators" class="btn-icon" title="顯示指標">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                            </svg>
-                        </button>
+                        <label class="toggle-switch toggle-switch-small">
+                            <input type="checkbox" id="indicatorsToggle" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">指標</span>
+                        </label>
                         <button type="button" id="btnChartSettings" class="btn-icon" title="圖表管理">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -480,6 +479,8 @@
                     <p>選擇股票以顯示 K 線圖</p>
                 </div>
                 <div id="chart"></div>
+                <!-- Feature D: 懸浮窗 overlay -->
+                <div id="chartTooltip" class="chart-tooltip" style="display:none;"></div>
                 <!-- Feature B: 指標控制列 overlay -->
                 <div id="indicatorTopBar" style="position:absolute;top:8px;left:8px;z-index:10;pointer-events:none;"></div>
                 <!-- Feature C: 型態標註 SVG overlay -->
@@ -515,17 +516,17 @@
 <script src="/feature/Screening/function_block/indicator_block.js"></script>
 <!-- Feature B / C: 指標控制列 + 型態標註 -->
 <script src="/feature/Screening/function_block/indicator_top_bar.js?v=2.0"></script>
-<script src="/feature/Screening/function_block/pattern_annotation.js?v=2.0"></script>
-<script src="/feature/Screening/chartController.js?v=2.0"></script>
+<script src="/feature/Screening/function_block/pattern_annotation.js?v=2.4"></script>
+<script src="/feature/Screening/chartController.js?v=2.4"></script>
 
 <!-- 策略管理器與主控制 -->
 <script src="/feature/Screening/strategyManager.js?v=2.0"></script>
 <script src="/feature/Screening/screening.js?v=2.0"></script>
 
 <!-- 圖表設定彈窗 -->
-<script src="/feature/Screening/templates/ChartSettingsModalTemplate.js?v=2.0"></script>
-<script src="/feature/Screening/templates/ColorPickerTemplate.js"></script>
-<script src="/feature/Screening/chartSettingsModal.js?v=2.0"></script>
+<script src="/feature/Screening/templates/ChartSettingsModalTemplate.js?v=2.2"></script>
+<script src="/feature/Screening/templates/ColorPickerTemplate.js?v=2.2"></script>
+<script src="/feature/Screening/chartSettingsModal.js?v=2.4"></script>
 
 <!-- TODO [P1-Step2]: GoldenLayout v2 實作後取消此行註解
 <script src="/static/js/layout-screening.js"></script>

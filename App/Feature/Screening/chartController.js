@@ -11,6 +11,11 @@ window.ChartController = {
     isIndicatorsVisible: true, // 控制圖表指標是否顯示的開關
     currentChartData: null,   // ✅ 保存最新 K 線資料供重渲染使用（不重新 fetch）
     _resizeObserver: null,    // ✅ 用於正確銷毀 ResizeObserver（防記憶體洩漏）
+    seriesType: 'candlestick', // 當前圖表類型
+    _tooltipMode: 'floating',  // 懸浮窗模式: 'floating' | 'crosshair' | 'hidden'
+    _tooltipSide: 'right',     // BUG2: 'right'=左上 / 'left'=右上（屬於固定模式）
+    _tooltipBoundary: null,    // BUG2: 懸浮窗邊界，用於判斷吸附方向
+    _mirrorSeries: null,       // Bug7: 雙邊坐標用隱形左側 series
 
     /**
      * 初始化圖表
@@ -63,13 +68,20 @@ window.ChartController = {
             },
         });
 
-        // Add Candlestick Series
+        // Add Candlestick Series — Bug4 Fix: 使用 hollow 樣式與 defaultGeneralConfig 一致
+        // defaultGeneralConfig.bullStyle='hollow': 陽線空心描邊，陰線實心
+        const initCfg = (window.ChartSettingsModal && window.ChartSettingsModal._generalConfig) || {};
+        const initBull = initCfg.bullColor || '#26a69a';
+        const initBear = initCfg.bearColor || '#ef5350';
+        const initStyle = initCfg.bullStyle || 'hollow';
         this.candleSeries = this.chart.addCandlestickSeries({
-            upColor: '#26a69a',
-            downColor: '#ef5350',
-            borderVisible: false,
-            wickUpColor: '#26a69a',
-            wickDownColor: '#ef5350',
+            upColor:         initStyle === 'solid' ? initBull : 'transparent',
+            downColor:       initBear,
+            borderUpColor:   initBull,
+            borderDownColor: initBear,
+            borderVisible:   true,
+            wickUpColor:     initBull,
+            wickDownColor:   initBear,
         });
 
         // Handle Resize using ResizeObserver
@@ -80,9 +92,10 @@ window.ChartController = {
         });
         this._resizeObserver.observe(chartContainer);
 
-        // ✅ Feature B: crosshair 移動時更新指標控制列數值
+        // ✅ Feature B: crosshair 移動時更新指標控制列數值 + 懸浮窗
         this.chart.subscribeCrosshairMove(param => {
             if (window.IndicatorTopBar) window.IndicatorTopBar.updateValues(param);
+            this._updateCrosshairTooltip(param);
         });
 
         // ✅ 綁定型態標註 Toggle（每次 init 後重新綁定）
@@ -93,7 +106,13 @@ window.ChartController = {
             };
         }
 
+        // BUG2: DOM 模式懸浮窗事件（吸附、左右邊界切換、Y軸碰撞偵測）
+        this._bindTooltipMouseEvents(chartContainer);
+
         console.log('[ChartController] 圖表初始化完成');
+
+        // Bug 10: 圖表重建後重新訂閑 PatternAnnotation的縮放事件，避免綁定舊 timeScale 實例
+        if (window.PatternAnnotation) window.PatternAnnotation._subscribeRedraw();
     },
 
     /**
@@ -411,6 +430,554 @@ window.ChartController = {
         console.log(`[ChartController] 指標顯示切換為: ${this.isIndicatorsVisible ? '開' : '關'}`);
         // 使用現有 K 線資料重渲染，不重新 fetch API
         this.renderIndicatorsFromState();
+    },
+
+    // ========== Feature 3: 常規設定 ==========
+
+    /**
+     * 計算平均K線（Heikin Ashi）資料
+     * @param {Array} data - OHLC K線資料
+     * @returns {Array} Heikin Ashi K線資料
+     */
+    _computeHeikinAshi(data) {
+        const result = [];
+        for (let i = 0; i < data.length; i++) {
+            const bar = data[i];
+            const haClose = (bar.open + bar.high + bar.low + bar.close) / 4;
+            let haOpen;
+            if (i === 0) {
+                haOpen = (bar.open + bar.close) / 2;
+            } else {
+                haOpen = (result[i - 1].open + result[i - 1].close) / 2;
+            }
+            const haHigh = Math.max(bar.high, haOpen, haClose);
+            const haLow  = Math.min(bar.low,  haOpen, haClose);
+            result.push({ time: bar.time, open: haOpen, high: haHigh, low: haLow, close: haClose });
+        }
+        return result;
+    },
+
+    /**
+     * 切換圖表類型（銷毀舊 series 並建立新 series）
+     * @param {string} type - 'candlestick' | 'bar' | 'line' | 'monochrome_candle' | 'heikin_ashi'
+     * @param {Array} chartData - OHLC K線資料
+     */
+    _switchChartSeries(type, chartData) {
+        if (!this.chart || !chartData || chartData.length === 0) return;
+        const LW = window.LightweightCharts;
+        if (!LW) return;
+
+        // If same type already active, just re-apply visual options (colour/style)
+        if (this.seriesType === type && this.candleSeries) {
+            this._applySeriesVisualOptions(type);
+            return;
+        }
+
+        // Save visible range to restore after rebuild
+        let visRange = null;
+        try { visRange = this.chart.timeScale().getVisibleLogicalRange(); } catch (e) {}
+
+        // Clear indicator overlays first (they reference the old series)
+        this.clearIndicatorSeries();
+
+        // Destroy old main series
+        if (this.candleSeries) {
+            try { this.chart.removeSeries(this.candleSeries); } catch (e) { console.warn('[ChartController] removeSeries:', e); }
+            this.candleSeries = null;
+        }
+
+        const cfg = (window.ChartSettingsModal && window.ChartSettingsModal._generalConfig) || {};
+        const bullColor = cfg.bullColor || '#26a69a';
+        const bearColor = cfg.bearColor || '#ef5350';
+
+        if (type === 'bar') {
+            this.candleSeries = this.chart.addBarSeries({ upColor: bullColor, downColor: bearColor });
+            this.candleSeries.setData(chartData);
+        } else if (type === 'line') {
+            this.candleSeries = this.chart.addLineSeries({ color: bullColor, lineWidth: 2 });
+            this.candleSeries.setData(chartData.map(b => ({ time: b.time, value: b.close })));
+        } else if (type === 'monochrome_candle') {
+            // BUG2+3 Fix: 依 bgTheme 和 bullStyle 決定顏色
+            const bullStyle  = cfg.bullStyle || 'hollow';
+            const isDark     = (cfg.bgTheme || 'dark') === 'dark';
+            const upFill     = bullStyle === 'solid' ? '#ffffff' : 'transparent';
+            const borderUp   = isDark ? '#c8ccd4' : '#000000'; // 淡雅銀灰 or 黑
+            const downFill   = '#000000';
+            const borderDown = isDark ? '#888888' : '#000000';
+            this.candleSeries = this.chart.addCandlestickSeries({
+                upColor:         upFill,
+                downColor:       downFill,
+                borderUpColor:   borderUp,
+                borderDownColor: borderDown,
+                wickUpColor:     borderUp,
+                wickDownColor:   borderDown,
+                borderVisible:   true
+            });
+            this.candleSeries.setData(chartData);
+        } else if (type === 'heikin_ashi') {
+            this.candleSeries = this.chart.addCandlestickSeries({
+                upColor: bullColor, downColor: bearColor,
+                borderVisible: false,
+                wickUpColor: bullColor, wickDownColor: bearColor
+            });
+            this.candleSeries.setData(this._computeHeikinAshi(chartData));
+        } else {
+            // candlestick (default)
+            const bullStyle = cfg.bullStyle || 'hollow';
+            this.candleSeries = this.chart.addCandlestickSeries({
+                upColor:        bullStyle === 'solid' ? bullColor : 'transparent',
+                downColor:      bearColor,
+                borderUpColor:  bullColor,
+                borderDownColor: bearColor,
+                wickUpColor:    bullColor,
+                wickDownColor:  bearColor,
+                borderVisible:  true
+            });
+            this.candleSeries.setData(chartData);
+        }
+
+        this.seriesType = type;
+
+        // Restore visible range
+        if (visRange) {
+            try { this.chart.timeScale().setVisibleLogicalRange(visRange); } catch (e) {}
+        }
+
+        // Re-render indicators and pattern annotations on new series
+        this.renderIndicators(chartData);
+        if (window.PatternAnnotation) {
+            const results = window.state && window.state.lastResults;
+            const stock = results ? results.find(s => s.symbol === this.currentSymbol) : null;
+            window.PatternAnnotation.setData(stock ? (stock.patterns_found || []) : [], chartData);
+        }
+
+        console.log('[ChartController] _switchChartSeries:', type);
+    },
+
+    /**
+     * 僅重新套用當前 series 的顏色/樣式（不重建 series）
+     * @param {string} type - 圖表類型
+     */
+    _applySeriesVisualOptions(type) {
+        if (!this.candleSeries) return;
+        const cfg = (window.ChartSettingsModal && window.ChartSettingsModal._generalConfig) || {};
+        const bullColor = cfg.bullColor || '#26a69a';
+        const bearColor = cfg.bearColor || '#ef5350';
+        if (type === 'candlestick') {
+            const bullStyle = cfg.bullStyle || 'hollow';
+            this.candleSeries.applyOptions({
+                upColor:        bullStyle === 'solid' ? bullColor : 'transparent',
+                downColor:      bearColor,
+                borderUpColor:  bullColor,
+                borderDownColor: bearColor,
+                wickUpColor:    bullColor,
+                wickDownColor:  bearColor
+            });
+        } else if (type === 'bar') {
+            this.candleSeries.applyOptions({ upColor: bullColor, downColor: bearColor });
+        } else if (type === 'line') {
+            this.candleSeries.applyOptions({ color: bullColor });
+        } else if (type === 'heikin_ashi') {
+            this.candleSeries.applyOptions({
+                upColor: bullColor, downColor: bearColor,
+                wickUpColor: bullColor, wickDownColor: bearColor
+            });
+        } else if (type === 'monochrome_candle') {
+            // BUG3 Fix: 依 bgTheme 和 bullStyle 決定顏色
+            const bullStyle  = cfg.bullStyle || 'hollow';
+            const isDark     = (cfg.bgTheme || 'dark') === 'dark';
+            const upFill     = bullStyle === 'solid' ? '#ffffff' : 'transparent';
+            const borderUp   = isDark ? '#c8ccd4' : '#000000';
+            const borderDown = isDark ? '#888888' : '#000000';
+            this.candleSeries.applyOptions({
+                upColor:         upFill,
+                borderUpColor:   borderUp,
+                wickUpColor:     borderUp,
+                downColor:       '#000000',
+                borderDownColor: borderDown,
+                wickDownColor:   borderDown
+            });
+        }
+    },
+
+    // ========== BUG2: 懸浮窗完整實作 ==========
+
+    /**
+     * BUG2: 綁定 DOM mousemove / mouseleave 事件
+     * 第一層部式定絍由此處處理，_updateCrosshairTooltip 则用於指標庄控制列更新
+     */
+    _bindTooltipMouseEvents(chartContainer) {
+        // 移除舊的事件避免重複綁定
+        const old      = chartContainer._tooltipMouseMove;
+        const oldLeave = chartContainer._tooltipMouseLeave;
+        const oldEnter = chartContainer._tooltipMouseEnter;
+        if (old)      chartContainer.removeEventListener('mousemove',  old);
+        if (oldLeave) chartContainer.removeEventListener('mouseleave', oldLeave);
+        if (oldEnter) chartContainer.removeEventListener('mouseenter', oldEnter);
+
+        const BOUNDARY_RATIO = 0.18; // 左右邊界識別區比例
+
+        // Bug1 Fix: mouseenter 判斷初次移入側
+        // 滑鼠從左側進入 → tooltip 初始在右上角（side='left'）
+        // 滑鼠從右側進入 → tooltip 初始在左上角（side='right'）
+        const onEnter = (e) => {
+            const rect  = chartContainer.getBoundingClientRect();
+            const chartW = rect.width;
+            const ox = e.clientX - rect.left;
+            const leftEdge  = chartW * BOUNDARY_RATIO;
+            const rightEdge = chartW * (1 - BOUNDARY_RATIO);
+            if (ox <= leftEdge)       this._tooltipSide = 'left';   // 從左進 → 右上角
+            else if (ox >= rightEdge) this._tooltipSide = 'right';  // 從右進 → 左上角
+            // 中間進入不改變 side（維持預設 'right' = 左上角）
+        };
+
+        const onMove = (e) => {
+            if (this._tooltipMode === 'hidden') return;
+            const tooltip = document.getElementById('chartTooltip');
+            if (!tooltip) return;
+
+            const rect  = chartContainer.getBoundingClientRect();
+            const chartW = rect.width;
+            const chartH = rect.height;
+            const ox     = e.clientX - rect.left;
+            const oy     = e.clientY - rect.top;
+
+            // 吸附至最近一筆 bar
+            const bar = this._snapToNearestBar(ox);
+            if (!bar) { tooltip.style.display = 'none'; return; }
+
+            // 渲染內容
+            tooltip.innerHTML = this._buildTooltipHTML(bar);
+            tooltip.style.display = 'block';
+
+            // 邊界判斷（防抖鎖定：只在觸碰邊界識別區才切換）
+            const leftEdge  = chartW * BOUNDARY_RATIO;
+            const rightEdge = chartW * (1 - BOUNDARY_RATIO);
+            // side='left'  → 滑鼠在左邊界 → tooltip 顯示於右上角（或游標右側）
+            // side='right' → 滑鼠在右邊界 → tooltip 顯示於左上角（或游標左側）
+            if (ox <= leftEdge)  this._tooltipSide = 'left';
+            if (ox >= rightEdge) this._tooltipSide = 'right';
+
+            const tooltipW = tooltip.offsetWidth  || 160;
+            const tooltipH = tooltip.offsetHeight || 220;
+
+            if (this._tooltipMode === 'floating') {
+                // 模式A：固定懸浮窗（居左上角或右上角，避免遮擋游標所在側）
+                tooltip.classList.remove('is-following');
+                tooltip.style.removeProperty('--tt-left');
+                tooltip.style.removeProperty('--tt-top');
+                if (this._tooltipSide === 'left') {
+                    // 滑鼠在左邊界 → tooltip 顯示於「右上角」
+                    tooltip.style.left   = 'auto';
+                    tooltip.style.right  = '8px';
+                    tooltip.style.top    = '8px';
+                    tooltip.style.bottom = 'auto';
+                } else {
+                    // 滑鼠在右邊界 → tooltip 顯示於「左上角」
+                    tooltip.style.right  = 'auto';
+                    tooltip.style.left   = '8px';
+                    tooltip.style.top    = '8px';
+                    tooltip.style.bottom = 'auto';
+                }
+            } else if (this._tooltipMode === 'crosshair') {
+                // 模式B：跟隨懸浮窗
+                tooltip.classList.add('is-following');
+                const offset = 16;
+                let   tx, ty;
+
+                // X軸左右複被邏輯
+                if (this._tooltipSide === 'left') {
+                    tx = ox + offset; // 在游標右側
+                } else {
+                    tx = ox - tooltipW - offset; // 在游標左側
+                }
+
+                // Y軸碰撞偵測：靠近頂部則居底部
+                if (oy - tooltipH - offset < 0) {
+                    ty = oy + offset; // 居底
+                } else {
+                    ty = oy - tooltipH - offset; // 居頂
+                }
+
+                // 邊界安全防護
+                tx = Math.max(0, Math.min(tx, chartW - tooltipW - 4));
+                ty = Math.max(0, Math.min(ty, chartH - tooltipH - 4));
+
+                tooltip.style.setProperty('--tt-left', tx + 'px');
+                tooltip.style.setProperty('--tt-top',  ty + 'px');
+                tooltip.style.right  = 'auto';
+                tooltip.style.left   = 'auto';
+                tooltip.style.top    = 'auto';
+                tooltip.style.bottom = 'auto';
+            }
+        };
+
+        const onLeave = () => {
+            const tooltip = document.getElementById('chartTooltip');
+            if (tooltip) tooltip.style.display = 'none';
+        };
+
+        chartContainer._tooltipMouseMove  = onMove;
+        chartContainer._tooltipMouseLeave = onLeave;
+        chartContainer._tooltipMouseEnter = onEnter;
+        chartContainer.addEventListener('mousemove',  onMove);
+        chartContainer.addEventListener('mouseleave', onLeave);
+        chartContainer.addEventListener('mouseenter', onEnter);
+    },
+
+    /**
+     * BUG2: 吸附至最近一筆 K 線 bar
+     * @param {number} offsetX - 在圖表容器內的 x 座標
+     * @returns {Object|null} bar資料
+     */
+    _snapToNearestBar(offsetX) {
+        if (!this.chart || !this.currentChartData || this.currentChartData.length === 0) return null;
+        try {
+            const logical = this.chart.timeScale().coordinateToLogical(offsetX);
+            if (logical === null || logical === undefined) return null;
+            const idx = Math.max(0, Math.min(Math.round(logical), this.currentChartData.length - 1));
+            return this.currentChartData[idx] || null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    /**
+     * BUG2: 建立懸浮窗 HTML（依照截圖格式）
+     * @param {Object} bar - K 線資料
+     * @returns {string} HTML 字串
+     */
+    _buildTooltipHTML(bar) {
+        const data = this.currentChartData;
+        const idx  = data.findIndex(b => String(b.time) === String(bar.time));
+
+        // 日期 + 星期
+        let dateLabel = bar.time || '';
+        try {
+            const d = new Date(bar.time + 'T00:00:00');
+            const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            const dateStr = bar.time.replace(/-/g, '/'); // YYYY/MM/DD
+            dateLabel = `${dateStr} ${weekdays[d.getDay()]}`;
+        } catch (_) {}
+
+        // 漲跌額 / 漲跌幅
+        const prevBar   = idx > 0 ? data[idx - 1] : null;
+        const rawChange = prevBar ? (bar.close - prevBar.close) : null;
+        const change    = rawChange !== null ? rawChange.toFixed(2) : '—';
+        const changePct = rawChange !== null && prevBar.close ? ((rawChange / prevBar.close) * 100).toFixed(2) + '%' : '—';
+        const isUp      = rawChange !== null ? rawChange >= 0 : true;
+        const upCls     = isUp ? 'up' : 'down';
+        const changeSign = rawChange !== null && rawChange >= 0 ? '+' : '';
+
+        // 成交量（若有）
+        const volume = bar.volume != null ? bar.volume.toLocaleString() : 'To Do';
+
+        return `
+            <div class="chart-tooltip-date">${dateLabel}</div>
+            <div class="chart-tooltip-row"><span class="chart-tooltip-label">開盤</span><span class="chart-tooltip-value">${bar.open.toFixed(3)}</span></div>
+            <div class="chart-tooltip-row"><span class="chart-tooltip-label">最高</span><span class="chart-tooltip-value">${bar.high.toFixed(3)}</span></div>
+            <div class="chart-tooltip-row"><span class="chart-tooltip-label">最低</span><span class="chart-tooltip-value">${bar.low.toFixed(3)}</span></div>
+            <div class="chart-tooltip-row"><span class="chart-tooltip-label">收盤</span><span class="chart-tooltip-value">${bar.close.toFixed(3)}</span></div>
+            <div class="chart-tooltip-row"><span class="chart-tooltip-label">漲跌額</span><span class="chart-tooltip-value ${upCls}">${changeSign}${change}</span></div>
+            <div class="chart-tooltip-row"><span class="chart-tooltip-label">漲跌幅</span><span class="chart-tooltip-value ${upCls}">${changeSign}${changePct}</span></div>
+            <div class="chart-tooltip-row"><span class="chart-tooltip-label">成交量</span><span class="chart-tooltip-value">${volume}</span></div>
+            <div class="chart-tooltip-row"><span class="chart-tooltip-label">成交額</span><span class="chart-tooltip-value to-do">To Do</span></div>
+            <div class="chart-tooltip-row"><span class="chart-tooltip-label">換手率</span><span class="chart-tooltip-value to-do">To Do</span></div>
+            <div class="chart-tooltip-row"><span class="chart-tooltip-label">市盈率</span><span class="chart-tooltip-value to-do">To Do</span></div>
+        `;
+    },
+
+    /**
+     * BUG2: 多重取消訂閑 LW crosshair 事件（保留多重指標控制列需要它）
+     */
+    /**
+     * 套用懸浮窗模式
+     */
+    _applyTooltipMode(mode) {
+        this._tooltipMode = mode;
+        const tooltip = document.getElementById('chartTooltip');
+        if (tooltip && mode === 'hidden') tooltip.style.display = 'none';
+
+        // Bug1 Fix: 依模式連動 LightweightCharts 內建十字線顯示
+        if (this.chart) {
+            const LW = window.LightweightCharts;
+            const crosshairMode = (mode === 'hidden')
+                ? (LW?.CrosshairMode?.Hidden ?? 3)
+                : (LW?.CrosshairMode?.Normal ?? 1);
+            try { this.chart.applyOptions({ crosshair: { mode: crosshairMode } }); } catch (_) {}
+        }
+    },
+
+    /**
+     * LW crosshair 移動事件 — 僅更新指標控制列（tooltip 改由 DOM mousemove 控制）
+     */
+    _updateCrosshairTooltip(param) {
+        // 指標控制列更新已在 subscribeCrosshairMove callback 裡處理
+        // 此函式預留給未來擴展用
+    },
+
+    /**
+     * 套用常規設定（圖表類型、現價線、十字線、K線顏色）
+     * @param {Object} cfg - defaultGeneralConfig 結構
+     */
+    applyGeneralSettings(cfg) {
+        if (!cfg || !this.chart) return;
+        const LW = window.LightweightCharts;
+        if (!LW) return;
+
+        // BUG1: 背景主題切換
+        const bgTheme = cfg.bgTheme || 'dark';
+        if (bgTheme === 'silver') {
+            this.chart.applyOptions({
+                layout: { background: { color: '#f0f3fa' }, textColor: '#333333' },
+                grid: {
+                    vertLines: { color: 'rgba(180,185,200,0.4)' },
+                    horzLines:  { color: 'rgba(180,185,200,0.4)' }
+                }
+            });
+        } else {
+            this.chart.applyOptions({
+                layout: { background: { color: '#131722' }, textColor: '#d1d4dc' },
+                grid: {
+                    vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
+                    horzLines:  { color: 'rgba(42, 46, 57, 0.5)' }
+                }
+            });
+        }
+
+        // 現價線
+        if (this.candleSeries) {
+            this.candleSeries.applyOptions({
+                lastValueVisible: !!cfg.showPriceLine,
+                priceLineVisible: !!cfg.showPriceLine
+            });
+        }
+
+        // 懸浮窗模式
+        this._applyTooltipMode(cfg.tooltipMode || 'floating');
+
+        // 圖表類型
+        const newType = cfg.chartType || 'candlestick';
+        if (newType !== this.seriesType) {
+            this._switchChartSeries(newType, this.currentChartData);
+        } else {
+            this._applySeriesVisualOptions(newType);
+        }
+
+        console.log('[ChartController] applyGeneralSettings:', newType, cfg.tooltipMode, 'theme:', bgTheme);
+    },
+
+    // ========== Feature 4: 坐標軸設定 ==========
+
+    /**
+     * 套用坐標軸設定（坐標模式、左右刻度）
+     * @param {Object} cfg - defaultAxisConfig 結構
+     */
+    applyAxisSettings(cfg) {
+        if (!cfg || !this.chart) return;
+        const LW = window.LightweightCharts;
+        if (!LW) return;
+
+        // Bug 6: 用可選鏈 + 數值 fallback 防止 enum 引用失敗
+        const modeMap = {
+            normal:      LW.PriceScaleMode?.Normal       ?? 0,
+            logarithmic: LW.PriceScaleMode?.Logarithmic  ?? 1,
+            percentage:  LW.PriceScaleMode?.Percentage   ?? 2,
+            indexed:     LW.PriceScaleMode?.IndexedTo100 ?? 3
+        };
+        const primaryMode = modeMap[cfg.priceScaleMode] ?? 0;
+        console.log('[Axis] priceScaleMode resolved:', primaryMode, '(from:', cfg.priceScaleMode, ')');
+
+        // 坐標顯示位置
+        const placement = cfg.scalePlacement || 'right';
+        const showLeft  = placement === 'left'  || placement === 'dual';
+        const showRight = placement === 'right' || placement === 'dual';
+        const isNormal  = cfg.priceScaleMode === 'normal';
+
+        // 左右各自 mode
+        // 普通坐標：依 leftScaleType/rightScaleType 獨立映射；非普通坐標：左右鏡像相同
+        const leftMode  = isNormal && cfg.leftScaleType  === 'change' ? (LW.PriceScaleMode?.Percentage  ?? 2) : primaryMode;
+        const rightMode = isNormal && cfg.rightScaleType === 'change' ? (LW.PriceScaleMode?.Percentage  ?? 2) : primaryMode;
+
+        // Bug 7: 雙邊坐標需要 mirror series 讓左側 scale 有資料可計算刻度
+        if (placement === 'dual') {
+            this._ensureMirrorSeries();
+        } else {
+            this._removeMirrorSeries();
+        }
+
+        this.chart.applyOptions({
+            rightPriceScale: { mode: rightMode, visible: showRight },
+            leftPriceScale:  { mode: leftMode,  visible: showLeft  }
+        });
+
+        console.log('[ChartController] applyAxisSettings:', cfg.priceScaleMode, placement);
+    },
+
+    /**
+     * Bug 7: 建立/更新雙邊坐標用的左側 mirror series（不可見，僅用於讓 leftPriceScale 有 series 掛靠）
+     */
+    _ensureMirrorSeries() {
+        const data = this.currentChartData;
+        if (!data || data.length === 0 || !this.chart) return;
+        const LW = window.LightweightCharts;
+        if (!LW) return;
+
+        // 先確保 candleSeries 在右側
+        if (this.candleSeries) {
+            try { this.candleSeries.applyOptions({ priceScaleId: 'right' }); } catch (e) {}
+        }
+
+        // 若 mirror series 已存在，直接更新資料即可
+        if (!this._mirrorSeries) {
+            try {
+                this._mirrorSeries = this.chart.addLineSeries({
+                    priceScaleId: 'left',
+                    lineWidth: 1,
+                    color: 'transparent',
+                    lastValueVisible: false,
+                    priceLineVisible: false,
+                    crosshairMarkerVisible: false
+                });
+            } catch (e) {
+                console.warn('[ChartController] mirror series 建立失敗:', e);
+                return;
+            }
+        }
+        this._mirrorSeries.setData(data.map(b => ({ time: b.time, value: b.close })));
+    },
+
+    /**
+     * Bug 7: 銷毀 mirror series（離開雙邊坐標模式時呼叫）
+     */
+    _removeMirrorSeries() {
+        if (!this._mirrorSeries || !this.chart) return;
+        try {
+            this.chart.removeSeries(this._mirrorSeries);
+        } catch (e) {
+            console.warn('[ChartController] mirror series 移除失敗:', e);
+        }
+        this._mirrorSeries = null;
+        // 把 candleSeries 歸還到 right（預設 scale id）
+        if (this.candleSeries) {
+            try { this.candleSeries.applyOptions({ priceScaleId: 'right' }); } catch (e) {}
+        }
+    },
+
+    // ========== Feature 2: 型態設定 ==========
+
+    /**
+     * 套用型態視覺設定到 PatternAnnotation
+     * @param {Object} cfg - defaultPatternConfig 結構
+     */
+    applyPatternConfig(cfg) {
+        if (!cfg) return;
+        window.state.patternConfig = cfg;
+        // Bug 8a: 修正大小寫（window.PatternAnnotation），並呼叫存在的 render() 方法
+        if (window.PatternAnnotation) {
+            window.PatternAnnotation.render();
+        }
+        console.log('[ChartController] applyPatternConfig applied');
     },
 
     /**

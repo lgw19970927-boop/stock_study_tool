@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-Hant"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ef6d3b",
+                        "background-main": "#1e222d",
+                        "background-card": "#1e222d",
+                        "panel-dark": "#131722",
+                        "border-dim": "#2a2e39",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23787b86' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.25em 1.25em;
+        }
+        
+        /* Custom Radio Styling to match Image 3 */
+        input[type="radio"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #4a4f5d;
+            border-radius: 50%;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            background: transparent;
+        }
+        input[type="radio"]:checked {
+            border-color: #ef6d3b;
+        }
+        input[type="radio"]:checked::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ef6d3b;
+        }
+
+        .btn-gradient-blue {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+        }
+    </style>
+</head>
+<body class="bg-[#131722] font-display text-[#d1d4dc] min-h-screen flex items-center justify-center p-4">
+<div class="w-full max-w-[800px] bg-background-card rounded-sm shadow-2xl flex flex-col h-auto min-h-[500px] border border-transparent">
+<!-- Header -->
+<header class="flex items-center justify-between px-6 py-4 border-b border-border-dim">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#22ab94] text-xl font-bold">settings_input_component</span>
+<h2 class="text-base font-bold text-[#d1d4dc]">圖表管理</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-[#787b86] hover:text-[#d1d4dc] transition-colors">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+<button class="text-[#787b86] hover:text-[#d1d4dc] transition-colors">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+</header>
+<!-- Tabs Navigation -->
+<nav class="flex px-6 border-b border-border-dim whitespace-nowrap overflow-x-auto scrollbar-hide">
+<a class="py-4 px-4 text-sm font-medium text-[#787b86] hover:text-[#d1d4dc] transition-colors border-b-2 border-transparent" href="#">
+            常規設定
+        </a>
+<a class="py-4 px-4 text-sm font-bold text-[#d1d4dc] border-b-2 border-primary" href="#">
+            坐標軸
+        </a>
+<a class="py-4 px-4 text-sm font-medium text-[#787b86] hover:text-[#d1d4dc] transition-colors border-b-2 border-transparent" href="#">
+            指標管理
+        </a>
+<a class="py-4 px-4 text-sm font-medium text-[#787b86] hover:text-[#d1d4dc] transition-colors border-b-2 border-transparent" href="#">
+            型態管理
+        </a>
+</nav>
+<!-- Content -->
+<div class="p-8 flex-1 space-y-10">
+<!-- Coordinate Selectors -->
+<div class="max-w-[400px] space-y-6">
+<div class="flex items-center justify-between gap-8">
+<label class="text-sm text-[#787b86]">坐標切換</label>
+<div class="flex-1">
+<select class="custom-select w-full h-9 px-3 bg-[#2a2e39] border-none rounded text-sm text-[#d1d4dc] outline-none">
+<option value="normal">普通坐標</option>
+</select>
+</div>
+</div>
+<div class="flex items-center justify-between gap-8">
+<label class="text-sm text-[#787b86]">坐標設定</label>
+<div class="flex-1">
+<select class="custom-select w-full h-9 px-3 bg-[#2a2e39] border-none rounded text-sm text-[#d1d4dc] outline-none">
+<option value="dual">雙邊坐標</option>
+</select>
+</div>
+</div>
+</div>
+<div class="h-px bg-border-dim"></div>
+<!-- Left Coordinate -->
+<div class="space-y-4">
+<h3 class="text-sm font-bold text-[#d1d4dc]">左坐標</h3>
+<div class="flex items-center gap-12 pl-1">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" name="left_coord" type="radio" value="price"/>
+<span class="text-sm text-[#d1d4dc]">價格</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input name="left_coord" type="radio" value="change"/>
+<span class="text-sm text-[#d1d4dc]">漲跌幅</span>
+</label>
+</div>
+</div>
+<!-- Right Coordinate -->
+<div class="space-y-4">
+<h3 class="text-sm font-bold text-[#d1d4dc]">右坐標</h3>
+<div class="flex items-center gap-12 pl-1">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" name="right_coord" type="radio" value="price"/>
+<span class="text-sm text-[#d1d4dc]">價格</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input name="right_coord" type="radio" value="change"/>
+<span class="text-sm text-[#d1d4dc]">漲跌幅</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="p-6 flex justify-end items-center gap-6 border-t border-border-dim bg-[#131722]">
+<button class="text-sm font-medium text-[#d1d4dc] hover:text-white transition-colors">
+            取消
+        </button>
+<button class="px-6 py-2 rounded-md text-sm font-bold text-white btn-gradient-blue shadow-lg hover:brightness-110 transition-all">
+            確定
+        </button>
+</footer>
+</div>
+</body></html>

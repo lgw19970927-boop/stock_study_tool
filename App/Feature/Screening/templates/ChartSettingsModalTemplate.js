@@ -22,9 +22,10 @@ var ChartSettingsModalTemplate = `
 
         <!-- Tab 切換 -->
         <div class="chart-modal-tabs">
-            <button class="chart-tab-btn" data-tab="general" disabled>常規設定</button>
-            <button class="chart-tab-btn" data-tab="screener" disabled>坐標軸</button>
+            <button class="chart-tab-btn" data-tab="general">常規設定</button>
+            <button class="chart-tab-btn" data-tab="axis">坐標軸</button>
             <button class="chart-tab-btn active" data-tab="indicators">指標管理</button>
+            <button class="chart-tab-btn" data-tab="patterns">型態管理</button>
         </div>
 
         <!-- 彈窗主體 -->
@@ -40,42 +41,42 @@ var ChartSettingsModalTemplate = `
                         主圖
                     </div>
                     <div class="indicator-items">
-                        <label class="indicator-item" data-indicator="ma">
+                        <div class="indicator-item" data-indicator="ma">
                             <input type="checkbox" id="ma-toggle" checked>
                             <span>MA</span>
-                        </label>
-                        <label class="indicator-item" data-indicator="boll">
+                        </div>
+                        <div class="indicator-item" data-indicator="boll">
                             <input type="checkbox" id="boll-toggle">
                             <span>BOLL</span>
-                        </label>
-                        <label class="indicator-item disabled">
+                        </div>
+                        <div class="indicator-item disabled">
                             <input type="checkbox" disabled>
                             <span>EMA</span>
-                        </label>
-                        <label class="indicator-item disabled">
+                        </div>
+                        <div class="indicator-item disabled">
                             <input type="checkbox" disabled>
                             <span>SAR</span>
-                        </label>
-                        <label class="indicator-item disabled">
+                        </div>
+                        <div class="indicator-item disabled">
                             <input type="checkbox" disabled>
                             <span>CDP</span>
-                        </label>
-                        <label class="indicator-item disabled">
+                        </div>
+                        <div class="indicator-item disabled">
                             <input type="checkbox" disabled>
                             <span>IC</span>
-                        </label>
-                        <label class="indicator-item disabled">
+                        </div>
+                        <div class="indicator-item disabled">
                             <input type="checkbox" disabled>
                             <span>KC</span>
-                        </label>
-                        <label class="indicator-item disabled">
+                        </div>
+                        <div class="indicator-item disabled">
                             <input type="checkbox" disabled>
                             <span>神奇九轉</span>
-                        </label>
-                        <label class="indicator-item disabled">
+                        </div>
+                        <div class="indicator-item disabled">
                             <input type="checkbox" disabled>
                             <span>VWAP</span>
-                        </label>
+                        </div>
                     </div>
                 </div>
 
@@ -88,14 +89,22 @@ var ChartSettingsModalTemplate = `
                         副圖
                     </div>
                     <div class="indicator-items">
-                        <label class="indicator-item disabled">
+                        <div class="indicator-item disabled">
                             <input type="checkbox" disabled>
                             <span>換手率</span>
-                        </label>
-                        <label class="indicator-item disabled">
+                        </div>
+                        <div class="indicator-item disabled">
                             <input type="checkbox" disabled>
                             <span>MI</span>
-                        </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 型態管理側邊欄（切換 patterns tab 時顯示）-->
+                <div class="indicator-category pattern-sidebar-section" style="display:none;">
+                    <div class="category-header">型態</div>
+                    <div class="indicator-items" id="patternSidebarItems">
+                        <!-- 由 JS 動態生成 -->
                     </div>
                 </div>
             </div>
@@ -124,7 +133,7 @@ var ChartSettingsModalTemplate = `
 </div>
 `;
 
-// Inject into body
-if (!document.getElementById('chartSettingsModal')) {
-    document.body.insertAdjacentHTML('beforeend', ChartSettingsModalTemplate);
-}
+// 強制替換舊有 DOM（確保 HTMX 切換後模板始終最新）
+const _existingChartModal = document.getElementById('chartSettingsModal');
+if (_existingChartModal) _existingChartModal.parentNode.removeChild(_existingChartModal);
+document.body.insertAdjacentHTML('beforeend', ChartSettingsModalTemplate);

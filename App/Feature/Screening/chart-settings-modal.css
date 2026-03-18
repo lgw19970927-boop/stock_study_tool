@@ -13,6 +13,7 @@
     justify-content: center;
     z-index: 9999;
     animation: fadeIn 0.2s ease;
+    pointer-events: none; /* Bug 5：不攔截背景點擊 */
 }
 
 @keyframes fadeIn {
@@ -36,6 +37,13 @@
     flex-direction: column;
     box-shadow: var(--shadow-lg);
     animation: slideUp 0.3s ease;
+    pointer-events: auto; /* Bug 5：容器本身仍可互動 */
+}
+
+.chart-modal-container.is-dragging {
+    user-select: none;
+    opacity: 0.94;
+    animation: none; /* 拖移時停用入場動畫 */
 }
 
 @keyframes slideUp {
@@ -49,13 +57,15 @@
     }
 }
 
-/* 彈窗標題 */
+/* 彈窗標題（Bug 5：拖移把手）*/
 .chart-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: var(--spacing-md) var(--spacing-lg);
     border-bottom: 1px solid var(--border-color);
+    cursor: move;
+    user-select: none;
 }
 
 .modal-title {
@@ -336,12 +346,12 @@
 /* MA 設定列表 */
 .ma-list-header {
     display: grid;
-    grid-template-columns: 150px 80px 60px 60px 80px 120px auto;
+    grid-template-columns: minmax(110px,1.5fr) 72px 50px 56px 64px 1fr 40px 32px;
     gap: var(--spacing-sm);
     padding: var(--spacing-xs) var(--spacing-sm);
     background: var(--bg-tertiary);
     border-radius: var(--radius-sm);
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -357,7 +367,7 @@
 
 .ma-line-item {
     display: grid;
-    grid-template-columns: 150px 80px 60px 60px 80px 120px auto;
+    grid-template-columns: minmax(110px,1.5fr) 72px 50px 56px 64px 1fr 40px 32px;
     gap: var(--spacing-sm);
     align-items: center;
     padding: var(--spacing-sm);
@@ -375,7 +385,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
     cursor: pointer;
 }
@@ -389,6 +399,8 @@
     border-radius: 3px;
     cursor: pointer;
     transition: all var(--transition-fast);
+    position: relative;
+    flex-shrink: 0;
 }
 
 .ma-line-item input[type="checkbox"]:checked {
@@ -398,12 +410,14 @@
 
 .ma-line-item input[type="checkbox"]:checked::after {
     content: '';
-    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
     width: 4px;
     height: 7px;
     border: solid white;
     border-width: 0 2px 2px 0;
-    transform: rotate(45deg) translate(2px, -1px);
+    transform: translate(-50%, -60%) rotate(45deg);
 }
 
 .ma-line-item input[type="number"] {
@@ -413,7 +427,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     text-align: center;
 }
 
@@ -423,7 +437,7 @@
 }
 
 .ma-label {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-primary);
     text-align: center;
@@ -468,11 +482,11 @@
 }
 
 .opacity-value {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-family: var(--font-mono);
     color: var(--text-secondary);
-    min-width: 40px;
-    text-align: right;
+    text-align: center;
+    min-width: 32px;
 }
 
 .btn-remove-ma {
@@ -582,7 +596,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     text-align: center;
 }
 
@@ -605,7 +619,7 @@
 }
 
 .boll-line-config span:last-child {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-family: var(--font-mono);
     color: var(--text-secondary);
     text-align: right;
@@ -669,6 +683,215 @@
     background: var(--bg-secondary);
 }
 
+/* ===== 現價線開關按鈕組 ===== */
+.btn-toggle-group {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.btn-toggle-opt {
+    padding: 4px 14px;
+    background: var(--bg-primary);
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-toggle-opt:not(:last-child) {
+    border-right: 1px solid var(--border-color);
+}
+
+.btn-toggle-opt.active {
+    background: #ff6b35;
+    color: #fff;
+    font-weight: 600;
+}
+
+.btn-toggle-opt:hover:not(.active) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* ===== 坐標軸 Radio 群組 ===== */
+.axis-radio-section {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-sm) 0;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: var(--spacing-sm);
+}
+
+.axis-radio-label {
+    min-width: 60px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.axis-radio-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.axis-radio-item input[type="radio"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: border-color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.axis-radio-item input[type="radio"]:checked {
+    border-color: #ff6b35;
+}
+
+.axis-radio-item input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ff6b35;
+}
+
+/* ===== 型態管理 Table Layout ===== */
+.pattern-table-header,
+.pattern-table-row {
+    display: grid;
+    grid-template-columns: 48px 56px 1fr 60px 56px;
+    gap: var(--spacing-sm);
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.pattern-table-header {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: var(--spacing-sm);
+    text-align: center;
+}
+
+.pattern-table-header span:nth-child(3) {
+    text-align: left;
+}
+
+.pattern-table-row {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md) var(--spacing-sm);
+}
+
+.pattern-cell-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pattern-opacity-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+/* pattern-cb: 使用與 indicator-item 相同的樣式 */
+.pattern-cb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.pattern-cb:checked {
+    background: #ff6b35;
+    border-color: #ff6b35;
+}
+
+.pattern-cb:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 4px; height: 7px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -60%) rotate(45deg);
+}
+
+.pattern-color-btn {
+    width: 44px;
+    height: 26px;
+}
+
+/* 側邊欄型態選中高亮 */
+.indicator-item.selected {
+    background: var(--bg-hover);
+}
+
+/* ===== K線圖懸浮 Tooltip ===== */
+.chart-tooltip {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(19, 23, 34, 0.92);
+    border: 1px solid var(--border-color, rgba(197,203,206,0.3));
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    line-height: 1.8;
+    pointer-events: none;
+    z-index: 20;
+    min-width: 160px;
+    color: #d1d4dc;
+    white-space: nowrap;
+}
+
+.chart-tooltip.is-following {
+    top: var(--tt-top, 8px);
+    left: var(--tt-left, 8px);
+}
+
+.chart-tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.chart-tooltip-label {
+    color: #787b86;
+}
+
+.chart-tooltip-value {
+    font-weight: 600;
+}
+
+.chart-tooltip-value.up   { color: #26a69a; }
+.chart-tooltip-value.down { color: #ef5350; }
+
 /* ===== 色板選擇器彈窗 ===== */
 
 .color-picker-overlay {
@@ -692,6 +915,13 @@
     width: 420px;
     box-shadow: var(--shadow-lg);
     animation: slideUp 0.2s ease;
+    pointer-events: auto; /* 拖曳用 */
+}
+
+.color-picker-container.is-dragging {
+    user-select: none;
+    opacity: 0.94;
+    animation: none;
 }
 
 .color-picker-header {
@@ -700,6 +930,8 @@
     justify-content: space-between;
     padding: var(--spacing-sm) var(--spacing-md);
     border-bottom: 1px solid var(--border-color);
+    cursor: move;
+    user-select: none;
 }
 
 .color-picker-header span {
@@ -759,4 +991,260 @@
     gap: var(--spacing-sm);
     padding: var(--spacing-sm) var(--spacing-md);
     border-top: 1px solid var(--border-color);
+}
+
+/* ===== Features 2-4: 常規/坐標/型態 設定面板 ===== */
+
+/* 切換 no-sidebar 時隱藏左欄 */
+.chart-modal-body.no-sidebar .chart-modal-sidebar {
+    display: none;
+}
+
+.general-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    max-width: 520px;
+}
+
+.general-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.general-row > label:first-child {
+    min-width: 100px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.general-row select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    min-width: 160px;
+}
+
+.general-row select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+/* 坐標軸模式 radio 群組 */
+.axis-mode-row {
+    align-items: flex-start;
+}
+
+.axis-mode-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm) var(--spacing-md);
+}
+
+.axis-mode-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* 指標介紹面板 */
+.intro-panel {
+    line-height: 1.7;
+    color: var(--text-primary);
+}
+
+.intro-panel h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.intro-panel p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.intro-list {
+    padding-left: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+}
+
+.intro-list li {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.intro-list li strong {
+    color: var(--text-primary);
+}
+
+.intro-note {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    background: var(--bg-tertiary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    display: inline-block;
+}
+
+/* ===== Bug 4: 自訂 Canvas 色品選擇器 ===== */
+
+.custom-color-panel {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.cp-canvas-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.cp-preview-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.cp-preview {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: #ff0000;
+    flex-shrink: 0;
+}
+
+.cp-inputs {
+    display: flex;
+    gap: 4px;
+}
+
+.cp-inputs label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    gap: 2px;
+}
+
+.cp-inputs input[type="number"] {
+    width: 44px;
+    padding: 2px 4px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.cp-inputs input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.cp-hex-input {
+    width: 80px;
+    padding: 4px 6px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+}
+
+.cp-hex-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.cp-add-btn {
+    width: 100%;
+    font-size: 0.75rem;
+}
+
+/* ===== BUG2: 懸浮窗（Chart Tooltip）完整樣式 ===== */
+#chartTooltip {
+    position: absolute;
+    z-index: 20;
+    background: rgba(19, 23, 34, 0.93);
+    border: 1px solid rgba(197, 203, 206, 0.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #d1d4dc;
+    pointer-events: none;
+    min-width: 150px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    /* 預設定位（固定懸浮窗使用 JS 的 style.top/left/right 覆蓋） */
+}
+
+/* 跟隨懸浮窗模式（is-following class 由 JS 套用，並用 CSS 自訂屬性定位） */
+#chartTooltip.is-following {
+    top:  var(--tt-top,  8px) !important;
+    left: var(--tt-left, 8px) !important;
+    right: auto !important;
+    bottom: auto !important;
+}
+
+/* 日期標題行 */
+.chart-tooltip-date {
+    font-weight: 700;
+    color: #e0e3eb;
+    margin-bottom: 5px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(197, 203, 206, 0.2);
+    letter-spacing: 0.02em;
+}
+
+.chart-tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    line-height: 1.65;
+}
+
+.chart-tooltip-label {
+    color: #787b86;
+    white-space: nowrap;
+}
+
+.chart-tooltip-value {
+    font-family: monospace;
+    font-weight: 600;
+    color: #d1d4dc;
+    text-align: right;
+}
+
+.chart-tooltip-value.up {
+    color: #26a69a;
+}
+
+.chart-tooltip-value.down {
+    color: #ef5350;
+}
+
+/* BUG2: To Do 欄位（未實作資料）樣式 */
+.chart-tooltip-value.to-do {
+    color: #5a6070;
+    font-style: italic;
+    font-weight: 400;
 }

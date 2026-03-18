@@ -29,8 +29,25 @@ var ColorPickerTemplate = `
                 <button class="btn btn-sm btn-ghost" id="btnDefineCustomColor">定義自訂色彩(D) >></button>
             </div>
 
-            <!-- 原生顏色選擇器（隱藏） -->
-            <input type="color" id="nativeColorPicker" style="display: none;">
+            <!-- Bug 4: 自訂 Canvas 色彩選擇器（展開式） -->
+            <div id="customColorPanel" class="custom-color-panel" style="display:none;">
+                <div class="cp-canvas-row">
+                    <canvas id="colorSpectrumCanvas" width="200" height="150"
+                        style="cursor:crosshair; border-radius:4px;"></canvas>
+                    <canvas id="hueSliderCanvas" width="18" height="150"
+                        style="cursor:crosshair; border-radius:3px; margin-left:6px;"></canvas>
+                </div>
+                <div class="cp-preview-row">
+                    <div class="cp-preview" id="colorPreview"></div>
+                    <div class="cp-inputs">
+                        <label>R<input type="number" id="cpInputR" min="0" max="255" value="255" /></label>
+                        <label>G<input type="number" id="cpInputG" min="0" max="255" value="0" /></label>
+                        <label>B<input type="number" id="cpInputB" min="0" max="255" value="0" /></label>
+                    </div>
+                    <input type="text" id="cpInputHex" class="cp-hex-input" value="#ff0000" maxlength="7" placeholder="#rrggbb" />
+                </div>
+                <button class="btn btn-sm btn-ghost cp-add-btn" id="btnAddCustomColor">加入自訂色彩</button>
+            </div>
         </div>
 
         <div class="color-picker-footer">
@@ -41,7 +58,7 @@ var ColorPickerTemplate = `
 </div>
 `;
 
-// Inject into body
-if (!document.getElementById('colorPickerModal')) {
-    document.body.insertAdjacentHTML('beforeend', ColorPickerTemplate);
-}
+// 強制替換舊有 DOM（確保色板內容含 customColorPanel 後始終最新）
+const _existingColorPicker = document.getElementById('colorPickerModal');
+if (_existingColorPicker) _existingColorPicker.parentNode.removeChild(_existingColorPicker);
+document.body.insertAdjacentHTML('beforeend', ColorPickerTemplate);

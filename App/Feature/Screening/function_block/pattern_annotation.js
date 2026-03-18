@@ -50,7 +50,8 @@ window.PatternAnnotation = {
     // ──────────────── 訂閱重繪 ────────────────
 
     /**
-     * 訂閱 visible range change，確保 pan/zoom 時重繪
+     * Bug10: 訂閱 visible range change，確保 pan/zoom 時重繪（雙保險）
+     * Bug5 Fix: 加入 requestAnimationFrame wrapping，確保 LW 完成 layout 更新後再取座標
      */
     _subscribeRedraw() {
         if (this._unsubscribe) {
@@ -60,10 +61,22 @@ window.PatternAnnotation = {
         const chart = window.ChartController?.chart;
         if (!chart) return;
 
-        const handler = () => this.render();
+        // 用 requestAnimationFrame 包裝確保在下一局棟取回正確座標
+        let _rafId = null;
+        const handler = () => {
+            if (_rafId !== null) cancelAnimationFrame(_rafId);
+            _rafId = requestAnimationFrame(() => {
+                _rafId = null;
+                this.render();
+            });
+        };
         chart.timeScale().subscribeVisibleLogicalRangeChange(handler);
+        // 雙保險：同時訂閱 time range change
+        try { chart.timeScale().subscribeVisibleTimeRangeChange(handler); } catch (_) {}
         this._unsubscribe = () => {
+            if (_rafId !== null) cancelAnimationFrame(_rafId);
             try { chart.timeScale().unsubscribeVisibleLogicalRangeChange(handler); } catch (_) {}
+            try { chart.timeScale().unsubscribeVisibleTimeRangeChange(handler); } catch (_) {}
         };
     },
 
@@ -84,11 +97,18 @@ window.PatternAnnotation = {
             return;
         }
 
-        // 同步 SVG 尺寸到容器
-        const container = document.getElementById('chart');
+        // Bug4 Fix: 改從 #chartWrapper 取容器尺寸
+        // Bug5 Fix: 移除顯式 width/height attribute，避免 SVG viewport 跟 CSS 廣座充突
+        // CSS 已設定 width:100%;height:100%，同時設屬性用 px 會造成座標系縮放分岐導致偏移
+        // 使用 setAttribute('width','100%') 讓 SVG 內部 1 unit = 1 CSS pixel
+        const container = document.getElementById('chartWrapper') || document.getElementById('chart');
         if (container) {
-            svg.setAttribute('width',  container.clientWidth  || container.offsetWidth);
-            svg.setAttribute('height', container.clientHeight || container.offsetHeight);
+            const w = container.clientWidth  || container.offsetWidth  || 800;
+            const h = container.clientHeight || container.offsetHeight || 500;
+            // 等效於用 CSS 控制大小；viewBox 確保內部座標與番幕像素直接對應
+            svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            svg.removeAttribute('width');
+            svg.removeAttribute('height');
         }
 
         const timeScale = chart.timeScale();
@@ -96,6 +116,10 @@ window.PatternAnnotation = {
 
         this._patterns.forEach(pattern => {
             if (!pattern.start_date || !pattern.end_date) return;
+
+            // Bug9e: 總開關判斷，若 masterVisible === false 则此型態全部跳過
+            const patCfg = window.ChartSettingsModal?._patternConfig?.[pattern.name];
+            if (patCfg && patCfg.masterVisible === false) return;
 
             // 轉換為 timestamp（秒）進行比較
             const startTs = new Date(pattern.start_date + 'T00:00:00').getTime() / 1000;
@@ -111,10 +135,13 @@ window.PatternAnnotation = {
 
             if (slice.length < 2) return;
 
-            if ((pattern.name || '').toLowerCase() === 'consolidation') {
-                this._drawRect(svg, pattern, slice, timeScale, candleSeries);
+            const patternType = (pattern.name || '').toLowerCase();
+            if (patternType === 'consolidation') {
+                this._drawRect(svg, pattern, slice, timeScale, candleSeries, patCfg);
+            } else if (patternType === 'triangle') {
+                this._drawTriangle(svg, pattern, slice, timeScale, candleSeries, patCfg);
             } else {
-                this._drawPolyline(svg, pattern, slice, timeScale, candleSeries);
+                this._drawPolyline(svg, pattern, slice, timeScale, candleSeries, patCfg);
             }
         });
     },
@@ -124,7 +151,7 @@ window.PatternAnnotation = {
     /**
      * 繪製矩形框（盤整區）
      */
-    _drawRect(svg, pattern, slice, timeScale, candleSeries) {
+    _drawRect(svg, pattern, slice, timeScale, candleSeries, patCfg) {
         const top    = Math.max(...slice.map(b => b.high));
         const bottom = Math.min(...slice.map(b => b.low));
         const x1 = timeScale.timeToCoordinate(slice[0].time);
@@ -134,30 +161,41 @@ window.PatternAnnotation = {
 
         if (x1 == null || x2 == null || y1 == null || y2 == null) return;
 
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('x',            Math.min(x1, x2));
-        rect.setAttribute('y',            Math.min(y1, y2));
-        rect.setAttribute('width',        Math.abs(x2 - x1));
-        rect.setAttribute('height',       Math.abs(y2 - y1));
-        rect.setAttribute('fill',         'rgba(255,255,255,0.05)');
-        rect.setAttribute('stroke',       '#ffffff');
-        rect.setAttribute('stroke-width', '1.5');
-        rect.setAttribute('opacity',      '0.8');
-        rect.appendChild(this._makeTitle(pattern));
-        svg.appendChild(rect);
+        // Bug8b: 從 patCfg 讀取設定，沒有則用 fallback
+        const shapeVisible = !patCfg || patCfg.shapeVisible !== false;
+        const textVisible  = !patCfg || patCfg.textVisible  !== false;
+        const color      = patCfg?.color      || '#6090c8';
+        const labelColor = patCfg?.labelColor || '#ffffff';
+        const lineWidth  = patCfg?.lineWidth  || 1;
+        const opacity    = (patCfg?.opacity   ?? 70) / 100;
 
-        // 左上角標籤
-        this._drawLabel(svg, Math.min(x1, x2) + 3, Math.min(y1, y2) - 4, pattern, '#ffffff');
+        if (shapeVisible) {
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x',            Math.min(x1, x2));
+            rect.setAttribute('y',            Math.min(y1, y2));
+            rect.setAttribute('width',        Math.abs(x2 - x1));
+            rect.setAttribute('height',       Math.abs(y2 - y1));
+            rect.setAttribute('fill',         `rgba(${this._hexToRgb(color)},${opacity * 0.1})`);
+            rect.setAttribute('stroke',       color);
+            rect.setAttribute('stroke-width', String(lineWidth));
+            rect.setAttribute('opacity',      String(opacity));
+            rect.appendChild(this._makeTitle(pattern));
+            svg.appendChild(rect);
+        }
+
+        if (textVisible) {
+            const labelY = Math.min(y1, y2) - 4;
+            if (labelY != null) this._drawLabel(svg, Math.min(x1, x2) + 3, labelY, pattern, labelColor);
+        }
     },
 
     /**
      * 繪製折線（有型態的連線，如 W底、頭肩頂等）
      */
-    _drawPolyline(svg, pattern, slice, timeScale, candleSeries) {
+    _drawPolyline(svg, pattern, slice, timeScale, candleSeries, patCfg) {
         const extrema = this._findLocalExtrema(slice);
         if (extrema.length < 2) {
-            // 極值不足時 fallback 為 rect
-            this._drawRect(svg, pattern, slice, timeScale, candleSeries);
+            this._drawRect(svg, pattern, slice, timeScale, candleSeries, patCfg);
             return;
         }
 
@@ -170,24 +208,168 @@ window.PatternAnnotation = {
 
         if (points.length < 2) return;
 
-        const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-        polyline.setAttribute('points',       points.join(' '));
-        polyline.setAttribute('fill',         'none');
-        polyline.setAttribute('stroke',       '#00d4aa');
-        polyline.setAttribute('stroke-width', '1.5');
-        polyline.setAttribute('opacity',      '0.85');
-        polyline.appendChild(this._makeTitle(pattern));
-        svg.appendChild(polyline);
+        // Bug8b: 從 patCfg 讀取設定
+        const shapeVisible = !patCfg || patCfg.shapeVisible !== false;
+        const textVisible  = !patCfg || patCfg.textVisible  !== false;
+        const color      = patCfg?.color      || '#00d4aa';
+        const labelColor = patCfg?.labelColor || '#00d4aa';
+        const lineWidth  = patCfg?.lineWidth  || 1.5;
+        const opacity    = (patCfg?.opacity   ?? 85) / 100;
 
-        // 標籤放在第一個極值點附近
-        const firstX = timeScale.timeToCoordinate(extrema[0].time);
-        const firstY = candleSeries.priceToCoordinate(extrema[0].price);
-        if (firstX != null && firstY != null) {
-            this._drawLabel(svg, firstX + 3, firstY - 6, pattern, '#00d4aa');
+        if (shapeVisible) {
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            polyline.setAttribute('points',       points.join(' '));
+            polyline.setAttribute('fill',         'none');
+            polyline.setAttribute('stroke',       color);
+            polyline.setAttribute('stroke-width', String(lineWidth));
+            polyline.setAttribute('opacity',      String(opacity));
+            polyline.appendChild(this._makeTitle(pattern));
+            svg.appendChild(polyline);
+        }
+
+        if (textVisible) {
+            // Bug10: null 保護
+            const firstX = timeScale.timeToCoordinate(extrema[0].time);
+            const firstY = candleSeries.priceToCoordinate(extrema[0].price);
+            if (firstX == null || firstY == null) return;
+
+            const pName = (pattern.name || '').toLowerCase();
+            let labelY;
+            if (pName === 'head_shoulders_top') {
+                const topPrice = Math.max(...slice.map(b => b.high));
+                const topY = candleSeries.priceToCoordinate(topPrice);
+                labelY = topY != null ? topY - 14 : firstY - 14;
+            } else if (pName === 'w_bottom' || pName === 'head_shoulders_bottom') {
+                const bottomPrice = Math.min(...slice.map(b => b.low));
+                const bottomY = candleSeries.priceToCoordinate(bottomPrice);
+                labelY = bottomY != null ? bottomY + 14 : firstY + 14;
+            } else {
+                labelY = firstY - 6;
+            }
+            if (labelY != null) this._drawLabel(svg, firstX + 3, labelY, pattern, labelColor);
         }
     },
 
+    // ──────────────── 三角收斂專用繪圖（Bug 1）────────────────
+
+    /**
+     * 繪製三角收斂：上方下降阻力線 + 下方上升支撐線
+     * Fallback 策略：
+     *   - 兩邊皆不足 2 點 → 矩形框
+     *   - 只有一邊不足 → 畫單線
+     */
+    _drawTriangle(svg, pattern, slice, timeScale, candleSeries, patCfg) {
+        const windowSize = Math.max(2, Math.floor(slice.length / 10));
+        const peaks   = this._findPeaks(slice, windowSize);
+        const valleys = this._findValleys(slice, windowSize);
+
+        const hasPeaks   = peaks.length   >= 2;
+        const hasValleys = valleys.length >= 2;
+
+        if (!hasPeaks && !hasValleys) {
+            this._drawRect(svg, pattern, slice, timeScale, candleSeries, patCfg);
+            return;
+        }
+
+        // Bug8b: 從 patCfg 讀取設定
+        const shapeVisible = !patCfg || patCfg.shapeVisible !== false;
+        const textVisible  = !patCfg || patCfg.textVisible  !== false;
+        const color      = patCfg?.color      || '#e8d5a3';
+        const labelColor = patCfg?.labelColor || '#e8d5a3';
+        const lineWidth  = patCfg?.lineWidth  || 1.5;
+        const opacity    = (patCfg?.opacity   ?? 85) / 100;
+
+        const drawTrendLine = (p1, p2) => {
+            const x1 = timeScale.timeToCoordinate(p1.time);
+            const y1 = candleSeries.priceToCoordinate(p1.price);
+            const x2 = timeScale.timeToCoordinate(p2.time);
+            const y2 = candleSeries.priceToCoordinate(p2.price);
+            if (x1 == null || y1 == null || x2 == null || y2 == null) return null;
+
+            if (shapeVisible) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1',           x1.toFixed(1));
+                line.setAttribute('y1',           y1.toFixed(1));
+                line.setAttribute('x2',           x2.toFixed(1));
+                line.setAttribute('y2',           y2.toFixed(1));
+                line.setAttribute('stroke',       color);
+                line.setAttribute('stroke-width', String(lineWidth));
+                line.setAttribute('opacity',      String(opacity));
+                line.appendChild(this._makeTitle(pattern));
+                svg.appendChild(line);
+            }
+            return { x1, y1 };
+        };
+
+        let labelX = null, labelY = null;
+
+        if (hasPeaks) {
+            const r = drawTrendLine(peaks[0], peaks[peaks.length - 1]);
+            if (r) { labelX = r.x1 + 3; labelY = r.y1 - 10; }
+        }
+
+        if (hasValleys) {
+            const r = drawTrendLine(valleys[0], valleys[valleys.length - 1]);
+            if (r && labelX == null) { labelX = r.x1 + 3; labelY = r.y1 - 10; }
+        }
+
+        // Bug10: null 保護
+        if (textVisible && labelX != null && labelY != null) {
+            this._drawLabel(svg, labelX, labelY, pattern, labelColor);
+        }
+    },
+
+    /**
+     * 尋找局部峰值，按索引排序，相鄰窗口內保留較高者
+     */
+    _findPeaks(slice, windowSize = 3) {
+        const peaks = [];
+        for (let i = windowSize; i < slice.length - windowSize; i++) {
+            const seg  = slice.slice(i - windowSize, i + windowSize + 1);
+            const maxH = Math.max(...seg.map(b => b.high));
+            if (slice[i].high === maxH) {
+                const last = peaks[peaks.length - 1];
+                if (last && last.idx > i - windowSize * 2) {
+                    if (slice[i].high > last.price)
+                        peaks[peaks.length - 1] = { time: slice[i].time, price: slice[i].high, idx: i };
+                } else {
+                    peaks.push({ time: slice[i].time, price: slice[i].high, idx: i });
+                }
+            }
+        }
+        return peaks;
+    },
+
+    /**
+     * 尋找局部谷值，按索引排序，相鄰窗口內保留較低者
+     */
+    _findValleys(slice, windowSize = 3) {
+        const valleys = [];
+        for (let i = windowSize; i < slice.length - windowSize; i++) {
+            const seg  = slice.slice(i - windowSize, i + windowSize + 1);
+            const minL = Math.min(...seg.map(b => b.low));
+            if (slice[i].low === minL) {
+                const last = valleys[valleys.length - 1];
+                if (last && last.idx > i - windowSize * 2) {
+                    if (slice[i].low < last.price)
+                        valleys[valleys.length - 1] = { time: slice[i].time, price: slice[i].low, idx: i };
+                } else {
+                    valleys.push({ time: slice[i].time, price: slice[i].low, idx: i });
+                }
+            }
+        }
+        return valleys;
+    },
+
+
     // ──────────────── 工具方法 ────────────────
+
+    _hexToRgb(hex) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `${r},${g},${b}`;
+    },
 
     _makeTitle(pattern) {
         const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
@@ -261,3 +443,4 @@ window.PatternAnnotation = {
         return merged.map(pt => ({ time: pt.time, price: pt.price }));
     }
 };
+

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>圖表管理 - 型態管理</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            darkBg: '#1E1E26',
+            panelBg: '#25262D',
+            sidebarBg: '#1A1B20',
+            accentOrange: '#FF7A45',
+            inputBg: '#16171D',
+            borderGray: '#33343C',
+            textGray: '#8E8E93',
+            confirmBtn: '#5482F5'
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbar">
+    /* Custom scrollbar for the dark theme */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1A1B20;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #33343C;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #44454E;
+    }
+  </style>
+<style data-purpose="layout-tweaks">
+    .active-tab {
+      color: #FF7A45;
+      border-bottom: 2px solid #FF7A45;
+    }
+    .gradient-confirm {
+      background: linear-gradient(135deg, #5482F5 0%, #3D6ED6 100%);
+    }
+    input[type="range"] {
+      accent-color: #FF7A45;
+      background: #33343C;
+      appearance: none;
+      height: 4px;
+      border-radius: 2px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      height: 12px;
+      width: 12px;
+      border-radius: 50%;
+      background: #FF7A45;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="bg-black flex items-center justify-center min-h-screen font-sans antialiased text-gray-200">
+<!-- BEGIN: MainModalContainer -->
+<div class="w-full max-w-5xl h-[700px] bg-darkBg rounded-lg shadow-2xl flex flex-col overflow-hidden border border-gray-800" data-purpose="main-modal" id="chart-management-modal">
+<!-- BEGIN: ModalHeader -->
+<header class="flex justify-between items-center px-6 py-4 border-b border-gray-800">
+<div class="flex items-center gap-2">
+<svg class="h-5 w-5 text-emerald-400" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" fill-rule="evenodd"></path>
+</svg>
+<h1 class="text-lg font-bold">圖表管理</h1>
+</div>
+<button class="text-gray-500 hover:text-white transition-colors">
+<svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</header>
+<!-- END: ModalHeader -->
+<!-- BEGIN: TabNavigation -->
+<nav class="bg-darkBg px-6 flex gap-8 border-b border-gray-800 overflow-x-auto">
+<a class="py-3 px-1 text-textGray hover:text-white transition-colors whitespace-nowrap" href="#">常規設定</a>
+<a class="py-3 px-1 text-textGray hover:text-white transition-colors whitespace-nowrap" href="#">座標軸</a>
+<a class="py-3 px-1 text-textGray hover:text-white transition-colors whitespace-nowrap" href="#">指標管理</a>
+<a class="py-3 px-1 active-tab font-medium whitespace-nowrap" href="#">型態管理</a>
+</nav>
+<!-- END: TabNavigation -->
+<div class="flex flex-1 overflow-hidden">
+<!-- BEGIN: LeftSidebar -->
+<aside class="w-56 bg-sidebarBg p-4 border-r border-gray-800 overflow-y-auto">
+<div class="mb-2 flex items-center gap-1 text-gray-400 cursor-pointer">
+<svg class="h-4 w-4 transform rotate-90" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-sm font-medium">標註型態</span>
+</div>
+<div class="pl-5 space-y-3 mt-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="rounded bg-gray-700 border-gray-600 text-accentOrange focus:ring-accentOrange h-4 w-4" type="checkbox"/>
+<span class="text-sm text-white group-hover:text-gray-200">盤整區</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="rounded bg-gray-700 border-gray-600 text-accentOrange focus:ring-accentOrange h-4 w-4" type="checkbox"/>
+<span class="text-sm text-gray-400 group-hover:text-gray-200">W底</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded bg-gray-700 border-gray-600 text-accentOrange focus:ring-accentOrange h-4 w-4" type="checkbox"/>
+<span class="text-sm text-gray-400 group-hover:text-gray-200">頭肩頂</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded bg-gray-700 border-gray-600 text-accentOrange focus:ring-accentOrange h-4 w-4" type="checkbox"/>
+<span class="text-sm text-gray-400 group-hover:text-gray-200">頭肩底</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded bg-gray-700 border-gray-600 text-accentOrange focus:ring-accentOrange h-4 w-4" type="checkbox"/>
+<span class="text-sm text-gray-400 group-hover:text-gray-200">三角收斂</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded bg-gray-700 border-gray-600 text-accentOrange focus:ring-accentOrange h-4 w-4" type="checkbox"/>
+<span class="text-sm text-gray-400 group-hover:text-gray-200">VCP</span>
+</label>
+</div>
+</aside>
+<!-- END: LeftSidebar -->
+<!-- BEGIN: MainContent -->
+<main class="flex-1 p-8 bg-panelBg overflow-y-auto">
+<div class="mb-6">
+<h2 class="text-xl font-bold mb-4">盤整區 (Consolidation Zone)</h2>
+<div class="flex gap-4 border-b border-gray-700 pb-0 mb-8">
+<span class="active-tab text-sm pb-2 cursor-pointer font-medium">型態設定</span>
+<span class="text-textGray text-sm pb-2 cursor-pointer hover:text-gray-300">型態介紹</span>
+</div>
+</div>
+<!-- Pattern Specific Settings Table -->
+<div class="w-full">
+<!-- Table Header -->
+<div class="grid grid-cols-10 gap-4 px-4 text-xs text-textGray mb-4 font-medium">
+<div class="col-span-1 text-center">顯示</div>
+<div class="col-span-1 text-center">顏色</div>
+<div class="col-span-4 text-center">不透明度 (%)</div>
+<div class="col-span-2 text-center">標註文字</div>
+<div class="col-span-2 text-center">文字色</div>
+</div>
+<!-- Rows Container -->
+<div class="space-y-3">
+<!-- Simplified Setting Row -->
+<div class="grid grid-cols-10 gap-4 px-4 py-4 bg-inputBg rounded-lg items-center border border-transparent hover:border-gray-700 transition-all">
+<div class="col-span-1 flex justify-center">
+<input checked="" class="rounded bg-gray-800 border-gray-700 text-accentOrange focus:ring-accentOrange h-4 w-4" type="checkbox"/>
+</div>
+<div class="col-span-1 flex justify-center">
+<div class="w-10 h-6 rounded bg-red-500 cursor-pointer border border-white/10"></div>
+</div>
+<div class="col-span-4 flex items-center gap-3 px-2">
+<input class="w-full" type="range" value="80"/>
+<span class="text-[10px] w-8 text-right text-textGray">80</span>
+</div>
+<div class="col-span-2 flex justify-center">
+<input checked="" class="rounded bg-gray-800 border-gray-700 text-accentOrange focus:ring-accentOrange h-4 w-4" type="checkbox"/>
+</div>
+<div class="col-span-2 flex justify-center">
+<div class="w-10 h-6 rounded bg-white cursor-pointer border border-gray-700"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- END: MainContent -->
+</div>
+<!-- BEGIN: ModalFooter -->
+<footer class="p-6 border-t border-gray-800 bg-darkBg flex justify-end items-center gap-4">
+<button class="px-6 py-2 text-sm text-gray-400 hover:text-white transition-colors">取消</button>
+<button class="px-8 py-2 text-sm font-medium text-white rounded gradient-confirm shadow-lg hover:brightness-110 active:scale-95 transition-all">確定</button>
+</footer>
+<!-- END: ModalFooter -->
+</div>
+<!-- END: MainModalContainer -->
+</body></html>

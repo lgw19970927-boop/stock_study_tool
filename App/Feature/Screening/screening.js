@@ -163,11 +163,12 @@ window.ScreeningPage = {
         // Indicator Logic delegated to ScreeningBlockIndicator
 
         // ✅ Phase 5: Bind Phase 5 buttons (Show Indicators, Chart Settings)
-        const btnShowIndicators = document.getElementById('btnShowIndicators');
-        if (btnShowIndicators) {
-            btnShowIndicators.addEventListener('click', () => {
+        const indicatorsToggle = document.getElementById('indicatorsToggle');
+        if (indicatorsToggle) {
+            indicatorsToggle.addEventListener('change', () => {
                 if (window.ChartController) {
-                    window.ChartController.toggleIndicatorsVisibility();
+                    window.ChartController.isIndicatorsVisible = indicatorsToggle.checked;
+                    window.ChartController.renderIndicatorsFromState();
                 }
             });
         }
