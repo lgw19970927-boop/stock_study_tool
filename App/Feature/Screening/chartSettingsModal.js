@@ -53,7 +53,7 @@ window.ChartSettingsModal = {
         head_shoulders_top:    { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1.5, opacity: 85 },
         w_bottom:              { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1.5, opacity: 85 },
         head_shoulders_bottom: { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1.5, opacity: 85 },
-        triangle:              { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1.5, opacity: 85 },
+        triangle:              { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1,   opacity: 85 },
         consolidation:         { masterVisible: true, shapeVisible: true, textVisible: true, color: '#a0a8b8', labelColor: '#c8cdd8', lineWidth: 1,   opacity: 70 }
     },
 
@@ -749,15 +749,18 @@ window.ChartSettingsModal = {
         if (!patternKey) {
             return `<div class="settings-placeholder"><p>請選擇左側的型態</p></div>`;
         }
-        const cfg = (this._patternConfig || this.defaultPatternConfig)[patternKey] || {};
+        // ✅ Bug2 Fix: 使用可選鏈避免 _patternConfig 存在但缺少該 key 時回傳 {} 並使用錯誤 fallback 顏色
+        const cfg = this._patternConfig?.[patternKey] ?? this.defaultPatternConfig[patternKey] ?? {};
         const name = this._patternNameMap[patternKey] || patternKey;
         const opacity = cfg.opacity ?? 85;
+        const lineWidth = cfg.lineWidth ?? 1;
         return `
         <div class="settings-panel active">
             <h3 class="settings-title">${name}</h3>
             <div class="pattern-table-header">
                 <span>顯示</span>
                 <span>顏色</span>
+                <span>邊框粗細</span>
                 <span>不透明度 (%)</span>
                 <span>標註文字</span>
                 <span>文字色</span>
@@ -769,8 +772,13 @@ window.ChartSettingsModal = {
                 </div>
                 <div class="pattern-cell-center">
                     <button class="color-picker-btn pattern-color-btn" id="patternColorBtn_${patternKey}"
-                            style="background:${cfg.color || '#00d4aa'};"
+                            style="background:${cfg.color ?? '#a0a8b8'};"
                             onclick="window.ChartSettingsModal.openColorPickerForPattern('${patternKey}','shape')"></button>
+                </div>
+                <div class="pattern-opacity-cell">
+                    <input type="range" value="${lineWidth}" min="1" max="5" step="0.5" style="flex:1;"
+                           oninput="window.ChartSettingsModal.updatePatternField('${patternKey}','lineWidth',+this.value);document.getElementById('patternLwVal_${patternKey}').textContent=this.value">
+                    <span id="patternLwVal_${patternKey}" class="opacity-value">${lineWidth}</span>
                 </div>
                 <div class="pattern-opacity-cell">
                     <input type="range" value="${opacity}" min="0" max="100" style="flex:1;"
@@ -783,7 +791,7 @@ window.ChartSettingsModal = {
                 </div>
                 <div class="pattern-cell-center">
                     <button class="color-picker-btn pattern-color-btn" id="patternLabelColorBtn_${patternKey}"
-                            style="background:${cfg.labelColor || '#ffffff'};"
+                            style="background:${cfg.labelColor ?? '#c8cdd8'};"
                             onclick="window.ChartSettingsModal.openColorPickerForPattern('${patternKey}','label')"></button>
                 </div>
             </div>
@@ -797,8 +805,9 @@ window.ChartSettingsModal = {
     },
 
     openColorPickerForPattern(patternKey, target) {
-        const cfg = (this._patternConfig || this.defaultPatternConfig)[patternKey] || {};
-        const currentColor = target === 'label' ? (cfg.labelColor || '#ffffff') : (cfg.color || '#00d4aa');
+        // ✅ Bug2 Fix: 同步修正 fallback 顏色為亮灰，與 pattern_annotation.js 端一致
+        const cfg = this._patternConfig?.[patternKey] ?? this.defaultPatternConfig[patternKey] ?? {};
+        const currentColor = target === 'label' ? (cfg.labelColor ?? '#c8cdd8') : (cfg.color ?? '#a0a8b8');
         this.openColorPicker(currentColor, (color) => {
             const field = target === 'label' ? 'labelColor' : 'color';
             this.updatePatternField(patternKey, field, color);
@@ -1144,12 +1153,23 @@ window.ChartSettingsModal = {
         if (window.ChartController && this._patternConfig) {
             window.ChartController.applyPatternConfig(this._patternConfig);
         }
-        // ✅ Bug2 Fix: 重新訂閱縮放事件，避免設定後型態標示未隨圖表縮放連動
-        if (window.PatternAnnotation) window.PatternAnnotation._subscribeRedraw();
 
         // ✅ Bug3 / Feature B: 使用現有 K 線資料重渲染（不重新 fetch API）
         if (window.ChartController) {
             window.ChartController.renderIndicatorsFromState();
+        }
+
+        // ✅ Bug3 Fix: 雙層 RAF 確保 LightweightCharts 所有 layout pass 全部完成後
+        // 再重新訂閱 + render，避免縮放連動在第二次 layout pass 後失效。
+        if (window.PatternAnnotation) {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (window.PatternAnnotation) {
+                        window.PatternAnnotation._subscribeRedraw();
+                        window.PatternAnnotation.render();
+                    }
+                });
+            });
         }
 
         // 關閉彈窗

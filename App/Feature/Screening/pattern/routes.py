@@ -74,6 +74,12 @@ async def pattern_recognition_stream(
                     "current": idx + 1,
                     "total":   total,
                     "matched": matched_count,
+                    "partial_stocks":     matched_stocks,
+                    "partial_statistics": {
+                        "total":   matched_count,
+                        "gainers": sum(1 for s in matched_stocks if s["change_percent"] > 0),
+                        "losers":  sum(1 for s in matched_stocks if s["change_percent"] < 0),
+                    },
                 })
 
                 if idx % 10 == 0:

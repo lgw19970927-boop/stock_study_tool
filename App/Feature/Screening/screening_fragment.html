@@ -25,24 +25,29 @@
                 </h2>
             </div>
             <div class="filter-section">
-                <label class="filter-label">時間區段</label>
-                <div class="time-range-group">
-                    <button type="button" class="time-range-btn" data-range="1D">1D</button>
-                    <button type="button" class="time-range-btn" data-range="1W">1W</button>
-                    <button type="button" class="time-range-btn active" data-range="1M">1M</button>
-                    <button type="button" class="time-range-btn" data-range="3M">3M</button>
-                    <button type="button" class="time-range-btn" data-range="6M">6M</button>
-                    <button type="button" class="time-range-btn" data-range="1Y">1Y</button>
-                    <button type="button" class="time-range-btn" data-range="custom">自訂</button>
-                </div>
-                <div class="custom-date-range" id="customDateRange" style="display: none;">
-                    <div class="date-input-group">
-                        <label>開始日期</label>
-                        <input type="date" class="date-input" id="startDate">
+                <label class="filter-label">時間設定</label>
+                <div class="time-range-radio-group">
+                    <label class="radio-item tr-option">
+                        <input type="radio" name="timeRangeMode" value="today"> 今天
+                    </label>
+                    <label class="radio-item tr-option">
+                        <input type="radio" name="timeRangeMode" value="specific"> 自訂特定時點
+                    </label>
+                    <div class="tr-sub-panel" id="specificDatePanel" style="display:none;">
+                        <input type="date" class="date-input" id="specificDate">
                     </div>
-                    <div class="date-input-group">
-                        <label>結束日期</label>
-                        <input type="date" class="date-input" id="endDate">
+                    <label class="radio-item tr-option">
+                        <input type="radio" name="timeRangeMode" value="custom"> 自訂分析時間範圍 <span class="badge-sm">測試用</span>
+                    </label>
+                    <div class="tr-sub-panel custom-date-range" id="customDateRange" style="display:none;">
+                        <div class="date-input-group">
+                            <label>開始日期</label>
+                            <input type="date" class="date-input" id="startDate" value="2025-01-01">
+                        </div>
+                        <div class="date-input-group">
+                            <label>結束日期</label>
+                            <input type="date" class="date-input" id="endDate" value="2025-12-31">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -373,44 +378,41 @@
         <!-- 股票列表 -->
         <div class="stock-list-container">
             <div class="list-header">
-                <div class="col-symbol">股票代碼</div>
+                <div class="col-symbol sortable" data-sort="symbol">股票代碼 <span class="sort-icon">⇅</span></div>
                 <div class="col-name">公司名稱</div>
-                <div class="col-price">現價</div>
-                <div class="col-change">漲跌幅</div>
-                <div class="col-volume">成交額</div>
+                <div class="col-price sortable" data-sort="price">現價 <span class="sort-icon">⇅</span></div>
+                <div class="col-change sortable" data-sort="change">漲跌幅 <span class="sort-icon">⇅</span></div>
+                <div class="col-volume sortable" data-sort="volume">成交量 <span class="sort-icon">⇅</span></div>
                 <div class="col-pattern">篩選標籤</div>
             </div>
             <div class="stock-list" id="stockList">
                 <!-- 進度條（執行中顯示） -->
                 <div id="screeningProgressArea"
-                    style="display:none; padding: 40px 24px; align-items:center; justify-content:center;">
-                    <div style="width:100%; max-width:480px;">
-                        <div
-                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    style="display:none; padding: 24px 24px; align-items:center; justify-content:center; gap:0;">
+                    <div style="flex:1; max-width:480px; min-width:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                             <span id="progressStageText" style="color:var(--text-primary); font-size:13px;">&#9203;
                                 正在篩選...</span>
                             <span id="progressMatchedText"
                                 style="color:var(--accent, #00d4aa); font-size:12px; font-weight:600;">找到符合：0 支</span>
                         </div>
-                        <div
-                            style="background:var(--border, #2a2a3e); border-radius:6px; height:6px; overflow:hidden; margin-bottom:8px;">
+                        <div style="background:var(--border, #2a2a3e); border-radius:6px; height:6px; overflow:hidden; margin-bottom:8px;">
                             <div id="progressFill"
                                 style="height:100%; width:0%; border-radius:6px; transition:width 0.3s ease; background: linear-gradient(90deg, #00d4aa, #7c3aed);">
                             </div>
                         </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                            <span id="progressDetailText" style="color:var(--text-secondary); font-size:11px;">已分析 0 / 0
-                                支</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span id="progressDetailText" style="color:var(--text-secondary); font-size:11px;">已分析 0 / 0 支</span>
                             <span id="progressPercent" style="color:var(--text-secondary); font-size:11px;">0%</span>
                         </div>
-                        <div style="display:flex; justify-content:center;">
-                            <button type="button" id="btnStopFilter" class="btn-stop-filter">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                                    <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-                                </svg>
-                                停止篩選
-                            </button>
-                        </div>
+                    </div>
+                    <div style="margin-left:20px; flex-shrink:0; display:flex; align-items:center;">
+                        <button type="button" id="btnStopFilter" class="btn-stop-filter">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                            </svg>
+                            停止篩選
+                        </button>
                     </div>
                 </div>
                 <!-- 初始空白狀態 -->
@@ -423,6 +425,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- 垂直分割才：拖拉調整上方股票列表與下方K線圖高度 -->
+        <div id="verticalResizeHandle" class="vertical-resize-handle" title="拖拉調整高度"></div>
 
         <!-- K線圖區域 -->
         <div class="chart-container">
@@ -508,16 +513,27 @@
     </div><!-- end .content-area -->
 </div><!-- end #page-screening -->
 
-<!-- 停止篩選確認對話框 -->
-<div id="stopFilterDialog" class="stop-dialog-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="stopDialogTitle">
-    <div class="stop-dialog">
-        <h3 id="stopDialogTitle" class="stop-dialog-title">停止篩選</h3>
-        <p class="stop-dialog-body">確定要停止目前的篩選作業嗎？</p>
-        <p class="stop-dialog-hint">已找到符合條件的股票將不會被清除，可在篩選結果中查看。</p>
-        <div class="stop-dialog-actions">
-            <button type="button" id="btnCancelStop" class="btn-dialog-cancel">隨它，繼續</button>
-            <button type="button" id="btnConfirmStop" class="btn-dialog-confirm">確認停止</button>
-        </div>
+<!-- 停止篩選可移動提示視窗 -->
+<div id="stopFilterDialog" class="stop-dialog-window" style="display:none;" role="dialog" aria-modal="true">
+    <div class="stop-dialog-header" id="stopDialogHeader">
+        <span class="stop-dialog-title">確認停止篩選</span>
+        <button type="button" id="btnCloseStopDialog" class="stop-dialog-close" title="關閉" aria-label="關閉">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+    <div class="stop-dialog-body">
+        <p class="stop-dialog-desc">篩選尚未執行完成，請確定是否停止篩選</p>
+        <label class="stop-dialog-checkbox-label">
+            <input type="checkbox" id="cbShowPartialResults">
+            <span>顯示已執行完成的結果</span>
+        </label>
+    </div>
+    <div class="stop-dialog-footer">
+        <button type="button" id="btnConfirmStop" class="btn-dialog-confirm">確定</button>
+        <button type="button" id="btnCancelStop" class="btn-dialog-cancel">取消</button>
     </div>
 </div>
 
@@ -545,17 +561,17 @@
 <script src="/feature/Screening/function_block/indicator_block.js"></script>
 <!-- Feature B / C: 指標控制列 + 型態標註 -->
 <script src="/feature/Screening/function_block/indicator_top_bar.js?v=2.0"></script>
-<script src="/feature/Screening/function_block/pattern_annotation.js?v=2.4"></script>
-<script src="/feature/Screening/chartController.js?v=2.4"></script>
+<script src="/feature/Screening/function_block/pattern_annotation.js?v=2.5"></script>
+<script src="/feature/Screening/chartController.js?v=2.5"></script>
 
 <!-- 策略管理器與主控制 -->
 <script src="/feature/Screening/strategyManager.js?v=2.0"></script>
-<script src="/feature/Screening/screening.js?v=2.0"></script>
+<script src="/feature/Screening/screening.js?v=2.1"></script>
 
 <!-- 圖表設定彈窗 -->
 <script src="/feature/Screening/templates/ChartSettingsModalTemplate.js?v=2.2"></script>
 <script src="/feature/Screening/templates/ColorPickerTemplate.js?v=2.2"></script>
-<script src="/feature/Screening/chartSettingsModal.js?v=2.4"></script>
+<script src="/feature/Screening/chartSettingsModal.js?v=2.6"></script>
 
 <!-- TODO [P1-Step2]: GoldenLayout v2 實作後取消此行註解
 <script src="/static/js/layout-screening.js"></script>

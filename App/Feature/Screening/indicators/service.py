@@ -145,6 +145,11 @@ def resolve_analysis_dates(
     if start_date and end_date:
         return start_date, end_date
 
+    # 只有 end_date（今天 / 特定時點模式）：自動往前推 365 天
+    if end_date and not start_date:
+        end = date.fromisoformat(end_date)
+        return (end - timedelta(days=365)).isoformat(), end_date
+
     today = date.today()
     delta_map = {
         "1D": timedelta(days=1),

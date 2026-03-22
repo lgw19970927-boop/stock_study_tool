@@ -314,3 +314,77 @@
 ::-webkit-scrollbar-corner {
     background-color: var(--bg-primary);
 }
+
+/* ===== 時間設定 Radio Group ===== */
+.time-range-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 0;
+}
+
+.tr-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-primary);
+    user-select: none;
+}
+
+.tr-option input[type="radio"] {
+    accent-color: var(--accent, #00d4aa);
+    cursor: pointer;
+}
+
+.tr-sub-panel {
+    margin-left: 22px;
+    padding: 6px 0 2px;
+}
+
+.badge-sm {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(124, 58, 237, 0.2);
+    color: #a78bfa;
+    font-weight: 500;
+}
+
+/* ===== 欄位排序 ===== */
+.list-header .sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s;
+}
+
+.list-header .sortable:hover {
+    color: var(--accent, #00d4aa);
+}
+
+.list-header .sortable.sorted {
+    color: var(--accent, #00d4aa);
+}
+
+.sort-icon {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-left: 2px;
+}
+
+.list-header .sortable.sorted .sort-icon {
+    opacity: 1;
+}
+
+/* ===== 篩選狀態 Scrollbar 控制 ===== */
+/* 空閒 / 篩選中：隱藏垂直 scrollbar */
+#stockList.state-idle,
+#stockList.state-progressing {
+    overflow-y: hidden;
+}
+
+/* 篩選完成後恢復 scrollbar（state-result 或無 state class） */
+#stockList.state-result {
+    overflow-y: auto;
+}

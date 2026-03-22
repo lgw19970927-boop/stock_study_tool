@@ -147,6 +147,13 @@ async def filter_stocks_stream(
                     "current": idx + 1,
                     "total":   total,
                     "matched": matched_count,
+                    "partial_stocks":     matched_stocks,
+                    "partial_statistics": {
+                        "total":             matched_count,
+                        "gainers":           sum(1 for s in matched_stocks if s.get("change_percent", 0) > 0),
+                        "losers":            sum(1 for s in matched_stocks if s.get("change_percent", 0) < 0),
+                        "data_insufficient": sum(1 for s in matched_stocks if s.get("data_insufficient", False)),
+                    },
                 })
 
                 if idx % 10 == 0:

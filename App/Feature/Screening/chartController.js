@@ -110,6 +110,21 @@ window.ChartController = {
         // BUG2: DOM 模式懸浮窗事件（吸附、左右邊界切換、Y軸碰撞偵測）
         this._bindTooltipMouseEvents(chartContainer);
 
+        // Task4: 雙擊圖表區域即切換至懸浮窗模式
+        chartContainer.addEventListener('dblclick', () => {
+            this._applyTooltipMode('floating');
+            if (window.ChartSettingsModal) {
+                if (!window.ChartSettingsModal._generalConfig) {
+                    window.ChartSettingsModal._generalConfig =
+                        JSON.parse(JSON.stringify(window.ChartSettingsModal.defaultGeneralConfig));
+                }
+                window.ChartSettingsModal._generalConfig.tooltipMode = 'floating';
+                window.ChartSettingsModal.saveToLocalStorage();
+            }
+            const slt = document.getElementById('generalTooltipMode');
+            if (slt) slt.value = 'floating';
+        });
+
         console.log('[ChartController] 圖表初始化完成');
 
         // Bug 10: 圖表重建後重新訂閑 PatternAnnotation的縮放事件，避免綁定舊 timeScale 實例
@@ -799,13 +814,30 @@ window.ChartController = {
         const tooltip = document.getElementById('chartTooltip');
         if (tooltip && mode === 'hidden') tooltip.style.display = 'none';
 
-        // Bug1 Fix: 依模式連動 LightweightCharts 內建十字線顯示
+        // Bug4 Fix: CrosshairMode.Hidden 不在 LW v4 中，改用
+        // vertLine/horzLine visible 控制十字線顯示以避免驱動 LW 進入異常狀態。
         if (this.chart) {
-            const LW = window.LightweightCharts;
-            const crosshairMode = (mode === 'hidden')
-                ? (LW?.CrosshairMode?.Hidden ?? 3)
-                : (LW?.CrosshairMode?.Normal ?? 1);
-            try { this.chart.applyOptions({ crosshair: { mode: crosshairMode } }); } catch (_) {}
+            if (mode === 'hidden') {
+                try {
+                    this.chart.applyOptions({
+                        crosshair: {
+                            vertLine: { visible: false },
+                            horzLine: { visible: false }
+                        }
+                    });
+                } catch (_) {}
+            } else {
+                const LW = window.LightweightCharts;
+                try {
+                    this.chart.applyOptions({
+                        crosshair: {
+                            mode: LW?.CrosshairMode?.Normal ?? 0,
+                            vertLine: { visible: true },
+                            horzLine: { visible: true }
+                        }
+                    });
+                } catch (_) {}
+            }
         }
     },
 
@@ -913,6 +945,9 @@ window.ChartController = {
         });
 
         console.log('[ChartController] applyAxisSettings:', cfg.priceScaleMode, placement);
+
+        // Bug1 防禦：坐標軸設定後重新訂閱縮放事件，確保 PatternAnnotation 仍連動
+        if (window.PatternAnnotation) window.PatternAnnotation._subscribeRedraw();
     },
 
     /**

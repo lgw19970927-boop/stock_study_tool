@@ -260,35 +260,42 @@ body {
     overflow-y: auto;
 }
 
-/* ===== Sidebar Resize Handle ===== */
+/* ===== Sidebar Resize Handle (vertical bar, left↔right) ===== */
 .sidebar-resize-handle {
-    flex: 0 0 5px;
-    width: 5px;
+    flex: 0 0 6px;
+    width: 6px;
     cursor: col-resize;
     background: transparent;
     position: relative;
     z-index: 10;
-    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
 }
 .sidebar-resize-handle:hover,
 .sidebar-resize-handle.is-dragging {
-    background: var(--accent, #00d4aa);
+    background: color-mix(in srgb, var(--accent, #ebeded) 12%, transparent);
 }
-.sidebar-resize-handle::after {
-    content: '↔';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--text-muted);
-    font-size: 11px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.15s;
+/* 拖曳游標已由 cursor: col-resize 處理，滑鼠移至 handle 時自動顯示雙向箭頭 */
+
+/* ===== Vertical Resize Handle (horizontal bar, top↕bottom) ===== */
+.vertical-resize-handle {
+    flex: 0 0 6px;
+    height: 6px;
+    cursor: row-resize;
+    background: transparent;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
 }
-.sidebar-resize-handle:hover::after {
-    opacity: 1;
+.vertical-resize-handle:hover,
+.vertical-resize-handle.is-dragging {
+    background: color-mix(in srgb, var(--accent, #00d4aa) 12%, transparent);
 }
+/* 拖曳游標已由 cursor: row-resize 處理，滑鼠移至 handle 時自動顯示雙向箭頭 */
 
 /* ===== Sidebar ===== */
 .sidebar {
@@ -733,11 +740,14 @@ body {
 /* ===== Stock List ===== */
 .stock-list-container {
     flex: 0 0 auto;
-    max-height: 280px;
+    height: var(--stock-list-h, 280px);
+    min-height: 80px;
+    max-height: 70vh;
     display: flex;
     flex-direction: column;
     border-bottom: 1px solid var(--border-color);
     overflow-x: auto;
+    overflow-y: hidden; /* Bug3 Fix: 防止容器因內容筆數變動自動撐高，內層 .stock-list 自行捲動 */
 }
 
 /* Custom Scrollbar for stock-list-container */

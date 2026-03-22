@@ -118,7 +118,9 @@ window.PatternAnnotation = {
             if (!pattern.start_date || !pattern.end_date) return;
 
             // Bug9e: 總開關判斷，若 masterVisible === false 则此型態全部跳過
-            const patCfg = window.ChartSettingsModal?._patternConfig?.[pattern.name];
+            // ✅ Bug2 Fix: 先查 _patternConfig，再 fallback 至 defaultPatternConfig，確保初始渲染與設定額色一致
+            const patCfg = window.ChartSettingsModal?._patternConfig?.[pattern.name]
+                ?? window.ChartSettingsModal?.defaultPatternConfig?.[pattern.name];
             if (patCfg && patCfg.masterVisible === false) return;
 
             // 轉換為 timestamp（秒）進行比較
@@ -161,11 +163,11 @@ window.PatternAnnotation = {
 
         if (x1 == null || x2 == null || y1 == null || y2 == null) return;
 
-        // Bug8b: 從 patCfg 讀取設定，沒有則用 fallback
+        // Bug8b: 從 patCfg 讀取設定，沒有則用預設灰白色
         const shapeVisible = !patCfg || patCfg.shapeVisible !== false;
         const textVisible  = !patCfg || patCfg.textVisible  !== false;
-        const color      = patCfg?.color      || '#6090c8';
-        const labelColor = patCfg?.labelColor || '#ffffff';
+        const color      = patCfg?.color      || '#a0a8b8';
+        const labelColor = patCfg?.labelColor || '#c8cdd8';
         const lineWidth  = patCfg?.lineWidth  || 1;
         const opacity    = (patCfg?.opacity   ?? 70) / 100;
 
@@ -211,8 +213,8 @@ window.PatternAnnotation = {
         // Bug8b: 從 patCfg 讀取設定
         const shapeVisible = !patCfg || patCfg.shapeVisible !== false;
         const textVisible  = !patCfg || patCfg.textVisible  !== false;
-        const color      = patCfg?.color      || '#00d4aa';
-        const labelColor = patCfg?.labelColor || '#00d4aa';
+        const color      = patCfg?.color      || '#a0a8b8';
+        const labelColor = patCfg?.labelColor || '#c8cdd8';
         const lineWidth  = patCfg?.lineWidth  || 1.5;
         const opacity    = (patCfg?.opacity   ?? 85) / 100;
 
@@ -274,9 +276,9 @@ window.PatternAnnotation = {
         // Bug8b: 從 patCfg 讀取設定
         const shapeVisible = !patCfg || patCfg.shapeVisible !== false;
         const textVisible  = !patCfg || patCfg.textVisible  !== false;
-        const color      = patCfg?.color      || '#e8d5a3';
-        const labelColor = patCfg?.labelColor || '#e8d5a3';
-        const lineWidth  = patCfg?.lineWidth  || 1.5;
+        const color      = patCfg?.color      || '#a0a8b8';
+        const labelColor = patCfg?.labelColor || '#c8cdd8';
+        const lineWidth  = patCfg?.lineWidth  || 1;
         const opacity    = (patCfg?.opacity   ?? 85) / 100;
 
         const drawTrendLine = (p1, p2) => {

@@ -10,8 +10,8 @@ window.state = {
         frequency: '', // 'daily', 'weekly', 'monthly'
         indicators: [],
         patterns: [],
-        sensitivity: 75,
-        patternTimeframe: { min: 20, max: 60, interval: '1D' },
+        sensitivity: 40,
+        patternTimeframe: { min: 8, max: 60, interval: '1D' },
         // 分析時間範圍（由 ScreeningBlockTimeRange 寫入）
         time_range: '1M',               // 快捷鍵，null 代表自訂
         analysis_start_date: '',        // 自訂模式用
@@ -33,7 +33,7 @@ window.state = {
                 patternTimeframe: { min: 8, max: 50, interval: '1D' }
             }
         },
-        {
+        {   // default-strat-2 end
             id: 'default-strat-2',
             name: '測試指標篩選功能',
             timestamp: Date.now(),
@@ -55,6 +55,34 @@ window.state = {
                 patterns: [],
                 sensitivity: 75,
                 patternTimeframe: { min: 20, max: 60, interval: '1D' }
+            }
+        },
+        {
+            id: 'default-strat-3',
+            name: '測試指標+型態功能',
+            timestamp: Date.now(),
+            descLines: [
+                '市場範圍: 上市/上櫃/興櫃 | 篩選頻率: 每日',
+                'MA-日K: MA20 > MA50',
+                '技術型態: 盤整區 W底 三角收斂 | 敏感度: 40% | 週期: 8~150根 (1D)'
+            ],
+            data: {
+                markets: ['listed', 'otc', 'ipo'],
+                frequency: 'daily',
+                indicators: [
+                    {
+                        type: 'sma',
+                        timeframe: '1d',
+                        period: '日K',
+                        range: '當前值',
+                        presets: [],
+                        custom: [{ t1: 'MA', v1: '20', op: 'gt', t2: 'MA', v2: '50' }],
+                        conditions: [{ left: 'MA20', operator: '>', right: 'MA50' }]
+                    }
+                ],
+                patterns: ['consolidation', 'w_bottom', 'triangle'],
+                sensitivity: 40,
+                patternTimeframe: { min: 8, max: 150, interval: '1D' }
             }
         }
     ],
@@ -79,6 +107,10 @@ window.state = {
 };
 
 window.ScreeningPage = {
+    _sortState: { field: null, order: null },
+    _lastRenderStocks: null,
+    _lastRenderStats: null,
+
     init: function () {
         console.log('ScreeningPage Initializing...');
 
@@ -106,8 +138,18 @@ window.ScreeningPage = {
 
         // Feature1: 全螢幕功能
         this.initFullscreen();
+        // Feature2: 停止對話框拖懳
+        this.initStopDialogDrag();
         // Feature3: 側邊欄拖拉調整
         this.initSidebarResize();
+        // Feature4: 上下分割拖拉調整
+        this.initVerticalResize();
+
+        // 欄位排序標題初始化
+        this._initSortHeaders();
+        // 初始狀態：隱藏 scrollbar
+        const stockListInit = document.getElementById('stockList');
+        if (stockListInit) stockListInit.classList.add('state-idle');
     },
 
     // ✅ Phase 1 重構：圖表初始化已移至 ChartController.init()
@@ -194,6 +236,8 @@ window.ScreeningPage = {
         if (btnCancelStop) btnCancelStop.addEventListener('click', () => this._cancelStop());
         const btnConfirmStop = document.getElementById('btnConfirmStop');
         if (btnConfirmStop) btnConfirmStop.addEventListener('click', () => this._confirmStop());
+        const btnCloseStopDialog = document.getElementById('btnCloseStopDialog');
+        if (btnCloseStopDialog) btnCloseStopDialog.addEventListener('click', () => this._cancelStop());
 
     },
 
@@ -397,6 +441,8 @@ window.ScreeningPage = {
         // 🎯 只有當所有阻擋驗證都通過後，才正式顯示「正在篩選」的進度條與清空畫面
         this._isStopped = false;
         this._currentEvtSrc = null;
+        this._lastStageResults = null;
+        this._currentPartialResults = null; // Feature Bug 1: 清除中途累積結果
         this._showProgress();
 
         try {
@@ -421,6 +467,9 @@ window.ScreeningPage = {
                     this._renderResults([], indicatorResult.statistics);
                     return;
                 }
+
+                // ✅ 建立階段一結果存檔 ，供用戶中途停止時可選擇顯示
+                this._lastStageResults = { stocks: indicatorResult.stocks, statistics: indicatorResult.statistics };
 
                 const patternResult = await this._streamPatterns(
                     patternState, filtersToRun, symbols, '[2/2] 正在辨識型態...'
@@ -483,6 +532,8 @@ window.ScreeningPage = {
                     child.remove();
                 }
             });
+            stockList.classList.remove('state-idle', 'state-result');
+            stockList.classList.add('state-progressing');
         }
     },
 
@@ -541,6 +592,13 @@ window.ScreeningPage = {
                     const data = JSON.parse(e.data);
                     if (data.type === 'progress') {
                         this._updateProgressBar(data.current, data.total, data.matched, stageText);
+                        // Feature Bug 1: 累積中途已篩選出的股票清單
+                        if (data.partial_stocks !== undefined) {
+                            this._currentPartialResults = {
+                                stocks:     data.partial_stocks,
+                                statistics: data.partial_statistics || {}
+                            };
+                        }
                     } else if (data.type === 'done') {
                         evtSrc.close();
                         this._currentEvtSrc = null;
@@ -602,6 +660,11 @@ window.ScreeningPage = {
 
     _renderResults: function (stocks, statistics) {
         const stockList = document.getElementById('stockList');
+        // 移除進行中 / idle 的 state class，切換為 result 狀態（顯示 scrollbar）
+        if (stockList) {
+            stockList.classList.remove('state-idle', 'state-progressing');
+            stockList.classList.add('state-result');
+        }
         const totalStocksEl = document.getElementById('totalStocks');
         const gainersEl = document.getElementById('gainers');
         const losersEl = document.getElementById('losers');
@@ -615,6 +678,9 @@ window.ScreeningPage = {
         if (dataInsufficientEl) dataInsufficientEl.textContent = statistics?.data_insufficient ?? 0;
 
         window.state.lastResults = stocks;
+        this._lastRenderStocks = stocks;
+        this._lastRenderStats = statistics;
+        const sortedStocks = this._sortStocks(stocks);
 
         // 清空舊 stock item
         if (stockList) {
@@ -642,7 +708,7 @@ window.ScreeningPage = {
 
         if (emptyState) emptyState.style.display = 'none';
 
-        stocks.forEach(stock => {
+        sortedStocks.forEach(stock => {
             const changeClass = stock.change_percent >= 0 ? 'positive' : 'negative';
             const changeSign = stock.change_percent >= 0 ? '+' : '';
 
@@ -703,6 +769,59 @@ window.ScreeningPage = {
         });
     },
 
+    // ── 欄位排序 ─────────────────────────────────────────
+
+    _initSortHeaders: function () {
+        document.querySelectorAll('.list-header .sortable').forEach(col => {
+            col.style.cursor = 'pointer';
+            col.addEventListener('click', () => {
+                const field = col.dataset.sort;
+                if (this._sortState.field === field) {
+                    if (this._sortState.order === 'desc') {
+                        this._sortState.order = 'asc';
+                    } else {
+                        this._sortState.field = null;
+                        this._sortState.order = null;
+                    }
+                } else {
+                    this._sortState.field = field;
+                    this._sortState.order = 'desc';
+                }
+                this._updateSortIcons();
+                if (this._lastRenderStocks) {
+                    this._renderResults(this._lastRenderStocks, this._lastRenderStats);
+                }
+            });
+        });
+    },
+
+    _sortStocks: function (stocks) {
+        if (!this._sortState.field || !this._sortState.order) return [...stocks];
+        const field = this._sortState.field;
+        const dir = this._sortState.order === 'desc' ? -1 : 1;
+        return [...stocks].sort((a, b) => {
+            if (field === 'symbol') return dir * a.symbol.localeCompare(b.symbol);
+            if (field === 'price')  return dir * (a.price - b.price);
+            if (field === 'change') return dir * (a.change_percent - b.change_percent);
+            if (field === 'volume') return dir * (a.volume - b.volume);
+            return 0;
+        });
+    },
+
+    _updateSortIcons: function () {
+        document.querySelectorAll('.list-header .sortable').forEach(col => {
+            const icon = col.querySelector('.sort-icon');
+            if (!icon) return;
+            if (this._sortState.field === col.dataset.sort) {
+                icon.textContent = this._sortState.order === 'desc' ? '↓' : '↑';
+                col.classList.add('sorted');
+            } else {
+                icon.textContent = '⇅';
+                col.classList.remove('sorted');
+            }
+        });
+    },
+
     // Helper: Generate Mock OHLC Data
     generateMockOHLC: function (count) {
         const prices = [];
@@ -757,7 +876,15 @@ window.ScreeningPage = {
 
     _showStopDialog: function () {
         const dialog = document.getElementById('stopFilterDialog');
-        if (dialog) dialog.style.display = 'flex';
+        if (!dialog) return;
+        // 重置位置到畫面中央開始
+        dialog.style.left = '50%';
+        dialog.style.top  = '30%';
+        dialog.style.transform = 'translateX(-50%)';
+        dialog.style.display = 'block';
+        // 重置勾選框
+        const cb = document.getElementById('cbShowPartialResults');
+        if (cb) cb.checked = false;
     },
 
     _cancelStop: function () {
@@ -768,8 +895,93 @@ window.ScreeningPage = {
     _confirmStop: function () {
         const dialog = document.getElementById('stopFilterDialog');
         if (dialog) dialog.style.display = 'none';
+
+        const cb = document.getElementById('cbShowPartialResults');
+        const showResults = cb && cb.checked;
+
         this.stopFilter();
         this._hideProgress();
+
+        if (showResults) {
+            // Feature Bug 1: 優先顯示當前階段最新的中途累積結果，其次才是 lastStageResults
+            const partial = this._currentPartialResults || this._lastStageResults;
+            if (partial && partial.stocks && partial.stocks.length > 0) {
+                this._renderResults(partial.stocks, partial.statistics);
+            } else {
+                // 勾選了但確實無任何結果
+                const emptyState = document.getElementById('emptyState');
+                if (emptyState) {
+                    emptyState.style.display = 'flex';
+                    emptyState.innerHTML = `
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <p style="color:#f59e0b;">篩選已停止，目前尚無符合條件的結果</p>
+                    `;
+                }
+            }
+        } else {
+            // 未勾選：還原為篩選前的初始畫面
+            this._restoreEmptyState();
+        }
+    },
+
+    _restoreEmptyState: function () {
+        const emptyState = document.getElementById('emptyState');
+        if (!emptyState) return;
+        // 清除篩選結果 items
+        const stockList = document.getElementById('stockList');
+        if (stockList) {
+            [...stockList.children].forEach(child => {
+                if (child.id !== 'screeningProgressArea' && child.id !== 'emptyState') {
+                    child.remove();
+                }
+            });
+        }
+        emptyState.style.display = 'flex';
+        emptyState.innerHTML = `
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <p>設定篩選條件後點擊「執行篩選」</p>
+        `;
+    },
+
+    // ───────────────────────────────────────────────────────────
+    // Feature2: 停止篩選對話框拖曳
+    // ───────────────────────────────────────────────────────────
+
+    initStopDialogDrag: function () {
+        const dialog = document.getElementById('stopFilterDialog');
+        const header = document.getElementById('stopDialogHeader');
+        if (!dialog || !header) return;
+
+        header.addEventListener('mousedown', (e) => {
+            // Ignore clicks on the close button inside header
+            if (e.target.closest('.stop-dialog-close')) return;
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const rect = dialog.getBoundingClientRect();
+            // Switch from CSS transform centering to absolute px positioning
+            dialog.style.transform = 'none';
+            dialog.style.left = rect.left + 'px';
+            dialog.style.top  = rect.top  + 'px';
+
+            const onMove = (ev) => {
+                dialog.style.left = (rect.left + ev.clientX - startX) + 'px';
+                dialog.style.top  = (rect.top  + ev.clientY - startY) + 'px';
+            };
+            const onUp = () => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+            e.preventDefault();
+        });
     },
 
     // ───────────────────────────────────────────────────────────
@@ -831,6 +1043,57 @@ window.ScreeningPage = {
                 const delta = ev.clientX - startX;
                 const newW = Math.max(200, Math.min(600, startW + delta));
                 pageContent.style.setProperty('--sidebar-w', newW + 'px');
+            };
+            const onUp = () => {
+                handle.classList.remove('is-dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+    },
+
+    // ───────────────────────────────────────────────────────────
+    // Feature4: 上下分割拖拉調整
+    // ───────────────────────────────────────────────────────────
+
+    initVerticalResize: function () {
+        const handle = document.getElementById('verticalResizeHandle');
+        const stockListContainer = document.querySelector('.stock-list-container');
+        const contentArea = document.querySelector('.content-area');
+        if (!handle || !stockListContainer || !contentArea) return;
+
+        // ✅ Bug3 Fix: 動態計算初始 25% 高度，隨螢幕大小自適應
+        const statsBar = document.querySelector('.stats-bar');
+        const statsH = statsBar ? statsBar.offsetHeight : 60;
+        const totalH = contentArea.clientHeight;
+        const initH = Math.max(140, Math.round((totalH - statsH) * 0.25));
+        contentArea.style.setProperty('--stock-list-h', initH + 'px');
+
+        handle.addEventListener('mousedown', (e) => {
+            const startY = e.clientY;
+            const startH = stockListContainer.getBoundingClientRect().height;
+            handle.classList.add('is-dragging');
+            document.body.style.cursor = 'row-resize';
+            document.body.style.userSelect = 'none';
+
+            const onMove = (ev) => {
+                const delta = ev.clientY - startY;
+                const newH = Math.max(80, Math.min(window.innerHeight * 0.7, startH + delta));
+                contentArea.style.setProperty('--stock-list-h', newH + 'px');
+                // Trigger chart resize
+                if (window.ChartController && window.ChartController.chart) {
+                    const chartWrapper = document.getElementById('chartWrapper');
+                    if (chartWrapper) {
+                        window.ChartController.chart.applyOptions({
+                            width: chartWrapper.clientWidth,
+                            height: chartWrapper.clientHeight
+                        });
+                    }
+                }
             };
             const onUp = () => {
                 handle.classList.remove('is-dragging');
