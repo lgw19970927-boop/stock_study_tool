@@ -1270,6 +1270,11 @@ window.ChartSettingsModal = {
             if (settings.generalConfig && window.ChartController && window.ChartController.chart) {
                 window.ChartController.applyGeneralSettings(this._generalConfig);
             }
+            // Bug5 Fix: 同步套用坐標軸設定（確保 _currentAxisPlacement 正確，mirrorSeries 在首次 loadStock 時能補建）
+            // 若 init() 先執行、loadFromLocalStorage 後執行（HTMX 重新載入 modal 的情境），此處作為補充套用
+            if (settings.axisConfig && window.ChartController && window.ChartController.chart) {
+                window.ChartController.applyAxisSettings(this._axisConfig);
+            }
         } catch (error) {
             console.error('[ChartSettingsModal] 載入設定失敗:', error);
         }

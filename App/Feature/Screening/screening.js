@@ -905,6 +905,27 @@ window.ScreeningPage = {
         if (showResults) {
             // Feature Bug 1: 優先顯示當前階段最新的中途累積結果，其次才是 lastStageResults
             const partial = this._currentPartialResults || this._lastStageResults;
+
+            // Bug1 Fix: 若中途停止於型態篩選階段，_currentPartialResults 的 partial_stocks
+            // 尚未經過指標標籤合併步驟（該合併在 _streamPatterns 完成後才執行）
+            // 此處補回：從 _lastStageResults（指標篩選完整結果）取出 matched/insufficient_indicators
+            if (this._currentPartialResults && this._lastStageResults) {
+                const indicatorMap = new Map();
+                this._lastStageResults.stocks.forEach(s => {
+                    indicatorMap.set(s.symbol, {
+                        matched:      s.matched_indicators      || [],
+                        insufficient: s.insufficient_indicators || []
+                    });
+                });
+                this._currentPartialResults.stocks.forEach(s => {
+                    const mapping = indicatorMap.get(s.symbol);
+                    if (mapping) {
+                        s.matched_indicators      = mapping.matched;
+                        s.insufficient_indicators = mapping.insufficient;
+                    }
+                });
+            }
+
             if (partial && partial.stocks && partial.stocks.length > 0) {
                 this._renderResults(partial.stocks, partial.statistics);
             } else {

@@ -16,6 +16,7 @@ window.ChartController = {
     _tooltipSide: 'right',     // BUG2: 'right'=左上 / 'left'=右上（屬於固定模式）
     _tooltipBoundary: null,    // BUG2: 懸浮窗邊界，用於判斷吸附方向
     _mirrorSeries: null,       // Bug7: 雙邊坐標用隱形左側 series
+    _currentAxisPlacement: 'right', // 追加Bug Fix: 記錄當前座標軸 placement，供 loadStock 補建 mirrorSeries 使用
 
     /**
      * 初始化圖表
@@ -127,8 +128,22 @@ window.ChartController = {
 
         console.log('[ChartController] 圖表初始化完成');
 
-        // Bug 10: 圖表重建後重新訂閑 PatternAnnotation的縮放事件，避免綁定舊 timeScale 實例
+        // Bug 10: 圖表重建後重新訂閱 PatternAnnotation的縮放事件，避免綁定舊 timeScale 實例
         if (window.PatternAnnotation) window.PatternAnnotation._subscribeRedraw();
+
+        // Bug5 Fix: 套用已從 localStorage 載入的常規設定與坐標軸設定
+        // loadFromLocalStorage 可能比 init 先執行，此處確保設定被套用至新建的 chart instance
+        // - applyGeneralSettings: currentChartData=null 時 _switchChartSeries 會安全 return
+        // - applyAxisSettings:    currentChartData=null 時 _ensureMirrorSeries 安全 return，
+        //   但 _currentAxisPlacement 已寫入，chart axes 可見性已設定，之後 loadStock 能補建 mirrorSeries
+        if (window.ChartSettingsModal) {
+            if (window.ChartSettingsModal._generalConfig) {
+                this.applyGeneralSettings(window.ChartSettingsModal._generalConfig);
+            }
+            if (window.ChartSettingsModal._axisConfig) {
+                this.applyAxisSettings(window.ChartSettingsModal._axisConfig);
+            }
+        }
     },
 
     /**
@@ -196,6 +211,15 @@ window.ChartController = {
             // 0. 在載入新數據前，先清除舊的指標系列，避免時間軸衝突導致 Value is null 錯誤
             this.clearIndicatorSeries();
 
+            // Bug4 Fix: 先同步 mirrorSeries 時間軸資料，再設置主 series 與 setVisibleRange
+            // 若 mirrorSeries 仍保留舊頻率的時間戳，LW 的 setData() 會重算時間軸並觸發 auto-fit
+            // 導致 setVisibleRange（設定 end_date）被後續的 auto-fit scroll 覆蓋 → 圖表捲到最左邊
+            if (this._mirrorSeries && chartData && chartData.length > 0) {
+                try {
+                    this._mirrorSeries.setData(chartData.map(b => ({ time: b.time, value: b.close })));
+                } catch (e) {}
+            }
+
             // 設置圖表數據
             this.candleSeries.setData(chartData);
 
@@ -203,6 +227,13 @@ window.ChartController = {
             this.currentChartData = chartData;
 
             console.log(`[ChartController] Loaded ${chartData.length} bars for ${symbol}`);
+
+            // Bug3 Fix: 雙邊模式下首次載入股票時補建 mirrorSeries
+            // applyAxisSettings 設定雙邊時若尚無股票（currentChartData=null），_ensureMirrorSeries() 會提早 return
+            // 此處在 currentChartData 就緒後補建，確保左軸有 series 可顯示刻度
+            if (this._currentAxisPlacement === 'dual' && !this._mirrorSeries) {
+                this._ensureMirrorSeries();
+            }
 
             // ✅ Feature A: 依觸發方式決定初始視角
             // fromFilterClick=true → 對齊 analysis_end_date；否則維持當前視角（切換 timeframe 等）
@@ -333,7 +364,8 @@ window.ChartController = {
                 // 如果當前有顯示股票，重新載入數據
                 if (currentSymbol && currentSymbol !== '--') {
                     this.syncTimeframeUI(interval);
-                    this.loadStock(currentSymbol);
+                    // Bug2 Fix: 時間框架切換也需對齊 analysis_end_date（若有設定）
+                    this.loadStock(currentSymbol, { fromFilterClick: !!(window.state?.filters?.analysis_end_date) });
                 } else {
                     // 只更新 UI 狀態
                     this.syncTimeframeUI(interval);
@@ -498,7 +530,10 @@ window.ChartController = {
 
         // Destroy old main series
         if (this.candleSeries) {
-            try { this.chart.removeSeries(this.candleSeries); } catch (e) { console.warn('[ChartController] removeSeries:', e); }
+            // Bug2 Fix: 改用 ChartRenderer.removeSeries（支援 LW v4 series.remove() API）
+            // 原來的 chart.removeSeries() 是 LW v3 API，在 v4 下靜默失敗留下孤兒 series
+            // 孤兒 series 保留舊時間軸時間戳，切換頻率時 LW 合併新舊時間戳導致 K 線稀疏
+            window.ChartRenderer.removeSeries(this.chart, this.candleSeries);
             this.candleSeries = null;
         }
 
@@ -567,7 +602,22 @@ window.ChartController = {
             window.PatternAnnotation.setData(stock ? (stock.patterns_found || []) : [], chartData);
         }
 
+        // 追加Bug Fix: _switchChartSeries 重建 candleSeries 後預設 priceScaleId 回到 right
+        // 需重新套用當前 placement，確保左軸/雙邊模式下 scaleId 正確
+        this._applyScalePlacement();
+
         console.log('[ChartController] _switchChartSeries:', type);
+    },
+
+    /**
+     * 追加Bug Fix: 根據 _currentAxisPlacement 將 candleSeries 綁定至正確的價格刻度
+     * 在 _switchChartSeries 重建 series 後呼叫，避免 priceScaleId 被重置
+     */
+    _applyScalePlacement() {
+        if (!this.candleSeries) return;
+        const placement = this._currentAxisPlacement || 'right';
+        const scaleId = placement === 'left' ? 'left' : 'right'; // dual 模式 candleSeries 在右軸
+        try { this.candleSeries.applyOptions({ priceScaleId: scaleId }); } catch (e) {}
     },
 
     /**
@@ -749,7 +799,12 @@ window.ChartController = {
     _snapToNearestBar(offsetX) {
         if (!this.chart || !this.currentChartData || this.currentChartData.length === 0) return null;
         try {
-            const logical = this.chart.timeScale().coordinateToLogical(offsetX);
+            // Bug6 Fix: coordinateToLogical 期待的是相對於繪圖區域（drawing area）左邊的座標，
+            // 而 offsetX = e.clientX - containerRect.left 包含了左側座標軸的寬度。
+            // 有左軸時必須先減去左軸寬度，才能得到正確的 bar index（與 PatternAnnotation._leftOffset 原理相同）
+            let adjustedX = offsetX;
+            try { adjustedX = offsetX - (this.chart.priceScale('left').width() || 0); } catch (_) {}
+            const logical = this.chart.timeScale().coordinateToLogical(adjustedX);
             if (logical === null || logical === undefined) return null;
             const idx = Math.max(0, Math.min(Math.round(logical), this.currentChartData.length - 1));
             return this.currentChartData[idx] || null;
@@ -925,6 +980,7 @@ window.ChartController = {
 
         // 坐標顯示位置
         const placement = cfg.scalePlacement || 'right';
+        this._currentAxisPlacement = placement; // Bug3/追加Bug Fix: 記錄供 loadStock/_switchChartSeries 使用
         const showLeft  = placement === 'left'  || placement === 'dual';
         const showRight = placement === 'right' || placement === 'dual';
         const isNormal  = cfg.priceScaleMode === 'normal';
@@ -939,6 +995,12 @@ window.ChartController = {
             this._ensureMirrorSeries();
         } else {
             this._removeMirrorSeries();
+            // 追加Bug Fix: 左軸模式時，_removeMirrorSeries 的副作用是把 candleSeries 移回右軸
+            // 但右軸此時設為不可見 → 左軸無任何 series → 刻度完全消失
+            // 解法：_removeMirrorSeries 後若 placement==='left' 需將 candleSeries 移至左軸
+            if (placement === 'left' && this.candleSeries) {
+                try { this.candleSeries.applyOptions({ priceScaleId: 'left' }); } catch (e) {}
+            }
         }
 
         this.chart.applyOptions({
@@ -990,11 +1052,8 @@ window.ChartController = {
      */
     _removeMirrorSeries() {
         if (!this._mirrorSeries || !this.chart) return;
-        try {
-            this.chart.removeSeries(this._mirrorSeries);
-        } catch (e) {
-            console.warn('[ChartController] mirror series 移除失敗:', e);
-        }
+        // Bug2 Fix: 改用 ChartRenderer.removeSeries（支援 LW v4 series.remove() API）
+        window.ChartRenderer.removeSeries(this.chart, this._mirrorSeries);
         this._mirrorSeries = null;
         // 把 candleSeries 歸還到 right（預設 scale id）
         if (this.candleSeries) {
