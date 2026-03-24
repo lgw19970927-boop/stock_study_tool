@@ -388,3 +388,16 @@
 #stockList.state-result {
     overflow-y: auto;
 }
+
+/* ===== Bug3 Fix: 空狀態與進度條垂直置中 ===== */
+/* 升級為 flex container，子元素才能用 flex: 1 真正填滿高度 */
+#stockList {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 空狀態圖示與篩選中進度條均撐滿剩餘空間，配合自身 align-items/justify-content 達成垂直置中 */
+#stockList .empty-state,
+#screeningProgressArea {
+    flex: 1;
+}

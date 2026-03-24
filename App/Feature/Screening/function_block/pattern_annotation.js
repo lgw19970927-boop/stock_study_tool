@@ -13,6 +13,10 @@ window.PatternAnnotation = {
     _chartData: [],
     _enabled: true,
     _unsubscribe: null,
+    _dragRafId: null,          // Bug1 Fix: Y 軸拖曳 RAF ID
+    _removeDragListener: null, // Bug1 Fix: 清除 mousedown 監聽器的函式
+    _leftOffset: 0,            // Bug1 Fix: 左側座標軸寬度偏移量
+    _barHalfWidth: 0,          // Bug1 Fix: K 線半寬 Padding
 
     /**
      * 設定型態資料並渲染
@@ -78,6 +82,50 @@ window.PatternAnnotation = {
             try { chart.timeScale().unsubscribeVisibleLogicalRangeChange(handler); } catch (_) {}
             try { chart.timeScale().unsubscribeVisibleTimeRangeChange(handler); } catch (_) {}
         };
+        // Bug1 Fix: Y 軸拖曳補強（LW 不提供 Y 軸拖曳原生事件）
+        this._subscribeYAxisDrag();
+    },
+
+    // ──────────────── Y 軸拖曳補強 ────────────────
+
+    /**
+     * Bug1 Fix: 監聽圖表容器 mousedown，以 RAF loop 強制同步重繪 SVG
+     * LW 不提供 Y 軸拖曳原生事件，透過此機制補足空窗期。
+     * mouseup 時立即取消 RAF 以避免效能消耗。
+     */
+    _subscribeYAxisDrag() {
+        // 清除舊監聽器
+        if (this._removeDragListener) {
+            try { this._removeDragListener(); } catch (_) {}
+            this._removeDragListener = null;
+        }
+        if (this._dragRafId !== null) {
+            cancelAnimationFrame(this._dragRafId);
+            this._dragRafId = null;
+        }
+        const container = document.getElementById('chartWrapper') || document.getElementById('chart');
+        if (!container) return;
+
+        const onMouseDown = () => {
+            if (!this._enabled) return;
+            const loop = () => {
+                this.render();
+                this._dragRafId = requestAnimationFrame(loop);
+            };
+            this._dragRafId = requestAnimationFrame(loop);
+            const onMouseUp = () => {
+                if (this._dragRafId !== null) {
+                    cancelAnimationFrame(this._dragRafId);
+                    this._dragRafId = null;
+                }
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+            document.addEventListener('mouseup', onMouseUp);
+        };
+        container.addEventListener('mousedown', onMouseDown);
+        this._removeDragListener = () => {
+            container.removeEventListener('mousedown', onMouseDown);
+        };
     },
 
     // ──────────────── 主渲染 ────────────────
@@ -113,6 +161,26 @@ window.PatternAnnotation = {
 
         const timeScale = chart.timeScale();
         svg.innerHTML   = '';
+
+        // Bug1 Fix A: 計算左側座標軸偏移量（開啟左側 Y 軸時 LW 回傳的 X 座標不含左軸寬度）
+        this._leftOffset = 0;
+        try { this._leftOffset = chart.priceScale('left').width() || 0; } catch (_) {}
+
+        // Bug1 Fix B: 計算 K 線半寬，讓標示框能完整包覆 K 線最外邊緣而非只對齊中心
+        this._barHalfWidth = 0;
+        try {
+            const allData = candleSeries.data();
+            if (allData.length >= 2) {
+                for (let i = allData.length - 1; i >= 1; i--) {
+                    const xa = timeScale.timeToCoordinate(allData[i - 1].time);
+                    const xb = timeScale.timeToCoordinate(allData[i].time);
+                    if (xa != null && xb != null && Math.abs(xb - xa) > 0.5) {
+                        this._barHalfWidth = Math.abs(xb - xa) / 2;
+                        break;
+                    }
+                }
+            }
+        } catch (_) {}
 
         this._patterns.forEach(pattern => {
             if (!pattern.start_date || !pattern.end_date) return;
@@ -156,12 +224,16 @@ window.PatternAnnotation = {
     _drawRect(svg, pattern, slice, timeScale, candleSeries, patCfg) {
         const top    = Math.max(...slice.map(b => b.high));
         const bottom = Math.min(...slice.map(b => b.low));
-        const x1 = timeScale.timeToCoordinate(slice[0].time);
-        const x2 = timeScale.timeToCoordinate(slice[slice.length - 1].time);
+        const x1Raw = timeScale.timeToCoordinate(slice[0].time);
+        const x2Raw = timeScale.timeToCoordinate(slice[slice.length - 1].time);
         const y1 = candleSeries.priceToCoordinate(top);
         const y2 = candleSeries.priceToCoordinate(bottom);
 
-        if (x1 == null || x2 == null || y1 == null || y2 == null) return;
+        if (x1Raw == null || x2Raw == null || y1 == null || y2 == null) return;
+
+        // Bug1 Fix: 套用左側軸偏移量 + K 線半寬 Padding（左邊界往左、右邊界往右）
+        const x1 = x1Raw + this._leftOffset - this._barHalfWidth;
+        const x2 = x2Raw + this._leftOffset + this._barHalfWidth;
 
         // Bug8b: 從 patCfg 讀取設定，沒有則用預設灰白色
         const shapeVisible = !patCfg || patCfg.shapeVisible !== false;
@@ -202,9 +274,11 @@ window.PatternAnnotation = {
         }
 
         const points = extrema.map(pt => {
-            const x = timeScale.timeToCoordinate(pt.time);
-            const y = candleSeries.priceToCoordinate(pt.price);
-            if (x == null || y == null) return null;
+            const xRaw = timeScale.timeToCoordinate(pt.time);
+            const y    = candleSeries.priceToCoordinate(pt.price);
+            if (xRaw == null || y == null) return null;
+            // Bug1 Fix: 套用左側軸偏移量
+            const x = xRaw + this._leftOffset;
             return `${x.toFixed(1)},${y.toFixed(1)}`;
         }).filter(Boolean);
 
@@ -231,9 +305,11 @@ window.PatternAnnotation = {
 
         if (textVisible) {
             // Bug10: null 保護
-            const firstX = timeScale.timeToCoordinate(extrema[0].time);
-            const firstY = candleSeries.priceToCoordinate(extrema[0].price);
-            if (firstX == null || firstY == null) return;
+            const firstXRaw = timeScale.timeToCoordinate(extrema[0].time);
+            const firstY    = candleSeries.priceToCoordinate(extrema[0].price);
+            if (firstXRaw == null || firstY == null) return;
+            // Bug1 Fix: 套用左側軸偏移量
+            const firstX = firstXRaw + this._leftOffset;
 
             const pName = (pattern.name || '').toLowerCase();
             let labelY;
@@ -282,11 +358,15 @@ window.PatternAnnotation = {
         const opacity    = (patCfg?.opacity   ?? 85) / 100;
 
         const drawTrendLine = (p1, p2) => {
-            const x1 = timeScale.timeToCoordinate(p1.time);
-            const y1 = candleSeries.priceToCoordinate(p1.price);
-            const x2 = timeScale.timeToCoordinate(p2.time);
-            const y2 = candleSeries.priceToCoordinate(p2.price);
-            if (x1 == null || y1 == null || x2 == null || y2 == null) return null;
+            const x1Raw = timeScale.timeToCoordinate(p1.time);
+            const y1    = candleSeries.priceToCoordinate(p1.price);
+            const x2Raw = timeScale.timeToCoordinate(p2.time);
+            const y2    = candleSeries.priceToCoordinate(p2.price);
+            if (x1Raw == null || y1 == null || x2Raw == null || y2 == null) return null;
+
+            // Bug1 Fix: 套用左側軸偏移量
+            const x1 = x1Raw + this._leftOffset;
+            const x2 = x2Raw + this._leftOffset;
 
             if (shapeVisible) {
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');

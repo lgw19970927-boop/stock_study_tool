@@ -821,8 +821,10 @@ window.ChartController = {
                 try {
                     this.chart.applyOptions({
                         crosshair: {
-                            vertLine: { visible: false },
-                            horzLine: { visible: false }
+                            // Bug2 Fix: labelVisible: false 確保完全阻斷座標軸標籤干擾
+                            // 僅隱藏線條而不隱藏 label 會導致周 K 等稀疏圖表版面崩潰
+                            vertLine: { visible: false, labelVisible: false },
+                            horzLine: { visible: false, labelVisible: false }
                         }
                     });
                 } catch (_) {}
