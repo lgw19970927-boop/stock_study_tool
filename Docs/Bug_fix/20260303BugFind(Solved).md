@@ -141,7 +141,7 @@ stock_study_tool/
 │   ├── check_db_simple.py
 │   ├── tmp_check_db.py
 │   └── debug/                          # 原 debug/ 資料夾
-├── Spec/                               # 所有文件（.md）
+├── Docs/                               # 所有文件（.md）
 │   ├── project_structure.md            # 更新為新架構說明
 │   ├── filter_v4.5.md
 │   └── ...（其他歷史備忘錄）

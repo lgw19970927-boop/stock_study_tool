@@ -122,7 +122,7 @@ this._barHalfWidth = Math.abs(xb - xa) / 2;
 ### B-1：大檔案拆分（Phase B 中優先）
 - `styles.css`（1815 行）→ 8 個檔案至 `App/Static/css/`
 - `chart-settings-modal.css`（1140 行）→ 6 個檔案至 `App/Feature/Screening/`
-- 詳細拆分清單見 `Spec/refactor_code/20260322_css_tailwind_migration_plan.md`
+- 詳細拆分清單見 `Docs/refactor_code/20260322_css_tailwind_migration_plan.md`
 
 ### B-2～B-4：Tailwind 遷移
 依低風險到高風險順序，詳見遷移計畫書。
