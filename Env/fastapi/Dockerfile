@@ -1,3 +1,26 @@
+# ─────────────────────────────────────────────
+# Stage 1: Build Tailwind CSS
+# ─────────────────────────────────────────────
+FROM node:18-alpine AS css-builder
+
+WORKDIR /app
+
+# Install Node deps first (cache layer)
+COPY package.json ./
+RUN npm install
+
+# Copy Tailwind/PostCSS config
+COPY tailwind.config.js postcss.config.js ./
+
+# Copy all app source (HTML/JS for content scanning + CSS for @imports)
+COPY App/ App/
+
+# Build the CSS bundle
+RUN npm run build:css
+
+# ─────────────────────────────────────────────
+# Stage 2: Python application (CUDA runtime)
+# ─────────────────────────────────────────────
 FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
 
 WORKDIR /workspace
@@ -30,8 +53,11 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 # ultralytics 會把 opencv-python (有 GUI) 當作依賴安裝，覆蓋 headless 版本
 RUN pip install --no-cache-dir --force-reinstall opencv-python-headless
 
-# 複製整個應用程式碼到 /workspace
+# 複製整個應用程式碼到 /workspace（.dockerignore 已排除 tailwind.output.css）
 COPY . /workspace
+
+# 從 css-builder stage 複製建構好的 CSS（production 用；開發時由 volume mount 覆蓋）
+COPY --from=css-builder /app/App/Static/css/tailwind.output.css /workspace/App/Static/css/tailwind.output.css
 
 # ✅ 開啟多 worker（預設 4 個；也可改為 8）
 # 使用 App.app:app 形式啟動（App 是包，app.py 是模組，app 是應用實例）

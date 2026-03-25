@@ -1,0 +1,157 @@
+/* ===== Navbar ===== */
+.navbar {
+    @apply flex items-center justify-between sticky top-0;
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+.nav-brand {
+    @apply flex items-center;
+    gap: var(--spacing-sm);
+}
+
+.logo {
+    @apply flex items-center justify-center;
+}
+
+.brand-text {
+    @apply text-xl font-bold;
+    letter-spacing: -0.5px;
+}
+
+.brand-pro {
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    @apply text-xs font-semibold;
+    vertical-align: super;
+}
+
+.nav-links {
+    @apply flex;
+    gap: var(--spacing-xs);
+}
+
+.nav-link {
+    @apply font-medium;
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.nav-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.nav-link.active {
+    color: var(--accent-primary);
+    background: rgba(0, 212, 170, 0.1);
+}
+
+.nav-actions {
+    @apply flex;
+    gap: var(--spacing-sm);
+}
+
+/* ===== Main Layout ===== */
+.main-content {
+    @apply flex overflow-hidden relative;
+    height: calc(100vh - 60px);
+}
+
+.page-content {
+    @apply hidden w-full h-full;
+}
+
+.page-content.active,
+.page-content[style*="display: flex"] {
+    display: flex !important;
+}
+
+.page-content > .sidebar {
+    flex: 0 0 auto;
+    width: var(--sidebar-w, 340px);
+    min-width: 200px;
+    max-width: 600px;
+}
+
+.page-content > .content-area {
+    @apply flex-1 overflow-y-auto;
+}
+
+/* ===== Sidebar Resize Handle (vertical bar, left↔right) ===== */
+.sidebar-resize-handle {
+    @apply flex items-center justify-center relative;
+    flex: 0 0 6px;
+    width: 6px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 10;
+    transition: background 0.2s;
+}
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle.is-dragging {
+    background: color-mix(in srgb, var(--accent, #ebeded) 12%, transparent);
+}
+
+/* ===== Vertical Resize Handle (horizontal bar, top↕bottom) ===== */
+.vertical-resize-handle {
+    @apply flex items-center justify-center relative;
+    flex: 0 0 6px;
+    height: 6px;
+    cursor: row-resize;
+    background: transparent;
+    transition: background 0.2s;
+}
+.vertical-resize-handle:hover,
+.vertical-resize-handle.is-dragging {
+    background: color-mix(in srgb, var(--accent, #00d4aa) 12%, transparent);
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+    @apply overflow-y-auto flex flex-col;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    padding: var(--spacing-md);
+    gap: var(--spacing-md);
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* ===== Content Area ===== */
+.content-area {
+    @apply flex flex-col overflow-hidden;
+    background: var(--bg-primary);
+}
+
+/* ===== Page Content (duplicate definition — last-write wins) ===== */
+.page-content {
+    display: none;
+}
+
+.page-content.active {
+    display: flex !important;
+}

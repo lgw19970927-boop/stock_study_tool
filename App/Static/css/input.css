@@ -1,0 +1,27 @@
+/* ===== Global: CSS Variables & Animations ===== */
+@import "./variables.css";
+@import "./animations.css";
+
+/* ===== Global: Layout & Components (styles.css 拆分 Phase B-1) ===== */
+@import "./layout.css";
+@import "./components.css";
+@import "./stock-list.css";
+@import "./chart.css";
+@import "./backtest.css";
+@import "./tabs.css";
+
+/* ===== Feature: Screening ===== */
+@import "../../Feature/Screening/screening.css";
+@import "../../Feature/Screening/chart-modal-core.css";
+@import "../../Feature/Screening/chart-modal-sidebar.css";
+@import "../../Feature/Screening/chart-modal-indicators.css";
+@import "../../Feature/Screening/chart-modal-patterns.css";
+@import "../../Feature/Screening/chart-modal-color-picker.css";
+@import "../../Feature/Screening/chart-modal-general.css";
+
+/* ===== Feature: RiskManagement ===== */
+@import "../../Feature/RiskManagement/risk_management.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

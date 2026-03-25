@@ -1,0 +1,15 @@
+{
+  "name": "stock-study-tool",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:css": "postcss App/Static/css/input.css -o App/Static/css/tailwind.output.css"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "postcss-cli": "^11.0.0",
+    "postcss-import": "^16.1.0",
+    "tailwindcss": "^3.4.3"
+  }
+}

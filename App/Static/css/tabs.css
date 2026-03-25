@@ -1,0 +1,383 @@
+/* ===== Tab Styles ===== */
+.tabs-wrapper {
+    @apply flex flex-col overflow-hidden;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-md);
+}
+
+.tabs-header {
+    @apply flex flex-col;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.tabs-title {
+    @apply flex items-center whitespace-nowrap;
+    margin: 0;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tab-buttons {
+    @apply flex;
+    gap: 8px;
+}
+
+.tab-btn {
+    @apply cursor-pointer whitespace-nowrap;
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.tab-btn.active {
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+}
+
+.tab-content {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tabs-wrapper .tab-content {
+    padding: 0;
+}
+
+.tabs-wrapper .tab-content > section {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.tabs-wrapper .tab-content > section:first-child {
+    border-top: none;
+    margin-top: 0;
+}
+
+.tabs-wrapper .tab-content > .button-group {
+    padding: 0 var(--spacing-md) var(--spacing-md) var(--spacing-md);
+}
+
+/* ===== Strategies List (v4) ===== */
+.strategies-list {
+    @apply flex flex-col;
+    gap: 12px;
+}
+
+.strategy-card {
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    @apply cursor-pointer relative overflow-hidden;
+    transition: all var(--transition-fast);
+}
+
+.strategy-card:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 12px rgba(0, 212, 170, 0.2);
+}
+
+.strategy-card.selected {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 16px rgba(0, 212, 170, 0.3);
+}
+
+.strategy-card.selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent-primary);
+}
+
+.strategy-card-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.strategy-card-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.strategy-card-actions {
+    @apply flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+.strategy-card:hover .strategy-card-actions {
+    opacity: 1;
+}
+
+.strategy-card-actions button {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.strategy-card-actions button:hover {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    border-color: var(--accent-primary);
+}
+
+/* ===== Toggle Switch Styles (v4 New) ===== */
+.toggle-switch {
+    @apply flex items-center cursor-pointer relative;
+    gap: 12px;
+}
+
+.toggle-switch input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background-color: var(--bg-tertiary);
+    border-radius: 12px;
+    transition: background-color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform var(--transition-fast);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--accent-primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 0 2px var(--accent-primary-alpha);
+}
+
+.toggle-label {
+    @apply text-sm select-none;
+    color: var(--text-primary);
+}
+
+/* ===== Chart Options Styles (v4 New) ===== */
+.chart-options {
+    @apply flex items-center;
+    gap: 12px;
+    padding: 0 8px;
+}
+
+/* Small Toggle Switch for Chart Controls */
+.toggle-switch-small {
+    gap: 8px;
+}
+
+.toggle-switch-small .toggle-slider {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+}
+
+.toggle-switch-small .toggle-slider::before {
+    width: 14px;
+    height: 14px;
+    left: 3px;
+    top: 3px;
+}
+
+.toggle-switch-small input:checked + .toggle-slider::before {
+    transform: translateX(16px);
+}
+
+.toggle-switch-small .toggle-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ===== Strategy Cards (v4.1) ===== */
+.strategies-list {
+    @apply flex flex-col;
+    gap: var(--spacing-md);
+}
+
+.strategy-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    @apply cursor-pointer;
+    transition: all var(--transition-fast);
+}
+
+.strategy-card:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-hover);
+}
+
+.strategy-card-header {
+    @apply flex items-center justify-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.strategy-card-title {
+    @apply text-sm font-semibold;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.strategy-card-actions {
+    @apply flex;
+    gap: var(--spacing-xs);
+}
+
+.strategy-card-description {
+    @apply text-xs;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ===== Header Tab (VSCode 風格) ===== */
+
+/* tab 按鈕基底：全高、無 border、相對定位 */
+.htmx-tab-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    height: 100%;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-left: 1px solid #30363d;
+    min-width: 0;
+    transition: background 150ms ease;
+    outline: none;
+}
+
+/* 頂部 highlight bar（高 2px，貼頂） */
+.htmx-tab-top-bar {
+    display: block;
+    height: 2px;
+    width: 100%;
+    flex-shrink: 0;
+    transition: background 150ms ease;
+}
+
+/* 內容行：icon + label + 關閉 */
+.htmx-tab-inner {
+    @apply flex items-center flex-1 whitespace-nowrap;
+    gap: 6px;
+    padding: 0 14px;
+}
+
+.htmx-tab-label {
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    transition: color 150ms ease;
+    pointer-events: none;
+}
+
+/* 活躍 tab */
+.htmx-tab-btn--active {
+    background: #0d1117;
+    border-bottom: 1px solid #0d1117;
+    /* 遮住 header 底部線，讓 tab 與內容融合 */
+}
+
+/* 非活躍 tab：hover 時微亮 */
+.htmx-tab-btn--inactive {
+    background: transparent;
+    border-bottom: none;
+}
+
+.htmx-tab-btn--inactive:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* 非活躍 hover 時頂部出現灰線 */
+.htmx-tab-btn--inactive:hover .htmx-tab-top-bar {
+    background: #484f58 !important;
+}
+
+/* 關閉按鈕 */
+.htmx-tab-close-btn {
+    @apply flex items-center justify-center cursor-pointer;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0;
+    color: #8b949e;
+    transition: opacity 150ms ease, background 150ms ease, color 150ms ease;
+    flex-shrink: 0;
+}
+
+.htmx-tab-btn:hover .htmx-tab-close-btn {
+    opacity: 1;
+}
+
+.htmx-tab-close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #f0f6fc;
+}

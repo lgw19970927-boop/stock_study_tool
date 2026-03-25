@@ -44,6 +44,23 @@ echo Stopping and removing existing containers (docker-compose down)...
 docker-compose down
 echo.
 
+echo ============================================
+echo Building CSS (Tailwind)...
+echo ============================================
+echo (Using temporary Node.js Docker container - no local Node.js required)
+echo.
+docker run --rm -v "%cd%:/app" -w /app node:18-alpine sh -c "npm install && npm run build:css"
+if !errorlevel! neq 0 (
+    echo.
+    echo [ERROR] CSS build failed
+    echo Please check the error messages above
+    echo.
+    pause
+    exit /b 1
+)
+echo [OK] CSS built successfully (App/Static/css/tailwind.output.css)
+echo.
+
 echo Starting docker-compose...
 echo (Building images if needed and starting in background)
 echo.

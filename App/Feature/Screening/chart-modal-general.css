@@ -1,0 +1,236 @@
+/* ===== 圖表管理彈窗 — 常規設定、坐標軸、指標介紹、Tooltip ===== */
+
+/* 切換 no-sidebar 時隱藏左欄 */
+.chart-modal-body.no-sidebar .chart-modal-sidebar {
+    display: none;
+}
+
+.general-section {
+    @apply flex flex-col;
+    gap: var(--spacing-md);
+    max-width: 520px;
+}
+
+.general-row {
+    @apply flex items-center;
+    gap: var(--spacing-md);
+}
+
+.general-row > label:first-child {
+    min-width: 100px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.general-row select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    min-width: 160px;
+}
+
+.general-row select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+/* ===== 現價線開關按鈕組 ===== */
+.btn-toggle-group {
+    @apply flex overflow-hidden;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.btn-toggle-opt {
+    padding: 4px 14px;
+    background: var(--bg-primary);
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-toggle-opt:not(:last-child) {
+    border-right: 1px solid var(--border-color);
+}
+
+.btn-toggle-opt.active {
+    background: #ff6b35;
+    color: #fff;
+    font-weight: 600;
+}
+
+.btn-toggle-opt:hover:not(.active) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* ===== 坐標軸 Radio 群組 ===== */
+.axis-radio-section {
+    @apply flex items-center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-sm) 0;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: var(--spacing-sm);
+}
+
+.axis-radio-label {
+    min-width: 60px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.axis-radio-item {
+    @apply flex items-center cursor-pointer;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.axis-radio-item input[type="radio"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: border-color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.axis-radio-item input[type="radio"]:checked {
+    border-color: #ff6b35;
+}
+
+.axis-radio-item input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ff6b35;
+}
+
+/* 坐標軸模式 radio 群組 */
+.axis-mode-row {
+    align-items: flex-start;
+}
+
+.axis-mode-group {
+    @apply flex flex-wrap;
+    gap: var(--spacing-sm) var(--spacing-md);
+}
+
+.axis-mode-item {
+    @apply flex items-center cursor-pointer;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+/* 指標介紹面板 */
+.intro-panel {
+    line-height: 1.7;
+    color: var(--text-primary);
+}
+
+.intro-panel h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.intro-panel p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.intro-list {
+    padding-left: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+}
+
+.intro-list li {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.intro-list li strong {
+    color: var(--text-primary);
+}
+
+.intro-note {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    background: var(--bg-tertiary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    display: inline-block;
+}
+
+/* ===== K線圖懸浮 Tooltip ===== */
+.chart-tooltip {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(19, 23, 34, 0.92);
+    border: 1px solid var(--border-color, rgba(197,203,206,0.3));
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    line-height: 1.8;
+    pointer-events: none;
+    z-index: 20;
+    min-width: 160px;
+    color: #d1d4dc;
+    white-space: nowrap;
+}
+
+.chart-tooltip.is-following {
+    top: var(--tt-top, 8px);
+    left: var(--tt-left, 8px);
+}
+
+.chart-tooltip-row {
+    @apply flex justify-between;
+    gap: 16px;
+}
+
+.chart-tooltip-label {
+    color: #787b86;
+}
+
+.chart-tooltip-value {
+    font-weight: 600;
+}
+
+.chart-tooltip-value.up   { color: #26a69a; }
+.chart-tooltip-value.down { color: #ef5350; }
+
+/* ===== BUG2: 懸浮窗（Chart Tooltip）完整樣式 ===== */
+#chartTooltip {
+    position: absolute;
+    z-index: 20;
+    background: rgba(19, 23, 34, 0.93);
+    border: 1px solid rgba(197, 203, 206, 0.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #d1d4dc;
+    pointer-events: none;
+    min-width: 150px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    /* 預設定位（固定懸浮窗使用 JS 的 style.top/left/right 覆蓋） */
+}
+
+

@@ -1,0 +1,23 @@
+# Node.js 依賴（由 start_server.bat 的臨時 Node 容器產出，不應打包進 Docker build context）
+node_modules/
+package-lock.json
+
+# Tailwind 建構產物（由 volume mount 掛載，不需打包）
+App/Static/css/tailwind.output.css
+
+# Python 快取
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 開發工具
+.env
+.DS_Store
+Thumbs.db
+
+# 機密（已透過 Docker secrets 掛載）
+secrets/
+
+# 參考資料（不需進入容器）
+reference/

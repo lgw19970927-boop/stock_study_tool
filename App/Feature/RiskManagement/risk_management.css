@@ -26,22 +26,17 @@
 #risk-page {
     height: 100%;
     flex: 1;
-    overflow-y: auto;
+    @apply overflow-y-auto flex flex-col;
     background: var(--bg-primary);
     color: var(--text-primary);
     font-family: var(--font-family);
-    display: flex;
-    flex-direction: column;
     min-height: 0;
 }
 
 #risk-page .risk-main {
-    flex: 1;
-    width: 100%;
+    @apply flex-1 w-full flex flex-col;
     padding: 1.25rem 1.5rem 1.5rem;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
     min-height: 0;
 }
 
@@ -55,10 +50,7 @@
 
 /* 表格卡片撐滿剩餘空間 */
 #risk-page .rm-card.rm-table-card {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    @apply flex-1 flex flex-col overflow-hidden;
     margin-bottom: 0;
     min-height: 0;
 }
@@ -152,12 +144,9 @@
     border-radius: var(--radius-sm);
     padding: 0.35rem 0.85rem;
     font-size: 0.82rem;
-    cursor: pointer;
-    transition: background 0.15s;
-    display: inline-flex;
-    align-items: center;
+    @apply cursor-pointer inline-flex items-center whitespace-nowrap;
     gap: 0.3rem;
-    white-space: nowrap;
+    transition: background 0.15s;
 }
 
 #risk-page .btn-outline:hover {
@@ -210,11 +199,8 @@
 #risk-page .rm-ov-label {
     font-size: 0.72rem;
     color: var(--text-muted);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    @apply flex justify-between items-center uppercase;
     margin-bottom: 0.6rem;
-    text-transform: uppercase;
     letter-spacing: 0.04em;
 }
 
@@ -333,8 +319,7 @@
 
 /* ── 提示區塊 ── */
 #risk-page .rm-tip {
-    display: flex;
-    align-items: flex-start;
+    @apply flex items-start;
     gap: 0.6rem;
     background: var(--bg-secondary);
     border: 1px solid var(--border-subtle);

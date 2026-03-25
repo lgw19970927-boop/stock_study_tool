@@ -7,14 +7,11 @@
     <title>{% block title %}Stock AI Filter PRO{% endblock %}</title>
     <meta name="description" content="專業美股篩選與回測工具，支援技術指標篩選與型態辨識">
 
-    <!-- 原有 CSS（加上 v=1.1 強制清除快取） -->
-    <link rel="stylesheet" href="/static/css/styles.css?v=1.1">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS（CLI 建構產物；包含所有 CSS 拆分檔、Feature 樣式與自訂工具類）-->
+    <!-- Phase B-2：所有 CSS 已透過 input.css @import 整合至此單一檔案 -->
+    <link rel="stylesheet" href="/static/css/tailwind.output.css">
 
-    <!-- 全域載入各分頁 CSS（避免 HTMX 動態載入時樣式遺失） -->
-    <link rel="stylesheet" href="/feature/Screening/screening.css">
-    <link rel="stylesheet" href="/feature/Screening/chart-settings-modal.css?v=2.3">
-    <link rel="stylesheet" href="/feature/RiskManagement/risk_management.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- TODO [P1-Step2]: GoldenLayout v2 實作時補回 CDN
     <link rel="stylesheet" href="https://unpkg.com/golden-layout@2.6.0/dist/css/goldenlayout-base.css">
@@ -26,9 +23,6 @@
 
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js"></script>
-
-    <!-- Tailwind CSS（僅用於新建的 header 元件） -->
-    <script src="https://cdn.tailwindcss.com"></script>
 
     {% block extra_head %}{% endblock %}
 </head>

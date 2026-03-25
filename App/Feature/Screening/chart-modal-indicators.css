@@ -1,0 +1,331 @@
+/* ===== 圖表管理彈窗 — MA / BOLL 指標設定 + ITB 控制列 ===== */
+
+/* MA 設定列表 */
+.ma-list-header {
+    display: grid;
+    grid-template-columns: minmax(110px,1.5fr) 72px 50px 56px 64px 1fr 40px 32px;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.ma-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.ma-line-item {
+    display: grid;
+    grid-template-columns: minmax(110px,1.5fr) 72px 50px 56px 64px 1fr 40px 32px;
+    gap: var(--spacing-sm);
+    align-items: center;
+    padding: var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.ma-line-item:hover {
+    border-color: var(--accent-primary);
+}
+
+.ma-line-item label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.ma-line-item input[type="checkbox"] {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.ma-line-item input[type="checkbox"]:checked {
+    background: #ff6b35;
+    border-color: #ff6b35;
+}
+
+.ma-line-item input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 7px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -60%) rotate(45deg);
+}
+
+.ma-line-item input[type="number"] {
+    width: 100%;
+    padding: var(--spacing-xs);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.ma-line-item input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.ma-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.color-picker-btn {
+    width: 60px;
+    height: 28px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.color-picker-btn:hover {
+    border-color: var(--accent-primary);
+    transform: scale(1.05);
+}
+
+.ma-line-item input[type="range"] {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    appearance: none;
+    cursor: pointer;
+}
+
+.ma-line-item input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #ff6b35;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-fast);
+}
+
+.ma-line-item input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.opacity-value {
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    text-align: center;
+    min-width: 32px;
+}
+
+.btn-remove-ma {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.btn-remove-ma:hover {
+    background: rgba(248, 81, 73, 0.1);
+    color: var(--color-danger);
+}
+
+/* BOLL 設定 */
+.boll-params {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.param-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.param-row label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.param-row input[type="number"] {
+    padding: var(--spacing-sm);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.param-row input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.boll-lines {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* BOLL 各線 checkbox + 設定列（含啟用 checkbox） */
+.boll-line-config {
+    display: grid;
+    grid-template-columns: 120px 60px 80px 120px 60px;
+    gap: var(--spacing-sm);
+    align-items: center;
+    padding: var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.boll-line-config label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* BOLL 線表頭 */
+.boll-lines-header {
+    display: grid;
+    grid-template-columns: 120px 60px 80px 120px 60px;
+    gap: var(--spacing-sm);
+    padding: 4px var(--spacing-sm);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 4px;
+}
+
+.boll-line-config span:first-child {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.boll-line-config input[type="number"] {
+    padding: var(--spacing-xs);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.boll-line-config input[type="range"] {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    appearance: none;
+    cursor: pointer;
+}
+
+.boll-line-config input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #ff6b35;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.boll-line-config span:last-child {
+    font-size: 0.875rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+/* ===== Feature B: 指標控制列 (IndicatorTopBar) ===== */
+
+.itb-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.45);
+    pointer-events: none;    /* 容器不攔截事件；子元素覆寫 */
+    margin-bottom: 3px;
+    white-space: nowrap;
+}
+
+.itb-ctrl {
+    color: rgba(200, 200, 200, 0.55);
+    font-size: 12px;
+    line-height: 1;
+    transition: color 0.15s;
+    pointer-events: auto;
+}
+
+.itb-ctrl:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.itb-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.65);
+    font-family: monospace;
+    pointer-events: none;
+}
+
+.itb-line-token {
+    pointer-events: auto;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    border-radius: 2px;
+    padding: 0 2px;
+    transition: background 0.1s;
+}
+
+.itb-line-token:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
