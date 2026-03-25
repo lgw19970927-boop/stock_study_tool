@@ -129,7 +129,7 @@ def fetch_stock_prices(
     end_date: str
 ) -> List[Dict[str, Any]]:
     # datetime in MySQL requires valid strings or bindings
-    from ....Feature.data_sync.db import get_market_cursor
+    from App.Lib.db import get_market_cursor
     try:
         with get_market_cursor() as cursor:
             # 轉換為包含時分的比較
@@ -158,7 +158,7 @@ def fetch_stock_prices(
         return []
 
 def get_stocks_by_markets(markets: List[str]) -> List[Dict[str, Any]]:
-    from ....Feature.data_sync.db import get_market_cursor
+    from App.Lib.db import get_market_cursor
     try:
         with get_market_cursor() as cursor:
             markets_lower = [m.lower() for m in markets]

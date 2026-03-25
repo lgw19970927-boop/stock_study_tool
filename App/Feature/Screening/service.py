@@ -7,7 +7,7 @@ import pandas as pd
 from typing import List, Dict, Any, Optional
 import logging
 
-from ...Feature.data_sync.db import get_market_cursor
+from ...Lib.db import get_market_cursor
 from .indicators.service import calculate_indicators, evaluate_condition
 
 logger = logging.getLogger(__name__)

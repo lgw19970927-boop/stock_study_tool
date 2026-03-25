@@ -11,10 +11,10 @@ if str(PROJECT_ROOT) not in sys.path:
 
 # 測試腳本直接執行時不走 FastAPI，需自行初始化 DB 設定
 from App.config import get_config
-from App.Feature.data_sync import db as _db
+from App.Lib import db as _db
 _db.init_db(get_config())
 
-from App.Feature.data_sync.db import get_market_cursor
+from App.Lib.db import get_market_cursor
 
 
 def check_data() -> None:

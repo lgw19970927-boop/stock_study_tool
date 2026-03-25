@@ -12,12 +12,12 @@
 
 /* ===== Feature: Screening ===== */
 @import "../../Feature/Screening/screening.css";
-@import "../../Feature/Screening/chart-modal-core.css";
-@import "../../Feature/Screening/chart-modal-sidebar.css";
-@import "../../Feature/Screening/chart-modal-indicators.css";
-@import "../../Feature/Screening/chart-modal-patterns.css";
-@import "../../Feature/Screening/chart-modal-color-picker.css";
-@import "../../Feature/Screening/chart-modal-general.css";
+@import "../../Feature/Screening/chart/chart-modal-core.css";
+@import "../../Feature/Screening/chart/chart-modal-sidebar.css";
+@import "../../Feature/Screening/chart/chart-modal-indicators.css";
+@import "../../Feature/Screening/chart/chart-modal-patterns.css";
+@import "../../Feature/Screening/chart/chart-modal-color-picker.css";
+@import "../../Feature/Screening/chart/chart-modal-general.css";
 
 /* ===== Feature: RiskManagement ===== */
 @import "../../Feature/RiskManagement/risk_management.css";

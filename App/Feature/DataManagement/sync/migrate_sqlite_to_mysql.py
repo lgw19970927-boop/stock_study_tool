@@ -10,7 +10,7 @@ App/Feature/data_sync/data_sync/migrate_sqlite_to_mysql.py
 執行方式：
     cd d:\\Projects\\stock_study_tool
     conda activate marketing_system
-    python -m App.Feature.data_sync.data_sync.migrate_sqlite_to_mysql
+    python -m App.Feature.DataManagement.sync.migrate_sqlite_to_mysql
 
 注意：
   - SQLite 的 K 線資料表名為 `market_data`，MySQL 中為 `market_data_ohlcv`（自動對應）
@@ -329,7 +329,7 @@ def main() -> None:
     logger.info("=" * 60)
     logger.info("開始產生初始備份...")
 
-    from App.Feature.data_sync.data_sync.backup_mysql import backup_market_data, backup_user_data
+    from App.Feature.DataManagement.backup.backup_mysql import backup_market_data, backup_user_data
     backup_market_data()
     backup_user_data()
 

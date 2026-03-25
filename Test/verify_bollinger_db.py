@@ -5,7 +5,7 @@ import pandas as pd
 # 加入專案路徑
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from App.Feature.Screening.indicators.service import calculate_bollinger_bands
-from App.Feature.data_sync.db import get_market_cursor, init_db
+from App.Lib.db import get_market_cursor, init_db
 from App.config import get_config
 
 def verify_real_data():

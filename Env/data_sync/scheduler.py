@@ -11,12 +11,12 @@ from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 
 # ✅ 使用新路徑
-from App.Feature.data_sync.data_sync.sync_market_data import (
+from App.Feature.DataManagement.sync.sync_market_data import (
     incremental_update,
     progressive_backfill,
     ensure_data
 )
-from App.Feature.data_sync.data_sync.backup_mysql import backup_user_data, backup_market_data
+from App.Feature.DataManagement.backup.backup_mysql import backup_user_data, backup_market_data
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(

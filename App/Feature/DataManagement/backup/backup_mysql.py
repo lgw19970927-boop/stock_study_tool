@@ -4,7 +4,7 @@ App/Feature/data_sync/data_sync/backup_mysql.py
 透過 docker exec 呼叫容器內的 mysqldump，不需在 host 安裝 MySQL Client。
 
 使用方式：
-    from App.Feature.data_sync.data_sync.backup_mysql import backup_user_data
+    from App.Feature.DataManagement.backup.backup_mysql import backup_user_data
     backup_user_data()
 """
 import subprocess

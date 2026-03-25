@@ -21,33 +21,5 @@
         "right": "MA50"
       }
     ]
-  },
-  {
-    "type": "bollinger",
-    "timeframe": "1d",
-    "period": "日K",
-    "range": "當前值",
-    "presets": [
-      "自訂"
-    ],
-    "parameters": {
-      "period": 70,
-      "std_dev": 2
-    },
-    "custom": [
-      {
-        "left": "upper",
-        "op": "gt",
-        "right": "middle",
-        "val": ""
-      }
-    ],
-    "conditions": [
-      {
-        "left": "BB_UPPER",
-        "operator": ">",
-        "right": "BB_MIDDLE"
-      }
-    ]
   }
 ]

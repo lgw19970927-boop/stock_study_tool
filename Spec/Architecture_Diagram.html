@@ -132,6 +132,15 @@ flowchart LR
         AppConfig["config.py"]:::python
         AppMain ==> ContFastAPI
 
+        subgraph LibDir [Lib 共用函式]
+            LibDB["db.py"]:::python
+        end
+
+        subgraph FeatureDataMgmt [DataManagement 模組]
+            DM_Sync["sync/*.py\n(config, sync_market_data,\nfetch_tickers, gap_scanner...)"]:::python
+            DM_Backup["backup/backup_mysql.py"]:::python
+        end
+
         subgraph FeatureScreening [Screening 模組]
             S_Routes["routes.py"]:::python
             S_Service["service.py"]:::python
@@ -140,11 +149,15 @@ flowchart LR
             S_Pat_Srv["pattern/service.py"]:::python
             S_Pat_Model["pattern/models/*.pt"]:::config
             S_HTML["screening.html\n_fragment.html"]:::html
-            S_JS["screening.js\nchartController.js\nchartSettingsModal.js"]:::js
-            S_Blocks["function_block/*.js"]:::js
+            S_JS["screening.js"]:::js
+            S_Blocks["function_block/*.js\n(strategyManager, indicator_block...)"]:::js
             S_IndJS["indicators/*.js"]:::js
             S_CSS["screening.css"]:::css
-
+            subgraph ChartDir [chart/]
+                S_ChartJS["chartController.js\nchartSettingsModal.js"]:::js
+                S_ChartTPL["templates/*.js"]:::js
+                S_ChartCSS["chart-modal-*.css (x6)"]:::css
+            end
             S_Routes --> S_Service
             S_Service --> S_Models
             S_Service --> S_Ind_Srv
@@ -154,6 +167,8 @@ flowchart LR
             S_HTML --> S_JS
             S_HTML --> S_Blocks
             S_HTML --> S_IndJS
+            S_HTML --> S_ChartJS
+            S_ChartJS --> S_ChartTPL
             S_HTML --> S_CSS
         end
 
@@ -177,10 +192,17 @@ flowchart LR
         AppMain --> R_Routes
         AppMain --> B_Routes
 
+        AppMain --> LibDB
+        S_Service --> LibDB
+        DM_Sync --> LibDB
+
+        E_Sync -.-> DM_Sync
+        E_Sync -.-> DM_Backup
+
         subgraph GlobalStatic [全域資源]
             BaseHTML["base.html"]:::html
             StaticJS["layout.js\nhtmx.org\nlightweight-charts.js"]:::js
-            StaticCSS["styles.css\nlayout.css"]:::css
+            StaticCSS["input.css → tailwind.output.css\nlayout.css"]:::css
         end
 
         S_HTML --> BaseHTML
@@ -188,6 +210,7 @@ flowchart LR
         B_HTML --> BaseHTML
         BaseHTML --> StaticJS
         BaseHTML --> StaticCSS
+        StaticCSS --> S_ChartCSS
     end
         </pre>
     </div>

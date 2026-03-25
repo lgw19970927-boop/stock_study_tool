@@ -10,7 +10,7 @@ import argparse
 import time
 from datetime import datetime
 
-from App.Feature.data_sync.db import get_market_cursor
+from App.Lib.db import get_market_cursor
 
 logger = logging.getLogger(__name__)
 

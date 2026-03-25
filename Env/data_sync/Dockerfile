@@ -21,4 +21,4 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 # 複製整個應用程式碼到 /workspace
 COPY . /workspace
 
-CMD ["python3", "-m", "App.Feature.data_sync.data_sync.scheduler"]
+CMD ["python3", "/workspace/Env/data_sync/scheduler.py"]
