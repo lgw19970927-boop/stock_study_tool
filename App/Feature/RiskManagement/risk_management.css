@@ -329,3 +329,230 @@
     color: var(--text-secondary);
     margin-top: 0.75rem;
 }
+
+/* ════════════════════════════════════════════════════════
+   投資組合風險明細表 (7-Column) — .pm-* 命名空間
+   ════════════════════════════════════════════════════════ */
+
+/* 覆寫新表格的 td white-space，允許批次列垂直堆疊 */
+#risk-page #rm-portfolioTable td {
+    white-space: normal;
+    vertical-align: top;
+    padding: 0.6rem 0.65rem;
+}
+#risk-page #rm-portfolioTable th {
+    white-space: nowrap;
+}
+
+/* ── 狀態徽章 ── */
+#risk-page .pm-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.18rem 0.55rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+#risk-page .pm-status-badge.planned  { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+#risk-page .pm-status-badge.holding  { background: rgba(0,212,170,0.15);   color: #00d4aa; }
+#risk-page .pm-status-badge.closed   { background: rgba(110,118,129,0.15); color: #6e7681; }
+
+/* ── 已進場 checkbox label ── */
+#risk-page .pm-executed-label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+}
+#risk-page .pm-executed-label input[type="checkbox"] {
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+}
+
+/* ── 方向切換按鈕 ── */
+#risk-page .pm-direction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.18rem 0.5rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+#risk-page .pm-direction-btn.long  { color: #00d4aa; border-color: rgba(0,212,170,0.5); }
+#risk-page .pm-direction-btn.short { color: #f87171; border-color: rgba(248,113,113,0.5); }
+#risk-page .pm-direction-btn:hover { background: var(--bg-hover); }
+
+/* ── 批次列表容器 ── */
+#risk-page .pm-batch-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+}
+
+/* ── 單一批次行 ── */
+#risk-page .pm-batch-row {
+    display: flex;
+    align-items: center;
+    gap: 0.28rem;
+}
+
+/* ── 批次輸入框（價格/百分比） ── */
+#risk-page .pm-batch-input {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 4px !important;
+    color: var(--text-primary) !important;
+    padding: 0.22rem 0.38rem !important;
+    font-size: 0.76rem !important;
+    outline: none !important;
+    transition: border-color 0.15s !important;
+    font-family: var(--font-family);
+    width: 62px;
+    min-width: 62px;
+    box-sizing: border-box;
+}
+#risk-page .pm-batch-input:focus {
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 2px rgba(0,212,170,0.08) !important;
+}
+#risk-page .pm-batch-input.pm-pct-input {
+    width: 46px;
+    min-width: 46px;
+}
+#risk-page .pm-batch-input.locked {
+    background: rgba(0,0,0,0.1) !important;
+    border-color: transparent !important;
+    color: var(--text-muted) !important;
+    cursor: default;
+}
+
+/* ── 批次刪除按鈕（小型） ── */
+#risk-page .pm-batch-del-btn {
+    background: none;
+    border: none;
+    color: #6e7681;
+    cursor: pointer;
+    padding: 0.12rem;
+    line-height: 1;
+    border-radius: 3px;
+    transition: color 0.15s;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+#risk-page .pm-batch-del-btn:hover { color: #f87171; }
+
+/* ── 新增批次按鈕 ── */
+#risk-page .pm-add-batch-btn {
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    font-size: 0.73rem;
+    cursor: pointer;
+    padding: 0.12rem 0;
+    text-align: left;
+    opacity: 0.75;
+    transition: opacity 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.18rem;
+    margin-top: 0.1rem;
+}
+#risk-page .pm-add-batch-btn:hover { opacity: 1; }
+#risk-page .pm-add-batch-btn:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+    color: var(--text-muted);
+}
+
+/* ── 平均輸出（停損/損益） ── */
+#risk-page .pm-avg-output {
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-top: 0.22rem;
+    padding-top: 0.22rem;
+    border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ── 儲存格分隔線 ── */
+#risk-page .pm-cell-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin: 0.25rem 0;
+}
+
+/* ── 規劃狀態出場欄佔位文字 ── */
+#risk-page .pm-exit-waiting {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-style: italic;
+    padding: 0.2rem 0 0.1rem;
+}
+
+/* ── 整列刪除按鈕（垃圾桶） ── */
+#risk-page .pm-row-del-btn {
+    background: none;
+    border: none;
+    color: #6e7681;
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+}
+#risk-page .pm-row-del-btn:hover {
+    color: #f87171;
+    background: rgba(248,113,113,0.1);
+}
+
+/* ── 進場規劃欄（兩行標籤+輸入） ── */
+#risk-page .pm-field-row {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+}
+#risk-page .pm-field-label {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    min-width: 36px;
+    flex-shrink: 0;
+}
+#risk-page .pm-output-val {
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+
+/* ── 鎖定圖示 ── */
+#risk-page .pm-lock-icon {
+    color: #6e7681;
+    font-size: 0.68rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+/* ── 空狀態提示 ── */
+#risk-page .pm-empty-row td {
+    text-align: center;
+    padding: 2rem !important;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* ── 批次百分比警告（超過100%） ── */
+#risk-page .pm-pct-warn {
+    background: rgba(248,113,113,0.12) !important;
+    border-color: rgba(248,113,113,0.5) !important;
+    color: #f87171 !important;
+}

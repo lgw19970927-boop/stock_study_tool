@@ -24,37 +24,58 @@ window.OverviewBlock = (function () {
 
     /**
      * 更新概覽卡片
-     * @param {number} totalRisk    帳戶總風險 %
-     * @param {number} totalUsage   資金使用率 %（控制風險後倉位比例 加總）
-     * @param {number} totalLossPct 全失敗停損損失 %（= totalRisk）
+     * @param {object} data
+     *   data.totalContrib   {number}  Σ 各列帳戶貢獻% (正=獲利, 負=風險)
+     *   data.totalCtrlPos   {number}  Σ 各列控風倉位%
+     *   data.allCalcs       {Array}   各列 calc 結果（用於全失敗停損計算）
      */
-    function update(totalRisk, totalUsage) {
-        const capital  = window.RiskParams ? window.RiskParams.capital() : 1000000;
-        const maxLoss  = -(capital * totalRisk / 100);
-        const remaining = capital + maxLoss;
+    function update(data) {
+        const totalContrib = (data && data.totalContrib != null) ? data.totalContrib : 0;
+        const totalCtrlPos = (data && data.totalCtrlPos != null) ? data.totalCtrlPos : 0;
+        const allCalcs     = (data && data.allCalcs) ? data.allCalcs : [];
 
-        // 帳戶總風險
+        const capital = window.RiskParams ? window.RiskParams.capital() : 1000000;
+
+        // 全失敗停損總金額 = Σ (avgStopPct/100 × ctrlPosPct/100 × Capital)
+        const totalStopLossAmt = allCalcs.reduce((s, c) => {
+            if (c.avgStopPct != null && c.ctrlPosPct != null) {
+                return s + (c.avgStopPct / 100) * (c.ctrlPosPct / 100) * capital;
+            }
+            return s;
+        }, 0);
+        const remaining = capital + totalStopLossAmt;
+
+        // 帳戶總風險（帳戶貢獻加總，含正負值）
         const riskEl = $('rm-ov-totalRisk');
         if (riskEl) {
-            riskEl.textContent = _fmtPct(totalRisk);
-            riskEl.style.color = totalRisk <= 1 ? '#00d4aa'
-                               : totalRisk <= 2 ? '#00d4aa'
-                               : totalRisk <= 4 ? '#fbbf24' : '#f87171';
+            riskEl.textContent = _fmtPct(Math.abs(totalContrib));
+            riskEl.style.color = totalContrib >= 0 ? '#00d4aa'
+                               : Math.abs(totalContrib) <= 2 ? '#00d4aa'
+                               : Math.abs(totalContrib) <= 4 ? '#fbbf24' : '#f87171';
         }
         const riskLabelEl = $('rm-ov-riskLabel');
         if (riskLabelEl) {
-            riskLabelEl.textContent = totalRisk <= 1 ? '低風險範圍'
-                                    : totalRisk <= 2 ? '中度風險'
-                                    : totalRisk <= 4 ? '⚠ 偏高風險' : '🔴 高風險';
-            riskLabelEl.style.color = totalRisk <= 2 ? '#00d4aa'
-                                    : totalRisk <= 4 ? '#fbbf24' : '#f87171';
+            const absVal = Math.abs(totalContrib);
+            if (totalContrib >= 0) {
+                riskLabelEl.textContent = '淨正貢獻';
+                riskLabelEl.style.color = '#00d4aa';
+            } else if (absVal <= 2) {
+                riskLabelEl.textContent = '低風險範圍';
+                riskLabelEl.style.color = '#00d4aa';
+            } else if (absVal <= 4) {
+                riskLabelEl.textContent = '⚠ 偏高風險';
+                riskLabelEl.style.color = '#fbbf24';
+            } else {
+                riskLabelEl.textContent = '🔴 高風險';
+                riskLabelEl.style.color = '#f87171';
+            }
         }
 
         // 全失敗停損金額
         const lossEl = $('rm-ov-maxLoss');
         if (lossEl) {
-            lossEl.textContent = _fmtMoney(maxLoss);
-            lossEl.style.color = maxLoss < 0 ? '#f87171' : '#00d4aa';
+            lossEl.textContent = _fmtMoney(totalStopLossAmt);
+            lossEl.style.color = totalStopLossAmt < 0 ? '#f87171' : '#00d4aa';
         }
 
         // 停損後剩餘資金
@@ -62,10 +83,10 @@ window.OverviewBlock = (function () {
         if (remEl) remEl.textContent = _fmtMoneyAbs(remaining);
 
         // 資金使用率
-        const usageEl  = $('rm-ov-usage');
-        const barEl    = $('rm-ov-usageBar');
-        if (usageEl) usageEl.textContent = _fmtPct(totalUsage);
-        if (barEl)   barEl.style.width   = Math.min(Math.max(totalUsage, 0), 100) + '%';
+        const usageEl = $('rm-ov-usage');
+        const barEl   = $('rm-ov-usageBar');
+        if (usageEl) usageEl.textContent = _fmtPct(totalCtrlPos);
+        if (barEl)   barEl.style.width   = Math.min(Math.max(totalCtrlPos, 0), 100) + '%';
     }
 
     return { update };

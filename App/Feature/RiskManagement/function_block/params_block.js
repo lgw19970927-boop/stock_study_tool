@@ -38,13 +38,19 @@ window.RiskParams = (function () {
         const capEl     = document.getElementById('rm-capitalInput');
         const riskEl    = document.getElementById('rm-riskPctInput');
 
+        function _triggerRecalc() {
+            read();
+            document.dispatchEvent(new CustomEvent('rm-params-updated'));
+            onRecalc();
+        }
+
         if (recalcBtn) {
-            recalcBtn.addEventListener('click', () => { read(); onRecalc(); });
+            recalcBtn.addEventListener('click', _triggerRecalc);
         }
         [capEl, riskEl].forEach(el => {
             if (!el) return;
             el.addEventListener('keydown', e => {
-                if (e.key === 'Enter') { read(); onRecalc(); }
+                if (e.key === 'Enter') _triggerRecalc();
             });
         });
     }

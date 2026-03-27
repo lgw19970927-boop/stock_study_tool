@@ -120,28 +120,17 @@
                 </button>
             </div>
             <div class="rm-table-scroll">
-                <table id="rm-riskTable">
+                <table id="rm-portfolioTable">
                     <thead>
                         <tr>
-                            <!-- ── 使用者輸入欄 ── -->
-                            <th>持股</th>
-                            <th>買入均價<br><span style="color:#7fb3a0;font-weight:400;">(input)</span></th>
-                            <th>預計倉位%<br><span style="color:#7fb3a0;font-weight:400;">(input)</span></th>
-                            <th>停損價位1<br><span style="color:#7fb3a0;font-weight:400;">(input)</span></th>
-                            <th>停損價位2<br><span style="color:#7fb3a0;font-weight:400;">(input)</span></th>
-                            <!-- ── 自動計算欄 ── -->
-                            <th class="col-calc" title="(停損1到均價距離 + 停損2到均價距離) ÷ 2">平均停損%</th>
-                            <th class="col-calc" title="初始資金×單筆停損% ÷ (買入均價×平均停損%)">建議股數</th>
-                            <th class="col-calc" title="建議股數×買入均價 ÷ 初始資金">控風倉位%</th>
-                            <!-- ── 使用者輸入欄（出場） ── -->
-                            <th>出場價位1<br><span style="color:#7fb3a0;font-weight:400;">(input)</span></th>
-                            <th>出場價位2<br><span style="color:#7fb3a0;font-weight:400;">(input)</span></th>
-                            <th>出場1倉位%<br><span style="color:#7fb3a0;font-weight:400;">(input)</span></th>
-                            <th>出場2倉位%<br><span style="color:#7fb3a0;font-weight:400;">(input)</span></th>
-                            <!-- ── 自動計算欄 ── -->
-                            <th class="col-calc" title="出場1損益%×出場1比例 + 出場2損益%×出場2比例">平均損益%</th>
-                            <th class="col-risk" title="平均停損% × 控風倉位%，加總=帳戶總風險">倉位潛在風險</th>
-                            <th></th>
+                            <th style="min-width:90px;">【狀態】</th>
+                            <th style="min-width:90px;">【持股】</th>
+                            <th style="min-width:155px;">【進場規劃】</th>
+                            <th style="min-width:165px;">【停損設定】</th>
+                            <th style="min-width:165px;">【實際出場】</th>
+                            <th style="min-width:105px;">【交易績效】</th>
+                            <th style="min-width:105px;">【帳戶貢獻】</th>
+                            <th style="width:36px;"></th>
                         </tr>
                     </thead>
                     <tbody id="rm-tableBody">
@@ -149,13 +138,20 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="7" style="text-align:right; padding:0.7rem 0.65rem; color:#7fb3a0;">
-                                合計 / 平均
+                            <td colspan="2" style="text-align:right; padding:0.7rem 0.65rem; color:#7fb3a0; font-size:0.78rem;">
+                                合計
                             </td>
-                            <td class="col-calc text-primary" id="rm-foot-ctrlPos" style="text-align:center;">—</td>
-                            <td colspan="4"></td>
-                            <td class="col-calc" id="rm-foot-avgPnl" style="text-align:center;">—</td>
-                            <td class="col-risk text-primary" id="rm-foot-risk" style="text-align:center;">—</td>
+                            <td style="padding:0.7rem 0.65rem;">
+                                <div style="font-size:0.75rem;color:var(--text-muted);">控風倉位</div>
+                                <strong class="text-primary" id="rm-foot-ctrlPos" style="font-size:0.88rem;">—</strong>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td style="padding:0.7rem 0.65rem;">
+                                <div style="font-size:0.75rem;color:var(--text-muted);">帳戶貢獻</div>
+                                <strong id="rm-foot-contrib" style="font-size:0.88rem;">—</strong>
+                            </td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -174,9 +170,10 @@
                 </svg>
                 <div>
                     <strong>公式說明：</strong>
-                    平均停損% = [(均價-停損1) + (均價-停損2)] ÷ 均價 ÷ 2。
-                    建議股數 = 初始資金 × 單筆停損% ÷ (買入均價 × 平均停損%)。
-                    倉位潛在風險 = 平均停損% × 控風倉位%。帳戶總風險 = Σ 倉位潛在風險。
+                    平均停損% = Σ[方向 × (停損價₍ᵢ₎ − 均價) / 均價 × 批次佔比₍ᵢ₎]。
+                    建議股數 = INT(倉位% × 資金 × max(1, 最大風險% / |平均停損%|) / 均價)。
+                    控風倉位% = 建議股數 × 均價 / 資金。
+                    帳戶貢獻% = 平均損益% / 100 × 控風倉位%（有出場）或 平均停損% / 100 × 控風倉位%（規劃中）。
                     <span class="text-warn">建議帳戶總風險不超過 2%。</span>
                 </div>
             </div>
@@ -199,9 +196,11 @@
     </div><!-- /.risk-main -->
 </div><!-- /#risk-page -->
 
-<!-- RiskManagement CSS + JS（HTMX 動態載入場景） -->
+{% if not rm_full_page %}
+<!-- RiskManagement CSS + JS（HTMX 動態載入場景，非整頁渲染時載入） -->
 <link rel="stylesheet" href="/feature/RiskManagement/risk_management.css?v=1.5">
 <script src="/feature/RiskManagement/function_block/params_block.js?v=1.0"></script>
 <script src="/feature/RiskManagement/function_block/overview_block.js?v=1.0"></script>
 <script src="/feature/RiskManagement/function_block/portfolio_block.js?v=1.1"></script>
 <script src="/feature/RiskManagement/risk_management.js?v=1.0"></script>
+{% endif %}
