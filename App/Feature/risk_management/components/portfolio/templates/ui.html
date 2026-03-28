@@ -1,0 +1,88 @@
+<!-- 投資組合風險明細表 UI 片段 — 由 portfolio_block.js 管理資料與互動 -->
+<section class="rm-card rm-table-card">
+    <div style="display:flex; justify-content:space-between; align-items:center;
+            padding:0.9rem 1.2rem; border-bottom:1px solid rgba(0,212,170,0.1);">
+        <h3 style="font-size:1rem; font-weight:700; margin:0;">投資組合風險明細</h3>
+        <button class="btn-outline" id="rm-addRowBtn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            新增持股
+        </button>
+    </div>
+    <div class="rm-table-scroll">
+        <table id="rm-portfolioTable">
+            <thead>
+                <tr>
+                    <th style="min-width:90px;">【狀態】</th>
+                    <th style="min-width:90px;">【持股】</th>
+                    <th style="min-width:155px;">【進場規劃】</th>
+                    <th style="min-width:165px;">【停損設定】</th>
+                    <th style="min-width:165px;">【實際出場】</th>
+                    <th style="min-width:105px;">【交易績效】</th>
+                    <th style="min-width:105px;">【帳戶貢獻】</th>
+                    <th style="width:36px;"></th>
+                </tr>
+            </thead>
+            <tbody id="rm-tableBody">
+                <!-- 由 portfolio_block.js 動態填入 -->
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2"
+                        style="text-align:right; padding:0.7rem 0.65rem; color:#7fb3a0; font-size:0.78rem;">
+                        合計
+                    </td>
+                    <td style="padding:0.7rem 0.65rem;">
+                        <div style="font-size:0.75rem;color:var(--text-muted);">控風倉位</div>
+                        <strong class="text-primary" id="rm-foot-ctrlPos" style="font-size:0.88rem;">—</strong>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td style="padding:0.7rem 0.65rem;">
+                        <div style="font-size:0.75rem;color:var(--text-muted);">帳戶貢獻</div>
+                        <strong id="rm-foot-contrib" style="font-size:0.88rem;">—</strong>
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</section>
+
+<!-- ── 公式說明 + 風險提示（表格外） ── -->
+<div style="flex-shrink:0;">
+    <div class="rm-tip" style="margin-top:0.75rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="flex-shrink:0;margin-top:1px;color:var(--accent-primary)">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <div>
+            <strong>公式說明：</strong>
+            平均停損% = Σ[方向 × (停損價₍ᵢ₎ − 均價) / 均價 × 批次佔比₍ᵢ₎]。
+            建議股數 = INT(倉位% × 資金 × max(1, 最大風險% / |平均停損%|) / 均價)。
+            控風倉位% = 建議股數 × 均價 / 資金。
+            帳戶貢獻% = 平均損益% / 100 × 控風倉位%（有出場）或 平均停損% / 100 × 控風倉位%（規劃中）。
+            <span class="text-warn">建議帳戶總風險不超過 2%。</span>
+        </div>
+    </div>
+    <div class="rm-tip" style="margin-bottom:1rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="flex-shrink:0;margin-top:1px;color:var(--color-warning)">
+            <path
+                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+        <div>
+            <strong>風險提示：</strong>
+            上述計算係基於您輸入之停損位與單筆風險承受度。請務必考量市場滑價與流動性風險。
+            系統建議倉位僅供參考，不構成任何形式之投資建議或保證。
+        </div>
+    </div>
+</div>

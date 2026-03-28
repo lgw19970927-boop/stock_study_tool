@@ -1,0 +1,47 @@
+/* ===== Checkbox Group ===== */
+.checkbox-group {
+    @apply flex flex-wrap;
+    gap: var(--spacing-sm);
+}
+
+.checkbox-item {
+    @apply flex items-center cursor-pointer;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.checkbox-item:hover {
+    border-color: var(--accent-primary);
+}
+
+.checkbox-item input[type="checkbox"] {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.checkbox-item input[type="checkbox"]:checked {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+.checkbox-item input[type="checkbox"]:checked::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 7px;
+    border: solid #000;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) translate(2px, -1px);
+}

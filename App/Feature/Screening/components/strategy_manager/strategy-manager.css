@@ -1,0 +1,211 @@
+/* ===== Strategies List (v4) ===== */
+.strategies-list {
+    @apply flex flex-col;
+    gap: 12px;
+}
+
+.strategy-card {
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    @apply cursor-pointer relative overflow-hidden;
+    transition: all var(--transition-fast);
+}
+
+.strategy-card:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 12px rgba(0, 212, 170, 0.2);
+}
+
+.strategy-card.selected {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 16px rgba(0, 212, 170, 0.3);
+}
+
+.strategy-card.selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent-primary);
+}
+
+.strategy-card-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.strategy-card-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.strategy-card-actions {
+    @apply flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+.strategy-card:hover .strategy-card-actions {
+    opacity: 1;
+}
+
+.strategy-card-actions button {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.strategy-card-actions button:hover {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    border-color: var(--accent-primary);
+}
+
+/* ===== Toggle Switch Styles (v4 New) ===== */
+.toggle-switch {
+    @apply flex items-center cursor-pointer relative;
+    gap: 12px;
+}
+
+.toggle-switch input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background-color: var(--bg-tertiary);
+    border-radius: 12px;
+    transition: background-color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform var(--transition-fast);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--accent-primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 0 2px var(--accent-primary-alpha);
+}
+
+.toggle-label {
+    @apply text-sm select-none;
+    color: var(--text-primary);
+}
+
+/* ===== Chart Options Styles (v4 New) ===== */
+.chart-options {
+    @apply flex items-center;
+    gap: 12px;
+    padding: 0 8px;
+}
+
+/* Small Toggle Switch for Chart Controls */
+.toggle-switch-small {
+    gap: 8px;
+}
+
+.toggle-switch-small .toggle-slider {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+}
+
+.toggle-switch-small .toggle-slider::before {
+    width: 14px;
+    height: 14px;
+    left: 3px;
+    top: 3px;
+}
+
+.toggle-switch-small input:checked + .toggle-slider::before {
+    transform: translateX(16px);
+}
+
+.toggle-switch-small .toggle-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ===== Strategy Cards (v4.1) ===== */
+.strategies-list {
+    @apply flex flex-col;
+    gap: var(--spacing-md);
+}
+
+.strategy-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    @apply cursor-pointer;
+    transition: all var(--transition-fast);
+}
+
+.strategy-card:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-hover);
+}
+
+.strategy-card-header {
+    @apply flex items-center justify-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.strategy-card-title {
+    @apply text-sm font-semibold;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.strategy-card-actions {
+    @apply flex;
+    gap: var(--spacing-xs);
+}
+
+.strategy-card-description {
+    @apply text-xs;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}

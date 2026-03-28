@@ -1,0 +1,41 @@
+        <!-- Part 0: 市場與時間篩選 -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <path d="M12 1v6m0 6v6"></path>
+                        <path d="M4.22 4.22l4.24 4.24m0 5.08l-4.24 4.24"></path>
+                        <path d="M19.78 4.22l-4.24 4.24m0 5.08l4.24 4.24"></path>
+                    </svg>
+                    分析時間範圍
+                </h2>
+            </div>
+            <div class="filter-section">
+                <label class="filter-label">時間設定</label>
+                <div class="time-range-radio-group">
+                    <label class="radio-item tr-option">
+                        <input type="radio" name="timeRangeMode" value="today"> 今天
+                    </label>
+                    <label class="radio-item tr-option">
+                        <input type="radio" name="timeRangeMode" value="specific"> 自訂特定時點
+                    </label>
+                    <div class="tr-sub-panel" id="specificDatePanel" style="display:none;">
+                        <input type="date" class="date-input" id="specificDate">
+                    </div>
+                    <label class="radio-item tr-option">
+                        <input type="radio" name="timeRangeMode" value="custom"> 自訂分析時間範圍 <span class="badge-sm">測試用</span>
+                    </label>
+                    <div class="tr-sub-panel custom-date-range" id="customDateRange" style="display:none;">
+                        <div class="date-input-group">
+                            <label>開始日期</label>
+                            <input type="date" class="date-input" id="startDate" value="2025-01-01">
+                        </div>
+                        <div class="date-input-group">
+                            <label>結束日期</label>
+                            <input type="date" class="date-input" id="endDate" value="2025-12-31">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>

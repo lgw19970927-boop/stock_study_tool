@@ -11,8 +11,8 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 from .config import get_config
-from .Lib.db import init_db
-from .Feature import register_features
+from .lib.db import init_db
+from .feature import register_features
 
 
 def create_app(config_name: str | None = None) -> FastAPI:
@@ -37,15 +37,15 @@ def create_app(config_name: str | None = None) -> FastAPI:
     init_db(config)
 
     # ---- 靜態資源掛載 ----
-    # /static  → App/Static/  （全域共用 CSS/JS）
-    app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "Static")), name="static")
+    # /static  → app/static/  （全域共用 CSS/JS）
+    app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
-    # /feature → App/Feature/ （各 Feature 的前端 JS/CSS/HTML）
-    app.mount("/feature", StaticFiles(directory=os.path.join(BASE_DIR, "Feature")), name="feature")
+    # /feature → app/feature/ （各 Feature 的前端 JS/CSS/HTML）
+    app.mount("/feature", StaticFiles(directory=os.path.join(BASE_DIR, "feature")), name="feature")
 
     # ---- Jinja2 Templates ----
-    # 同時搜尋 Template（放 base.html）與 Feature（放各功能的 html）
-    templates = Jinja2Templates(directory=[os.path.join(BASE_DIR, "Template"), os.path.join(BASE_DIR, "Feature")])
+    # 同時搜尋 template（放 base.html）與 feature（放各功能的 html）
+    templates = Jinja2Templates(directory=[os.path.join(BASE_DIR, "template"), os.path.join(BASE_DIR, "feature")])
     app.state.templates = templates
 
     # ---- 登錄所有 Feature Router ----

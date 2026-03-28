@@ -1,0 +1,55 @@
+<!-- 概覽卡片 UI 片段 — 由 overview_block.js 計算並填入數值 -->
+<div class="rm-overview-grid">
+    <!-- 帳戶總風險 -->
+    <div class="rm-ov-card">
+        <div class="rm-ov-label">
+            <span>帳戶總風險</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="1.8"
+                opacity=".6">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+        </div>
+        <div class="rm-ov-value" id="rm-ov-totalRisk">—</div>
+        <div class="rm-ov-sub" id="rm-ov-riskLabel" style="color:#00d4aa;">—</div>
+    </div>
+    <!-- 全失敗停損總金額 -->
+    <div class="rm-ov-card">
+        <div class="rm-ov-label">
+            <span>全失敗停損總金額</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="1.8"
+                opacity=".6">
+                <polyline points="22 17 13 8 8 13 2 7" />
+            </svg>
+        </div>
+        <div class="rm-ov-value text-danger" id="rm-ov-maxLoss">—</div>
+        <div class="rm-ov-sub text-muted">最大潛在虧損</div>
+    </div>
+    <!-- 停損後剩餘資金 -->
+    <div class="rm-ov-card">
+        <div class="rm-ov-label">
+            <span>停損後剩餘資金</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="1.8"
+                opacity=".6">
+                <rect x="2" y="7" width="20" height="14" rx="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+            </svg>
+        </div>
+        <div class="rm-ov-value" id="rm-ov-remaining">—</div>
+        <div class="rm-ov-sub text-muted">預期剩餘價值</div>
+    </div>
+    <!-- 資金使用率 -->
+    <div class="rm-ov-card">
+        <div class="rm-ov-label">
+            <span>資金使用率</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="1.8"
+                opacity=".6">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 2a10 10 0 0 1 7 17" />
+            </svg>
+        </div>
+        <div class="rm-ov-value" id="rm-ov-usage">—</div>
+        <div class="rm-progress">
+            <div class="rm-progress-bar" id="rm-ov-usageBar" style="width:0%"></div>
+        </div>
+    </div>
+</div>

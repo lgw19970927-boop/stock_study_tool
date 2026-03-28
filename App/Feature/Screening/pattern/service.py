@@ -1,4 +1,4 @@
-"""
+﻿"""
 Pattern Recognition Service
 核心型態辨識邏輯：
 - YOLO 推理（W底、頭肩頂底、三角收斂）
@@ -129,7 +129,7 @@ def fetch_stock_prices(
     end_date: str
 ) -> List[Dict[str, Any]]:
     # datetime in MySQL requires valid strings or bindings
-    from App.Lib.db import get_market_cursor
+    from app.lib.db import get_market_cursor
     try:
         with get_market_cursor() as cursor:
             # 轉換為包含時分的比較
@@ -158,7 +158,7 @@ def fetch_stock_prices(
         return []
 
 def get_stocks_by_markets(markets: List[str]) -> List[Dict[str, Any]]:
-    from App.Lib.db import get_market_cursor
+    from app.lib.db import get_market_cursor
     try:
         with get_market_cursor() as cursor:
             markets_lower = [m.lower() for m in markets]

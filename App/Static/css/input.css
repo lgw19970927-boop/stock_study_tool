@@ -1,26 +1,31 @@
-/* ===== Global: CSS Variables & Animations ===== */
+/* ===== Global ===== */
 @import "./variables.css";
 @import "./animations.css";
-
-/* ===== Global: Layout & Components (styles.css 拆分 Phase B-1) ===== */
 @import "./layout.css";
 @import "./components.css";
-@import "./stock-list.css";
-@import "./chart.css";
-@import "./backtest.css";
 @import "./tabs.css";
 
-/* ===== Feature: Screening ===== */
-@import "../../Feature/Screening/screening.css";
-@import "../../Feature/Screening/chart/chart-modal-core.css";
-@import "../../Feature/Screening/chart/chart-modal-sidebar.css";
-@import "../../Feature/Screening/chart/chart-modal-indicators.css";
-@import "../../Feature/Screening/chart/chart-modal-patterns.css";
-@import "../../Feature/Screening/chart/chart-modal-color-picker.css";
-@import "../../Feature/Screening/chart/chart-modal-general.css";
+/* ===== Feature: screening ===== */
+@import "../../feature/screening/screening.css";
+@import "../../feature/screening/chart/kline_viewer/chart-area.css";
+@import "../../feature/screening/chart/chart_management/chart-modal-core.css";
+@import "../../feature/screening/chart/chart_management/chart-modal-sidebar.css";
+@import "../../feature/screening/chart/chart_management/chart-modal-indicators.css";
+@import "../../feature/screening/chart/chart_management/chart-modal-patterns.css";
+@import "../../feature/screening/chart/chart_management/chart-modal-color-picker.css";
+@import "../../feature/screening/chart/chart_management/chart-modal-general.css";
+@import "../../feature/screening/indicators/indicator-styles.css";
+@import "../../feature/screening/pattern/pattern-styles.css";
+@import "../../feature/screening/components/market_selection/market-selection.css";
+@import "../../feature/screening/components/time_range_selector/time-range-selector.css";
+@import "../../feature/screening/components/strategy_manager/strategy-manager.css";
+@import "../../feature/screening/components/results_table/results-table.css";
 
-/* ===== Feature: RiskManagement ===== */
-@import "../../Feature/RiskManagement/risk_management.css";
+/* ===== Feature: backtesting ===== */
+@import "../../feature/backtesting/backtesting.css";
+
+/* ===== Feature: risk_management ===== */
+@import "../../feature/risk_management/risk_management.css";
 
 @tailwind base;
 @tailwind components;

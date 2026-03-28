@@ -13,7 +13,7 @@ RUN npm install
 COPY tailwind.config.js postcss.config.js ./
 
 # Copy all app source (HTML/JS for content scanning + CSS for @imports)
-COPY App/ App/
+COPY app/ app/
 
 # Build the CSS bundle
 RUN npm run build:css
@@ -46,7 +46,7 @@ RUN pip install --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu121 torch torchvision
 
 # 複製 requirements 並安裝 Python 依賴
-COPY Env/fastapi/requirements.txt /tmp/requirements.txt
+COPY env/fastapi/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # 強制以 headless 版本覆蓋 ultralytics 安裝時拉入的 opencv-python
@@ -57,8 +57,8 @@ RUN pip install --no-cache-dir --force-reinstall opencv-python-headless
 COPY . /workspace
 
 # 從 css-builder stage 複製建構好的 CSS（production 用；開發時由 volume mount 覆蓋）
-COPY --from=css-builder /app/App/Static/css/tailwind.output.css /workspace/App/Static/css/tailwind.output.css
+COPY --from=css-builder /app/app/static/css/tailwind.output.css /workspace/app/static/css/tailwind.output.css
 
 # ✅ 開啟多 worker（預設 4 個；也可改為 8）
-# 使用 App.app:app 形式啟動（App 是包，app.py 是模組，app 是應用實例）
-CMD ["python3", "-m", "uvicorn", "App.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# 使用 app.app:app 形式啟動（app 是包，app.py 是模組，app 是應用實例）
+CMD ["python3", "-m", "uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

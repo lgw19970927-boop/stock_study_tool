@@ -1,9 +1,10 @@
 """
-App/Feature/Screening/indicators/service.py
+app/feature/screening/indicators/service.py
 指標計算服務（原 backend/services/indicator_service.py）+
 日期解析工具（原 backend/pattern_recognition/pattern_service.py 中與 DB 無關的純函式）
 
 此模組只包含純函式（pandas/numpy），不直接操作 DB。
+SMA / Bollinger 計算邏輯已拆至各自的模組檔案，此處重新 export 保持對外 API 不變。
 """
 import pandas as pd
 import numpy as np
@@ -11,42 +12,10 @@ from typing import Dict, Any, List, Optional, Tuple
 from datetime import date, timedelta
 import logging
 
+from .modules.sma.sma import calculate_sma
+from .modules.bollinger.bollinger import calculate_bollinger_bands
+
 logger = logging.getLogger(__name__)
-
-
-# ══════════════════════════════════════════════
-# SMA（Simple Moving Average）
-# ══════════════════════════════════════════════
-
-def calculate_sma(df: pd.DataFrame, period: int = 20) -> pd.DataFrame:
-    """計算簡單移動平均線，回傳加入 MA{period} 欄位的 DataFrame"""
-    if df.empty:
-        return df
-    if "close" not in df.columns:
-        raise ValueError("DataFrame must contain 'close' column")
-    df[f"MA{period}"] = df["close"].rolling(window=period).mean()
-    return df
-
-
-# ══════════════════════════════════════════════
-# Bollinger Bands
-# ══════════════════════════════════════════════
-
-def calculate_bollinger_bands(
-    df: pd.DataFrame,
-    period: int = 20,
-    std_dev: float = 2.0,
-) -> pd.DataFrame:
-    """計算布林通道（BB_UPPER / BB_MIDDLE / BB_LOWER）"""
-    if df.empty:
-        return df
-    if "close" not in df.columns:
-        raise ValueError("DataFrame must contain 'close' column")
-    df["BB_MIDDLE"] = df["close"].rolling(window=period).mean()
-    rolling_std = df["close"].rolling(window=period).std(ddof=0)
-    df["BB_UPPER"] = df["BB_MIDDLE"] + rolling_std * std_dev
-    df["BB_LOWER"] = df["BB_MIDDLE"] - rolling_std * std_dev
-    return df
 
 
 # ══════════════════════════════════════════════

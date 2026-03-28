@@ -1,0 +1,34 @@
+﻿<!-- app/feature/risk_management/risk_management_fragment.html
+     HTMX fragment — layout.js 動態載入時使用此版本
+     完整頁面（risk_management.html）透過 include 引入此檔案
+-->
+<div class="page-content active" id="risk-page">
+    <div class="risk-main">
+
+        <!-- ── 頂列：匯出（頁面層級控制項，不屬於任何子元件） ── -->
+        <div style="display:flex; justify-content:flex-end; margin-bottom:0.75rem;">
+            <button class="btn-outline" id="rm-exportCsvBtn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                匯出 CSV
+            </button>
+        </div>
+
+        {% include "risk_management/components/params/templates/ui.html" %}
+        {% include "risk_management/components/overview/templates/ui.html" %}
+        {% include "risk_management/components/portfolio/templates/ui.html" %}
+
+    </div><!-- /.risk-main -->
+</div><!-- /#risk-page -->
+
+{% if not rm_full_page %}
+<!-- RiskManagement CSS + JS（HTMX 動態載入場景，非整頁渲染時載入） -->
+<link rel="stylesheet" href="/feature/risk_management/risk_management.css?v=1.5">
+<script src="/feature/risk_management/components/params/params_block.js?v=1.0"></script>
+<script src="/feature/risk_management/components/overview/overview_block.js?v=1.0"></script>
+<script src="/feature/risk_management/components/portfolio/portfolio_block.js?v=1.1"></script>
+<script src="/feature/risk_management/risk_management.js?v=1.0"></script>
+{% endif %}

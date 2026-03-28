@@ -13,6 +13,6 @@ async def backtesting_page(request: Request):
     """回測頁面（空佔位）"""
     templates = request.app.state.templates
     if request.headers.get("HX-Request"):
-        return templates.TemplateResponse("Backtesting/backtesting_fragment.html", {"request": request})
-    return templates.TemplateResponse("Backtesting/backtesting.html", {"request": request})
+        return templates.TemplateResponse("backtesting/backtesting_fragment.html", {"request": request})
+    return templates.TemplateResponse("backtesting/backtesting.html", {"request": request})
 

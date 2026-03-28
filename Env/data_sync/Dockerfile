@@ -15,10 +15,10 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --upgrade pip setuptools wheel
 
 # 複製 requirements.txt
-COPY Env/data_sync/requirements.txt /tmp/requirements.txt
+COPY env/data_sync/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # 複製整個應用程式碼到 /workspace
 COPY . /workspace
 
-CMD ["python3", "/workspace/Env/data_sync/scheduler.py"]
+CMD ["python3", "/workspace/env/data_sync/scheduler.py"]

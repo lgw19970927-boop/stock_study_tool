@@ -12,11 +12,11 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       # 01: 建立 Schema 與資料表（必定掛載）
-      - ./Env/mysql/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./env/mysql/init.sql:/docker-entrypoint-initdb.d/01_init.sql
       # 02: 還原 market_data 備份（執行 migrate 後才會存在，初次啟動可忽略）
-      - ./Env/mysql/seed/seed_market_data.sql:/docker-entrypoint-initdb.d/02_seed_market_data.sql
+      - ./env/mysql/seed/seed_market_data.sql:/docker-entrypoint-initdb.d/02_seed_market_data.sql
       # 03: 還原 user_data 備份（執行 migrate 後才會存在，初次啟動可忽略）
-      - ./Env/mysql/seed/seed_user_data.sql:/docker-entrypoint-initdb.d/03_seed_user_data.sql
+      - ./env/mysql/seed/seed_user_data.sql:/docker-entrypoint-initdb.d/03_seed_user_data.sql
     secrets:
       - mysql_root_password
       - mysql_user_password
@@ -29,7 +29,7 @@ services:
   fastapi:
     build:
       context: .
-      dockerfile: ./Env/fastapi/Dockerfile
+      dockerfile: ./env/fastapi/Dockerfile
     container_name: stock-fastapi
     runtime: nvidia
     environment:
@@ -66,8 +66,9 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./Env/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./App/Static:/static
+      - ./env/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./app/static:/static
+      - ./app/feature:/workspace/app/feature:ro
     depends_on:
       fastapi:
         condition: service_healthy
@@ -75,7 +76,7 @@ services:
   data_sync:
     build:
       context: .
-      dockerfile: ./Env/data_sync/Dockerfile
+      dockerfile: ./env/data_sync/Dockerfile
     container_name: stock-data-sync
     environment:
       MYSQL_HOST: mysql

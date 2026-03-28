@@ -1,4 +1,4 @@
-"""
+﻿"""
 App/Feature/Screening/routes.py
 股票篩選頁面路由 + API 路由
 整合 HTMX：GET /screening 回傳 Jinja2 頁面或 HTML 片段
@@ -12,7 +12,7 @@ import logging
 
 from .service import screen_stocks, screen_single_stock
 from .indicators.service import resolve_analysis_dates
-from ..models import ScreeningRequest, ScreeningResponse, StockResult
+from .models import ScreeningRequest, ScreeningResponse, StockResult
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -34,10 +34,13 @@ async def screening_page(request: Request):
 
     if request.headers.get("HX-Request"):
         # HTMX 切換分頁：只回傳內容片段（不含 base.html）
+        # screening_full_page=False → fragment 底部 {% if not screening_full_page %} 會載入 JS
         return templates.TemplateResponse(
-            "Screening/screening_fragment.html", context
+            "screening/screening_fragment.html", context
         )
-    return templates.TemplateResponse("Screening/screening.html", context)
+    # 完整頁渲染：scripts 由 extra_scripts block 載入，fragment 內不重複載入
+    context["screening_full_page"] = True
+    return templates.TemplateResponse("screening/screening.html", context)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -103,8 +106,6 @@ async def filter_stocks_stream(
     """
     markets_list    = [m.strip() for m in (markets or "listed,otc").split(",") if m.strip()]
     indicators_list = json.loads(indicators_json or "[]")
-    with open("debug_indicators.json", "w", encoding="utf-8") as f:
-        json.dump(indicators_list, f, ensure_ascii=False, indent=2)
     timeframe       = indicators_list[0].get("timeframe", "1d") if indicators_list else "1d"
 
     resolved_start, resolved_end = resolve_analysis_dates(
@@ -113,7 +114,7 @@ async def filter_stocks_stream(
 
     async def event_stream():
         try:
-            from App.Lib.db import get_market_cursor
+            from app.lib.db import get_market_cursor
 
             with get_market_cursor() as cursor:
                 # 取得大盤基準日 (以資料庫最新的一筆 K 線時間為準)

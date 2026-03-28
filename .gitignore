@@ -12,11 +12,13 @@ Thumbs.db
 reference/extracted/
 *.zip
 *.sql
-App/Feature/Screening/pattern/models/*.pt
+app/feature/screening/pattern/models/.cache/
+app/feature/screening/pattern/models/*.pt
 
 # Tailwind CSS 建構產物（由 Docker Node 容器產出，不納入版控）
-App/Static/css/tailwind.output.css
+app/static/css/tailwind.output.css
 
 # Node.js 依賴（不應納入版控）
 node_modules/
 package-lock.json
+stock_study_tool_old

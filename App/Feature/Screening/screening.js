@@ -1,4 +1,4 @@
-/**
+﻿/**
  * StockFilter PRO - Screening Page Logic
  * Implements logic defined in filter_v4.3.md
  */
@@ -518,334 +518,6 @@ window.ScreeningPage = {
         }
     },
 
-    // ── 進度條控制 ─────────────────────────────────────────
-
-    _showProgress: function () {
-        const progressArea = document.getElementById('screeningProgressArea');
-        const emptyState = document.getElementById('emptyState');
-        if (progressArea) progressArea.style.display = 'flex';
-        if (emptyState) emptyState.style.display = 'none';
-        const stockList = document.getElementById('stockList');
-        if (stockList) {
-            [...stockList.children].forEach(child => {
-                if (child.id !== 'screeningProgressArea' && child.id !== 'emptyState') {
-                    child.remove();
-                }
-            });
-            stockList.classList.remove('state-idle', 'state-result');
-            stockList.classList.add('state-progressing');
-        }
-    },
-
-    _hideProgress: function () {
-        const progressArea = document.getElementById('screeningProgressArea');
-        if (progressArea) progressArea.style.display = 'none';
-    },
-
-    _updateProgressBar: function (current, total, matched, stageText) {
-        const pct = total > 0 ? Math.round((current / total) * 100) : 0;
-        const fillEl = document.getElementById('progressFill');
-        const detailEl = document.getElementById('progressDetailText');
-        const pctEl = document.getElementById('progressPercent');
-        const stageEl = document.getElementById('progressStageText');
-        const matchEl = document.getElementById('progressMatchedText');
-        if (fillEl) fillEl.style.width = pct + '%';
-        if (detailEl) detailEl.textContent = `已分析 ${current.toLocaleString()} / ${total.toLocaleString()} 支`;
-        if (pctEl) pctEl.textContent = pct + '%';
-        if (stageEl && stageText) stageEl.textContent = '⏳ ' + stageText;
-        if (matchEl) matchEl.textContent = `找到符合：${matched} 支`;
-    },
-
-    _showError: function (message) {
-        this._hideProgress();
-        const emptyState = document.getElementById('emptyState');
-        if (emptyState) {
-            emptyState.style.display = 'flex';  // 保持 CSS flex 置中
-            emptyState.innerHTML = `
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
-                     stroke="#ff6b6b" stroke-width="1.5"
-                     stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                </svg>
-                <p style="color:#ff6b6b;">篩選失敗：${message}</p>
-                <small style="color:#ff6b6b;">請檢查網絡連接或聯繫管理員</small>
-            `;
-        }
-    },
-
-    // ── SSE 輔助：消費 SSE 串流，回傳最終 done 資料 ──────────────
-
-    _consumeSSE: async function (url, stageText) {
-        return new Promise((resolve, reject) => {
-            const evtSrc = new EventSource(url);
-            this._currentEvtSrc = evtSrc;
-            evtSrc.onmessage = (e) => {
-                if (this._isStopped) {
-                    evtSrc.close();
-                    this._currentEvtSrc = null;
-                    reject(new Error('STOPPED'));
-                    return;
-                }
-                try {
-                    const data = JSON.parse(e.data);
-                    if (data.type === 'progress') {
-                        this._updateProgressBar(data.current, data.total, data.matched, stageText);
-                        // Feature Bug 1: 累積中途已篩選出的股票清單
-                        if (data.partial_stocks !== undefined) {
-                            this._currentPartialResults = {
-                                stocks:     data.partial_stocks,
-                                statistics: data.partial_statistics || {}
-                            };
-                        }
-                    } else if (data.type === 'done') {
-                        evtSrc.close();
-                        this._currentEvtSrc = null;
-                        resolve(data);
-                    } else if (data.type === 'error') {
-                        evtSrc.close();
-                        this._currentEvtSrc = null;
-                        reject(new Error(data.message));
-                    }
-                } catch (err) {
-                    evtSrc.close();
-                    this._currentEvtSrc = null;
-                    reject(err);
-                }
-            };
-            evtSrc.onerror = () => {
-                evtSrc.close();
-                this._currentEvtSrc = null;
-                reject(new Error('SSE 連線中斷'));
-            };
-        });
-    },
-
-    _streamIndicators: async function (filters, stageText) {
-        const base = window.API_CONFIG?.getURL?.('SCREENING_STREAM')
-            ?? 'http://localhost:8000/api/screening/filter/stream';
-        const params = new URLSearchParams({
-            markets: (filters.markets || []).join(','),
-            frequency: filters.frequency || 'daily',
-            indicators_json: JSON.stringify(filters.indicators || []),
-            analysis_start_date: filters.analysis_start_date || '',
-            analysis_end_date: filters.analysis_end_date || '',
-        });
-        // time_range 傳給後端做日期換算（快捷按鈕模式）
-        if (filters.time_range) params.append('time_range', filters.time_range);
-        return this._consumeSSE(`${base}?${params}`, stageText);
-    },
-
-    _streamPatterns: async function (patternState, filters, stockSymbols, stageText) {
-        const base = window.API_CONFIG?.getURL?.('PATTERN_STREAM')
-            ?? 'http://localhost:8000/api/screening/pattern-recognition/stream';
-        const params = new URLSearchParams({
-            markets_str: (filters.markets || []).join(','),          // → Optional[str]
-            patterns_str: (patternState.patterns || []).join(','),    // → Optional[str]
-            sensitivity: patternState.sensitivity ?? 75,
-            pattern_min: patternState.patternTimeframe?.min ?? 20,
-            pattern_max: patternState.patternTimeframe?.max ?? 60,
-            interval: patternState.patternTimeframe?.interval ?? '1D',
-            start_date: filters.analysis_start_date || '',
-            end_date: filters.analysis_end_date || '',
-        });
-        // 快捷按鈕模式（time_range 讓後端換算）
-        if (filters.time_range) params.append('time_range', filters.time_range);
-        if (stockSymbols?.length > 0) {
-            params.append('stock_symbols_str', stockSymbols.join(','));  // 逗號合併，對應後端 Optional[str]
-        }
-        return this._consumeSSE(`${base}?${params}`, stageText);
-    },
-
-    _renderResults: function (stocks, statistics) {
-        const stockList = document.getElementById('stockList');
-        // 移除進行中 / idle 的 state class，切換為 result 狀態（顯示 scrollbar）
-        if (stockList) {
-            stockList.classList.remove('state-idle', 'state-progressing');
-            stockList.classList.add('state-result');
-        }
-        const totalStocksEl = document.getElementById('totalStocks');
-        const gainersEl = document.getElementById('gainers');
-        const losersEl = document.getElementById('losers');
-        const dataInsufficientEl = document.getElementById('dataInsufficient');
-        const emptyState = document.getElementById('emptyState');
-
-        // 更新 stats-bar
-        if (totalStocksEl) totalStocksEl.textContent = statistics?.total ?? stocks.length;
-        if (gainersEl) gainersEl.textContent = statistics?.gainers ?? 0;
-        if (losersEl) losersEl.textContent = statistics?.losers ?? 0;
-        if (dataInsufficientEl) dataInsufficientEl.textContent = statistics?.data_insufficient ?? 0;
-
-        window.state.lastResults = stocks;
-        this._lastRenderStocks = stocks;
-        this._lastRenderStats = statistics;
-        const sortedStocks = this._sortStocks(stocks);
-
-        // 清空舊 stock item
-        if (stockList) {
-            [...stockList.children].forEach(child => {
-                if (child.id !== 'screeningProgressArea' && child.id !== 'emptyState') {
-                    child.remove();
-                }
-            });
-        }
-
-        if (!stocks || stocks.length === 0) {
-            if (emptyState) {
-                emptyState.style.display = 'flex';  // 保持 CSS flex 置中
-                emptyState.innerHTML = `
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <p>沒有符合條件的股票</p>
-                `;
-            }
-            return;
-        }
-
-        if (emptyState) emptyState.style.display = 'none';
-
-        sortedStocks.forEach(stock => {
-            const changeClass = stock.change_percent >= 0 ? 'positive' : 'negative';
-            const changeSign = stock.change_percent >= 0 ? '+' : '';
-
-            // 1. 整理所有標籤並去重
-            const uniqueLabels = new Set();
-            let finalTagsHTML = '';
-
-            // 2. 第一優先：符合的指標 (原灰色樣式)
-            if (stock.matched_indicators?.length > 0) {
-                stock.matched_indicators.forEach(ind => {
-                    if (!uniqueLabels.has(ind)) {
-                        uniqueLabels.add(ind);
-                        finalTagsHTML += `<span class="pattern-tag">${ind}</span>`;
-                    }
-                });
-            }
-
-            // 3. 第二優先：資料不足放行的指標 (原紅色警告樣式)
-            if (stock.insufficient_indicators?.length > 0) {
-                stock.insufficient_indicators.forEach(ind => {
-                    const warnLabel = `⚠️ ${ind} 資料不足`;
-                    if (!uniqueLabels.has(warnLabel)) {
-                        uniqueLabels.add(warnLabel);
-                        finalTagsHTML += `<span class="pattern-tag" style="background:rgba(255,107,107,0.15); color:#ff6b6b;">${warnLabel}</span>`;
-                    }
-                });
-            } else if (stock.data_insufficient && (!stock.insufficient_indicators || stock.insufficient_indicators.length === 0)) {
-                // 向下相容舊資料結構
-                const warnLabel = '⚠️ 資料不足';
-                if (!uniqueLabels.has(warnLabel)) {
-                    uniqueLabels.add(warnLabel);
-                    finalTagsHTML += `<span class="pattern-tag" style="background:rgba(255,107,107,0.15); color:#ff6b6b;">${warnLabel}</span>`;
-                }
-            }
-
-            // 4. 第三優先：AI 型態 (原綠色樣式)
-            if (stock.patterns_found?.length > 0) {
-                stock.patterns_found.forEach(pf => {
-                    if (!uniqueLabels.has(pf.display_name)) {
-                        uniqueLabels.add(pf.display_name);
-                        finalTagsHTML += `<span class="pattern-tag" style="background:rgba(0,212,170,0.15); color:var(--accent,#00d4aa);" title="信心値: ${pf.confidence}%">${pf.display_name}</span>`;
-                    }
-                });
-            }
-
-            const item = document.createElement('div');
-            item.className = 'stock-item';
-            item.setAttribute('onclick', `window.ScreeningPage.onStockClick('${stock.symbol}')`);
-            item.innerHTML = `
-                <div class="stock-symbol">${stock.symbol}</div>
-                <div class="stock-name">${stock.name}</div>
-                <div class="stock-price">${stock.price.toFixed(2)}</div>
-                <div class="stock-change ${changeClass}">${changeSign}${stock.change_percent}%</div>
-                <div class="stock-volume">${stock.volume.toLocaleString()}</div>
-                <div class="stock-pattern">${finalTagsHTML}</div>
-            `;
-            stockList.appendChild(item);
-        });
-    },
-
-    // ── 欄位排序 ─────────────────────────────────────────
-
-    _initSortHeaders: function () {
-        document.querySelectorAll('.list-header .sortable').forEach(col => {
-            col.style.cursor = 'pointer';
-            col.addEventListener('click', () => {
-                const field = col.dataset.sort;
-                if (this._sortState.field === field) {
-                    if (this._sortState.order === 'desc') {
-                        this._sortState.order = 'asc';
-                    } else {
-                        this._sortState.field = null;
-                        this._sortState.order = null;
-                    }
-                } else {
-                    this._sortState.field = field;
-                    this._sortState.order = 'desc';
-                }
-                this._updateSortIcons();
-                if (this._lastRenderStocks) {
-                    this._renderResults(this._lastRenderStocks, this._lastRenderStats);
-                }
-            });
-        });
-    },
-
-    _sortStocks: function (stocks) {
-        if (!this._sortState.field || !this._sortState.order) return [...stocks];
-        const field = this._sortState.field;
-        const dir = this._sortState.order === 'desc' ? -1 : 1;
-        return [...stocks].sort((a, b) => {
-            if (field === 'symbol') return dir * a.symbol.localeCompare(b.symbol);
-            if (field === 'price')  return dir * (a.price - b.price);
-            if (field === 'change') return dir * (a.change_percent - b.change_percent);
-            if (field === 'volume') return dir * (a.volume - b.volume);
-            return 0;
-        });
-    },
-
-    _updateSortIcons: function () {
-        document.querySelectorAll('.list-header .sortable').forEach(col => {
-            const icon = col.querySelector('.sort-icon');
-            if (!icon) return;
-            if (this._sortState.field === col.dataset.sort) {
-                icon.textContent = this._sortState.order === 'desc' ? '↓' : '↑';
-                col.classList.add('sorted');
-            } else {
-                icon.textContent = '⇅';
-                col.classList.remove('sorted');
-            }
-        });
-    },
-
-    // Helper: Generate Mock OHLC Data
-    generateMockOHLC: function (count) {
-        const prices = [];
-        let price = 150;
-        const now = new Date();
-        for (let i = 0; i < count; i++) {
-            const time = new Date(now.getTime() - (count - i) * 86400000);
-            const dateStr = time.toISOString().split('T')[0];
-            const change = (Math.random() - 0.5) * 5;
-            const open = price;
-            const close = price + change;
-            const high = Math.max(open, close) + Math.random() * 2;
-            const low = Math.min(open, close) - Math.random() * 2;
-            prices.push({
-                time: dateStr,
-                open: parseFloat(open.toFixed(2)),
-                high: parseFloat(high.toFixed(2)),
-                low: parseFloat(low.toFixed(2)),
-                close: parseFloat(close.toFixed(2))
-            });
-            price = close;
-        }
-        return prices;
-    },
 
 
     // ✅ Phase 2 重構：策略管理函數已移至 strategyManager.js
@@ -1014,23 +686,14 @@ window.ScreeningPage = {
         const wrapper = document.getElementById('chartWrapper');
         if (!btn || !wrapper) return;
 
-        btn.addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                wrapper.requestFullscreen().catch(err => {
-                    console.warn('[Fullscreen] requestFullscreen failed:', err);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        });
-
-        document.addEventListener('fullscreenchange', () => {
-            const isFull = !!document.fullscreenElement;
+        const updateIcons = (isFull) => {
             const iconIn  = document.getElementById('iconFullscreen');
             const iconOut = document.getElementById('iconFullscreenExit');
             if (iconIn)  iconIn.style.display  = isFull ? 'none' : '';
             if (iconOut) iconOut.style.display = isFull ? '' : 'none';
-            // Resize LW chart to fill new dimensions
+        };
+
+        const resizeChart = () => {
             if (window.ChartController && window.ChartController.chart) {
                 setTimeout(() => {
                     const el = document.getElementById('chartWrapper');
@@ -1038,7 +701,22 @@ window.ScreeningPage = {
                         width: el.clientWidth,
                         height: el.clientHeight
                     });
-                }, 100);
+                }, 50);
+            }
+        };
+
+        btn.addEventListener('click', () => {
+            const isFull = wrapper.classList.toggle('chart-viewport-fullscreen');
+            updateIcons(isFull);
+            resizeChart();
+        });
+
+        // Allow Escape key to exit viewport fullscreen
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && wrapper.classList.contains('chart-viewport-fullscreen')) {
+                wrapper.classList.remove('chart-viewport-fullscreen');
+                updateIcons(false);
+                resizeChart();
             }
         });
     },
@@ -1144,20 +822,19 @@ document.addEventListener('htmx:afterSwap', function (evt) {
     }
 });
 
-function initScreeningPage() {
+// 全域初始化函式（供 results_table.js 等後載腳本在自身執行完後呼叫）
+window.initScreeningPage = function initScreeningPage() {
     if (window._screeningPageInit) return;
     if (!document.getElementById('patternBarsMin')) return;
     window._screeningPageInit = true;
     window.ScreeningPage.init();
-}
+};
 
-// 1. 正常全頁面載入
-document.addEventListener('DOMContentLoaded', initScreeningPage);
+// 1. 全頁面載入：scripts 在 body 末端同步執行，DOMContentLoaded 在所有腳本跑完後才觸發
+document.addEventListener('DOMContentLoaded', window.initScreeningPage);
 
-// 2. HTMX 動態載入
-document.addEventListener('htmx:afterSettle', initScreeningPage);
+// 2. HTMX 重新載入：scripts 已在 <head>，afterSettle 發生時直接觸發
+document.addEventListener('htmx:afterSettle', window.initScreeningPage);
 
-// 3. 若 JS 被動態載入且 DOMContentLoaded 已觸發過
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    initScreeningPage();
-}
+// 注意：不在此處做 readyState 即時觸發（會搶在 results_table.js 之前執行導致方法缺失）
+// 動態注入的首次觸發由 results_table.js 末尾負責（它是最後載入的 ScreeningPage 擴充腳本）

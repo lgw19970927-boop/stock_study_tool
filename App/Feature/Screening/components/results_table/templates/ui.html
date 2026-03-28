@@ -1,0 +1,79 @@
+        <!-- 結果統計列 -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-value" id="totalStocks">0</span>
+                <span class="stat-label">篩選結果</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value positive" id="gainers">0</span>
+                <span class="stat-label">今日上漲</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value negative" id="losers">0</span>
+                <span class="stat-label">今日下跌</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="dataInsufficient" style="color: var(--warning, #f59e0b);">0</span>
+                <span class="stat-label">⚠️ 資料不足</span>
+            </div>
+            <div class="stat-divider"></div>
+            <button type="button" class="btn btn-ghost btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                匯出 CSV
+            </button>
+        </div>
+
+        <!-- 股票列表 -->
+        <div class="stock-list-container">
+            <div class="list-header">
+                <div class="col-symbol sortable" data-sort="symbol">股票代碼 <span class="sort-icon">⇅</span></div>
+                <div class="col-name">公司名稱</div>
+                <div class="col-price sortable" data-sort="price">現價 <span class="sort-icon">⇅</span></div>
+                <div class="col-change sortable" data-sort="change">漲跌幅 <span class="sort-icon">⇅</span></div>
+                <div class="col-volume sortable" data-sort="volume">成交量 <span class="sort-icon">⇅</span></div>
+                <div class="col-pattern">篩選標籤</div>
+            </div>
+            <div class="stock-list" id="stockList">
+                <!-- 進度條（執行中顯示） -->
+                <div id="screeningProgressArea"
+                    style="display:none; padding: 24px 24px; align-items:center; justify-content:center; gap:0;">
+                    <div style="flex:1; max-width:480px; min-width:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span id="progressStageText" style="color:var(--text-primary); font-size:13px;">&#9203;
+                                正在篩選...</span>
+                            <span id="progressMatchedText"
+                                style="color:var(--accent, #00d4aa); font-size:12px; font-weight:600;">找到符合：0 支</span>
+                        </div>
+                        <div style="background:var(--border, #2a2a3e); border-radius:6px; height:6px; overflow:hidden; margin-bottom:8px;">
+                            <div id="progressFill"
+                                style="height:100%; width:0%; border-radius:6px; transition:width 0.3s ease; background: linear-gradient(90deg, #00d4aa, #7c3aed);">
+                            </div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span id="progressDetailText" style="color:var(--text-secondary); font-size:11px;">已分析 0 / 0 支</span>
+                            <span id="progressPercent" style="color:var(--text-secondary); font-size:11px;">0%</span>
+                        </div>
+                    </div>
+                    <div style="margin-left:20px; flex-shrink:0; display:flex; align-items:center;">
+                        <button type="button" id="btnStopFilter" class="btn-stop-filter">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                            </svg>
+                            停止篩選
+                        </button>
+                    </div>
+                </div>
+                <!-- 初始空白狀態 -->
+                <div class="empty-state" id="emptyState">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <p>設定篩選條件後點擊「執行篩選」</p>
+                </div>
+            </div>
+        </div>
