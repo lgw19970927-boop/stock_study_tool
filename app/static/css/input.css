@@ -1,31 +1,55 @@
-/* ===== Global ===== */
+/* ===== Global (Phase 1 已遷移第一輪) ===== */
 @import "./variables.css";
 @import "./animations.css";
 @import "./layout.css";
 @import "./components.css";
 @import "./tabs.css";
 
-/* ===== Feature: screening ===== */
+/* ===== Feature: screening（Phase 2 持續遷移中） ===== */
 @import "../../feature/screening/screening.css";
 @import "../../feature/screening/chart/kline_viewer/chart-area.css";
-@import "../../feature/screening/chart/chart_management/chart-modal-core.css";
-@import "../../feature/screening/chart/chart_management/chart-modal-sidebar.css";
-@import "../../feature/screening/chart/chart_management/chart-modal-indicators.css";
-@import "../../feature/screening/chart/chart_management/chart-modal-patterns.css";
-@import "../../feature/screening/chart/chart_management/chart-modal-color-picker.css";
-@import "../../feature/screening/chart/chart_management/chart-modal-general.css";
-@import "../../feature/screening/indicators/indicator-styles.css";
-@import "../../feature/screening/pattern/pattern-styles.css";
-@import "../../feature/screening/components/market_selection/market-selection.css";
-@import "../../feature/screening/components/time_range_selector/time-range-selector.css";
-@import "../../feature/screening/components/strategy_manager/strategy-manager.css";
-@import "../../feature/screening/components/results_table/results-table.css";
+@import "../../feature/screening/chart/chart_management/chart-modal.css";
 
-/* ===== Feature: backtesting ===== */
-@import "../../feature/backtesting/backtesting.css";
-
-/* ===== Feature: risk_management ===== */
+/* ===== Feature: risk_management（Phase 2 已遷移第一輪） ===== */
 @import "../../feature/risk_management/risk_management.css";
+
+/* Phase 3 收斂規則：僅在檔案不再含有效規則時才移除 @import */
+
+@layer components {
+	.ui-focus-accent:focus {
+		@apply outline-none border-accent-primary;
+		box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.1);
+	}
+
+	.ui-checkbox-card {
+		@apply flex items-center cursor-pointer bg-bg-tertiary border border-border-color rounded-sm;
+		gap: var(--spacing-xs);
+		padding: var(--spacing-xs) var(--spacing-sm);
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		transition: all var(--transition-fast);
+	}
+
+	.ui-checkbox-card:hover {
+		border-color: var(--accent-primary);
+		color: var(--text-primary);
+		background: var(--bg-hover);
+	}
+}
+
+@layer utilities {
+	.is-hidden {
+		display: none !important;
+	}
+
+	.is-block {
+		display: block !important;
+	}
+
+	.is-flex {
+		display: flex !important;
+	}
+}
 
 @tailwind base;
 @tailwind components;

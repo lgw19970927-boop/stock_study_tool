@@ -1,86 +1,4 @@
-/* ===== Strategies List (v4) ===== */
-.strategies-list {
-    @apply flex flex-col;
-    gap: 12px;
-}
-
-.strategy-card {
-    padding: 12px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    @apply cursor-pointer relative overflow-hidden;
-    transition: all var(--transition-fast);
-}
-
-.strategy-card:hover {
-    background: var(--bg-hover);
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 12px rgba(0, 212, 170, 0.2);
-}
-
-.strategy-card.selected {
-    background: var(--bg-hover);
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 16px rgba(0, 212, 170, 0.3);
-}
-
-.strategy-card.selected::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--accent-primary);
-}
-
-.strategy-card-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-
-.strategy-card-desc {
-    font-size: 12px;
-    color: var(--text-secondary);
-    line-height: 1.4;
-}
-
-.strategy-card-actions {
-    @apply flex;
-    gap: 8px;
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border-color);
-}
-
-.strategy-card:hover .strategy-card-actions {
-    opacity: 1;
-}
-
-.strategy-card-actions button {
-    flex: 1;
-    padding: 6px 8px;
-    font-size: 12px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.strategy-card-actions button:hover {
-    background: var(--accent-primary);
-    color: var(--bg-primary);
-    border-color: var(--accent-primary);
-}
-
-/* ===== Toggle Switch Styles (v4 New) ===== */
+/* ===== Toggle Switch Styles ===== */
 .toggle-switch {
     @apply flex items-center cursor-pointer relative;
     gap: 12px;
@@ -167,7 +85,7 @@
     color: var(--text-secondary);
 }
 
-/* ===== Strategy Cards (v4.1) ===== */
+/* ===== Strategy Cards ===== */
 .strategies-list {
     @apply flex flex-col;
     gap: var(--spacing-md);
@@ -178,18 +96,47 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
-    @apply cursor-pointer;
+    @apply cursor-pointer relative overflow-hidden;
     transition: all var(--transition-fast);
 }
 
 .strategy-card:hover {
     border-color: var(--accent-primary);
     background: var(--bg-hover);
+    box-shadow: 0 0 12px rgba(0, 212, 170, 0.2);
+}
+
+.strategy-card.selected {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 16px rgba(0, 212, 170, 0.3);
+}
+
+.strategy-card.selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent-primary);
 }
 
 .strategy-card-header {
-    @apply flex items-center justify-between;
-    margin-bottom: var(--spacing-sm);
+    @apply flex items-center justify-between mb-2;
+}
+
+.strategy-card-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.strategy-card-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
 }
 
 .strategy-card-title {
@@ -199,8 +146,34 @@
 }
 
 .strategy-card-actions {
-    @apply flex;
-    gap: var(--spacing-xs);
+    @apply flex gap-1;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+.strategy-card:hover .strategy-card-actions {
+    opacity: 1;
+}
+
+.strategy-card-actions button {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.strategy-card-actions button:hover {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    border-color: var(--accent-primary);
 }
 
 .strategy-card-description {

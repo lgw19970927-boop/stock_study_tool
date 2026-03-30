@@ -103,7 +103,7 @@ window.BollingerIndicator = {
                     <option value="price">最新價</option>
                     <option value="value">數值</option>
                 </select>
-                <input type="number" class="number-input" placeholder="數值" style="width: 60px; display: none;">
+                <input type="number" class="number-input is-hidden" placeholder="數值" style="width: 60px;">
 
                 <span class="btn-delete-row" style="color: var(--text-muted); cursor: pointer; font-size: 11px; text-decoration: underline; white-space: nowrap;">
                     刪除
@@ -123,10 +123,15 @@ window.BollingerIndicator = {
             const valInput = lastRow.querySelector('input');
 
             // Initial check
-            if (rightSelect.value === 'value') valInput.style.display = 'block';
+            if (rightSelect.value === 'value') {
+                valInput.classList.remove('is-hidden');
+                valInput.classList.add('is-block');
+            }
 
             rightSelect.addEventListener('change', (e) => {
-                valInput.style.display = e.target.value === 'value' ? 'block' : 'none';
+                const showValue = e.target.value === 'value';
+                valInput.classList.toggle('is-hidden', !showValue);
+                valInput.classList.toggle('is-block', showValue);
             });
         }
     },
@@ -341,7 +346,8 @@ window.BollingerIndicator = {
 
                 if (rowConfig.right === 'value') {
                     const input = lastRow.querySelector('input');
-                    input.style.display = 'block';
+                    input.classList.remove('is-hidden');
+                    input.classList.add('is-block');
                     input.value = rowConfig.val;
                 }
             });

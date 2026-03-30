@@ -9,8 +9,14 @@ Object.assign(window.ScreeningPage, {
     _showProgress: function () {
         const progressArea = document.getElementById('screeningProgressArea');
         const emptyState = document.getElementById('emptyState');
-        if (progressArea) progressArea.style.display = 'flex';
-        if (emptyState) emptyState.style.display = 'none';
+        if (progressArea) {
+            progressArea.classList.remove('is-hidden');
+            progressArea.classList.add('is-flex');
+        }
+        if (emptyState) {
+            emptyState.classList.add('is-hidden');
+            emptyState.classList.remove('is-flex');
+        }
         const stockList = document.getElementById('stockList');
         if (stockList) {
             [...stockList.children].forEach(child => {
@@ -25,7 +31,10 @@ Object.assign(window.ScreeningPage, {
 
     _hideProgress: function () {
         const progressArea = document.getElementById('screeningProgressArea');
-        if (progressArea) progressArea.style.display = 'none';
+        if (progressArea) {
+            progressArea.classList.add('is-hidden');
+            progressArea.classList.remove('is-flex');
+        }
     },
 
     _updateProgressBar: function (current, total, matched, stageText) {
@@ -46,7 +55,8 @@ Object.assign(window.ScreeningPage, {
         this._hideProgress();
         const emptyState = document.getElementById('emptyState');
         if (emptyState) {
-            emptyState.style.display = 'flex';  // 保持 CSS flex 置中
+            emptyState.classList.remove('is-hidden');
+            emptyState.classList.add('is-flex');
             emptyState.innerHTML = `
                 <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
                      stroke="#ff6b6b" stroke-width="1.5"
@@ -55,8 +65,8 @@ Object.assign(window.ScreeningPage, {
                     <line x1="15" y1="9" x2="9" y2="15"></line>
                     <line x1="9" y1="9" x2="15" y2="15"></line>
                 </svg>
-                <p style="color:#ff6b6b;">篩選失敗：${message}</p>
-                <small style="color:#ff6b6b;">請檢查網絡連接或聯繫管理員</small>
+                <p class="empty-state-danger">篩選失敗：${message}</p>
+                <small class="empty-state-danger-sub">請檢查網絡連接或聯繫管理員</small>
             `;
         }
     },

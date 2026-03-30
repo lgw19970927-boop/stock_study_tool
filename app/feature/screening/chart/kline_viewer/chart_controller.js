@@ -47,7 +47,7 @@ window.ChartController = {
         }
 
         // ✅ Ensure chart is hidden on initialization
-        chartContainer.style.display = 'none';
+        chartContainer.classList.add('is-hidden');
 
         // 初始常規設定（供圖表與十字線初始化使用）
         const initCfg = (window.ChartSettingsModal && window.ChartSettingsModal._generalConfig) || {};
@@ -169,9 +169,12 @@ window.ChartController = {
      */
     async loadStock(symbol, opts = {}) {
         // Hide placeholder, show chart
-        document.querySelector('.chart-placeholder').style.display = 'none';
+        const placeholder = document.querySelector('.chart-placeholder');
+        if (placeholder) {
+            placeholder.classList.add('is-hidden');
+        }
         const chartEl = document.getElementById('chart');
-        chartEl.style.display = 'block';
+        chartEl.classList.remove('is-hidden');
 
         // ✅ Bug1: 確保圖表在容器顯示後有正確尺寸（修復隱藏容器導致的 0x0 初始化問題）
         if (this.chart) {

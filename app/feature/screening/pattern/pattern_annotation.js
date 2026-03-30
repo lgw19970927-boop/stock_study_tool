@@ -47,7 +47,9 @@ window.PatternAnnotation = {
     setEnabled(bool) {
         this._enabled = bool;
         const svg = document.getElementById('patternAnnotationSVG');
-        if (svg) svg.style.display = bool ? '' : 'none';
+        if (svg) {
+            svg.classList.toggle('is-hidden', !bool);
+        }
         if (bool) this.render();
     },
 

@@ -21,7 +21,6 @@ window.ScreeningLayout = {
     toggleSidebar() {
         const sidebar = document.getElementById('app-sidebar');
         if (!sidebar) return;
-        const isHidden = sidebar.style.display === 'none';
-        sidebar.style.display = isHidden ? '' : 'none';
+        sidebar.classList.toggle('is-hidden');
     }
 };

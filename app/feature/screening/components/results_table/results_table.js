@@ -39,7 +39,8 @@ Object.assign(window.ScreeningPage, {
 
         if (!stocks || stocks.length === 0) {
             if (emptyState) {
-                emptyState.style.display = 'flex';  // 保持 CSS flex 置中
+                emptyState.classList.remove('is-hidden');
+                emptyState.classList.add('is-flex');
                 emptyState.innerHTML = `
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="1">
@@ -52,10 +53,15 @@ Object.assign(window.ScreeningPage, {
             return;
         }
 
-        if (emptyState) emptyState.style.display = 'none';
+        if (emptyState) {
+            emptyState.classList.add('is-hidden');
+            emptyState.classList.remove('is-flex');
+        }
 
         sortedStocks.forEach(stock => {
-            const changeClass = stock.change_percent >= 0 ? 'positive' : 'negative';
+            const changeToneClass = stock.change_percent >= 0
+                ? 'text-color-success bg-[rgba(63,185,80,0.1)]'
+                : 'text-color-danger bg-[rgba(248,81,73,0.1)]';
             const changeSign = stock.change_percent >= 0 ? '+' : '';
 
             // 1. 整理所有標籤並去重
@@ -67,7 +73,7 @@ Object.assign(window.ScreeningPage, {
                 stock.matched_indicators.forEach(ind => {
                     if (!uniqueLabels.has(ind)) {
                         uniqueLabels.add(ind);
-                        finalTagsHTML += `<span class="pattern-tag">${ind}</span>`;
+                        finalTagsHTML += `<span class="pattern-tag inline-block shrink-0 whitespace-nowrap rounded-[3px] bg-[rgba(124,58,237,0.15)] px-1.5 py-0.5 text-[0.625rem] font-medium text-accent-secondary">${ind}</span>`;
                     }
                 });
             }
@@ -78,7 +84,7 @@ Object.assign(window.ScreeningPage, {
                     const warnLabel = `⚠️ ${ind} 資料不足`;
                     if (!uniqueLabels.has(warnLabel)) {
                         uniqueLabels.add(warnLabel);
-                        finalTagsHTML += `<span class="pattern-tag" style="background:rgba(255,107,107,0.15); color:#ff6b6b;">${warnLabel}</span>`;
+                        finalTagsHTML += `<span class="pattern-tag inline-block shrink-0 whitespace-nowrap rounded-[3px] bg-[rgba(255,107,107,0.15)] px-1.5 py-0.5 text-[0.625rem] font-medium text-[#ff6b6b]">${warnLabel}</span>`;
                     }
                 });
             } else if (stock.data_insufficient && (!stock.insufficient_indicators || stock.insufficient_indicators.length === 0)) {
@@ -86,7 +92,7 @@ Object.assign(window.ScreeningPage, {
                 const warnLabel = '⚠️ 資料不足';
                 if (!uniqueLabels.has(warnLabel)) {
                     uniqueLabels.add(warnLabel);
-                    finalTagsHTML += `<span class="pattern-tag" style="background:rgba(255,107,107,0.15); color:#ff6b6b;">${warnLabel}</span>`;
+                    finalTagsHTML += `<span class="pattern-tag inline-block shrink-0 whitespace-nowrap rounded-[3px] bg-[rgba(255,107,107,0.15)] px-1.5 py-0.5 text-[0.625rem] font-medium text-[#ff6b6b]">${warnLabel}</span>`;
                 }
             }
 
@@ -95,21 +101,25 @@ Object.assign(window.ScreeningPage, {
                 stock.patterns_found.forEach(pf => {
                     if (!uniqueLabels.has(pf.display_name)) {
                         uniqueLabels.add(pf.display_name);
-                        finalTagsHTML += `<span class="pattern-tag" style="background:rgba(0,212,170,0.15); color:var(--accent,#00d4aa);" title="信心値: ${pf.confidence}%">${pf.display_name}</span>`;
+                        finalTagsHTML += `<span class="pattern-tag inline-block shrink-0 whitespace-nowrap rounded-[3px] bg-[rgba(0,212,170,0.15)] px-1.5 py-0.5 text-[0.625rem] font-medium text-accent-primary" title="信心値: ${pf.confidence}%">${pf.display_name}</span>`;
                     }
                 });
             }
 
+            if (!finalTagsHTML) {
+                finalTagsHTML = '<span class="pattern-tag inline-block shrink-0 whitespace-nowrap rounded-[3px] bg-[rgba(124,58,237,0.15)] px-1.5 py-0.5 text-[0.625rem] font-medium text-accent-secondary">—</span>';
+            }
+
             const item = document.createElement('div');
-            item.className = 'stock-item';
+            item.className = 'stock-item grid min-w-[800px] cursor-pointer grid-cols-[100px_1fr_100px_100px_120px_100px] items-center gap-[var(--spacing-md)] border-l-[3px] border-l-transparent px-[var(--spacing-lg)] py-[var(--spacing-sm)] transition-[background] duration-fast hover:bg-bg-hover [animation:fadeIn_0.3s_ease_forwards]';
             item.setAttribute('onclick', `window.ScreeningPage.onStockClick('${stock.symbol}')`);
             item.innerHTML = `
-                <div class="stock-symbol">${stock.symbol}</div>
-                <div class="stock-name">${stock.name}</div>
-                <div class="stock-price">${stock.price.toFixed(2)}</div>
-                <div class="stock-change ${changeClass}">${changeSign}${stock.change_percent}%</div>
-                <div class="stock-volume">${stock.volume.toLocaleString()}</div>
-                <div class="stock-pattern">${finalTagsHTML}</div>
+                <div class="stock-symbol font-mono font-semibold text-accent-primary">${stock.symbol}</div>
+                <div class="stock-name overflow-hidden text-ellipsis whitespace-nowrap text-sm text-text-secondary">${stock.name}</div>
+                <div class="stock-price font-mono font-medium">${stock.price.toFixed(2)}</div>
+                <div class="stock-change rounded-sm px-2 py-0.5 text-center font-mono text-xs font-medium ${changeToneClass}">${changeSign}${stock.change_percent}%</div>
+                <div class="stock-volume font-mono text-xs text-text-secondary">${stock.volume.toLocaleString()}</div>
+                <div class="stock-pattern flex gap-1">${finalTagsHTML}</div>
             `;
             stockList.appendChild(item);
         });
@@ -119,7 +129,6 @@ Object.assign(window.ScreeningPage, {
 
     _initSortHeaders: function () {
         document.querySelectorAll('.list-header .sortable').forEach(col => {
-            col.style.cursor = 'pointer';
             col.addEventListener('click', () => {
                 const field = col.dataset.sort;
                 if (this._sortState.field === field) {

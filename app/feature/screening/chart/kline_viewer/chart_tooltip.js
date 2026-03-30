@@ -48,11 +48,14 @@ Object.assign(window.ChartController, {
 
             // 吸附至最近一筆 bar
             const bar = this._snapToNearestBar(ox);
-            if (!bar) { tooltip.style.display = 'none'; return; }
+            if (!bar) {
+                tooltip.classList.add('is-hidden');
+                return;
+            }
 
             // 渲染內容
             tooltip.innerHTML = this._buildTooltipHTML(bar);
-            tooltip.style.display = 'block';
+            tooltip.classList.remove('is-hidden');
 
             // 邊界判斷（防抖鎖定：只在觸碰邊界識別區才切換）
             const leftEdge  = chartW * BOUNDARY_RATIO;
@@ -118,7 +121,7 @@ Object.assign(window.ChartController, {
 
         const onLeave = () => {
             const tooltip = document.getElementById('chartTooltip');
-            if (tooltip) tooltip.style.display = 'none';
+            if (tooltip) tooltip.classList.add('is-hidden');
         };
 
         chartContainer._tooltipMouseMove  = onMove;
@@ -202,7 +205,9 @@ Object.assign(window.ChartController, {
     _applyTooltipMode(mode) {
         this._tooltipMode = mode;
         const tooltip = document.getElementById('chartTooltip');
-        if (tooltip && mode === 'hidden') tooltip.style.display = 'none';
+        if (tooltip && mode === 'hidden') {
+            tooltip.classList.add('is-hidden');
+        }
 
         // Bug4 Fix: CrosshairMode.Hidden 不在 LW v4 中，改用
         // vertLine/horzLine visible 控制十字線顯示以避免驱動 LW 進入異常狀態。

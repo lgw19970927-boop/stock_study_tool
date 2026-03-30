@@ -1,22 +1,22 @@
         <!-- 結果統計列 -->
-        <div class="stats-bar">
-            <div class="stat-item">
-                <span class="stat-value" id="totalStocks">0</span>
-                <span class="stat-label">篩選結果</span>
+        <div class="stats-bar flex items-center gap-6 border-b border-border-color bg-bg-secondary px-6 py-4">
+            <div class="stat-item flex flex-col">
+                <span class="stat-value font-mono text-2xl font-bold text-text-primary" id="totalStocks">0</span>
+                <span class="stat-label text-[0.625rem] uppercase tracking-[0.5px] text-text-muted">篩選結果</span>
             </div>
-            <div class="stat-item">
-                <span class="stat-value positive" id="gainers">0</span>
-                <span class="stat-label">今日上漲</span>
+            <div class="stat-item flex flex-col">
+                <span class="stat-value positive font-mono text-2xl font-bold text-color-success" id="gainers">0</span>
+                <span class="stat-label text-[0.625rem] uppercase tracking-[0.5px] text-text-muted">今日上漲</span>
             </div>
-            <div class="stat-item">
-                <span class="stat-value negative" id="losers">0</span>
-                <span class="stat-label">今日下跌</span>
+            <div class="stat-item flex flex-col">
+                <span class="stat-value negative font-mono text-2xl font-bold text-color-danger" id="losers">0</span>
+                <span class="stat-label text-[0.625rem] uppercase tracking-[0.5px] text-text-muted">今日下跌</span>
             </div>
-            <div class="stat-item">
-                <span class="stat-value" id="dataInsufficient" style="color: var(--warning, #f59e0b);">0</span>
-                <span class="stat-label">⚠️ 資料不足</span>
+            <div class="stat-item flex flex-col">
+                <span class="stat-value warning font-mono text-2xl font-bold text-color-warning" id="dataInsufficient">0</span>
+                <span class="stat-label text-[0.625rem] uppercase tracking-[0.5px] text-text-muted">⚠️ 資料不足</span>
             </div>
-            <div class="stat-divider"></div>
+            <div class="stat-divider ml-auto h-10 w-px bg-border-color"></div>
             <button type="button" class="btn btn-ghost btn-sm">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -29,7 +29,7 @@
 
         <!-- 股票列表 -->
         <div class="stock-list-container">
-            <div class="list-header">
+            <div class="list-header grid min-w-[800px] grid-cols-[100px_1fr_100px_100px_120px_100px] gap-[var(--spacing-md)] border-b border-border-color bg-bg-tertiary px-[var(--spacing-lg)] py-[var(--spacing-sm)] text-[0.625rem] font-semibold uppercase tracking-[0.5px] text-text-muted">
                 <div class="col-symbol sortable" data-sort="symbol">股票代碼 <span class="sort-icon">⇅</span></div>
                 <div class="col-name">公司名稱</div>
                 <div class="col-price sortable" data-sort="price">現價 <span class="sort-icon">⇅</span></div>
@@ -37,28 +37,25 @@
                 <div class="col-volume sortable" data-sort="volume">成交量 <span class="sort-icon">⇅</span></div>
                 <div class="col-pattern">篩選標籤</div>
             </div>
-            <div class="stock-list" id="stockList">
+            <div class="stock-list flex-1 overflow-y-auto py-[var(--spacing-sm)]" id="stockList">
                 <!-- 進度條（執行中顯示） -->
-                <div id="screeningProgressArea"
-                    style="display:none; padding: 24px 24px; align-items:center; justify-content:center; gap:0;">
-                    <div style="flex:1; max-width:480px; min-width:0;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <span id="progressStageText" style="color:var(--text-primary); font-size:13px;">&#9203;
+                <div id="screeningProgressArea" class="is-hidden items-center justify-center px-6 py-6">
+                    <div class="min-w-0 max-w-[480px] flex-1">
+                        <div class="mb-2.5 flex items-center justify-between">
+                            <span id="progressStageText" class="text-[13px] text-text-primary">&#9203;
                                 正在篩選...</span>
-                            <span id="progressMatchedText"
-                                style="color:var(--accent, #00d4aa); font-size:12px; font-weight:600;">找到符合：0 支</span>
+                            <span id="progressMatchedText" class="text-xs font-semibold text-accent-primary">找到符合：0 支</span>
                         </div>
-                        <div style="background:var(--border, #2a2a3e); border-radius:6px; height:6px; overflow:hidden; margin-bottom:8px;">
-                            <div id="progressFill"
-                                style="height:100%; width:0%; border-radius:6px; transition:width 0.3s ease; background: linear-gradient(90deg, #00d4aa, #7c3aed);">
+                        <div class="mb-2 h-1.5 overflow-hidden rounded-md bg-border-color">
+                            <div id="progressFill" class="h-full w-0 rounded-md transition-[width] duration-300 ease-[ease] bg-[linear-gradient(90deg,#00d4aa,#7c3aed)]">
                             </div>
                         </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span id="progressDetailText" style="color:var(--text-secondary); font-size:11px;">已分析 0 / 0 支</span>
-                            <span id="progressPercent" style="color:var(--text-secondary); font-size:11px;">0%</span>
+                        <div class="flex items-center justify-between">
+                            <span id="progressDetailText" class="text-[11px] text-text-secondary">已分析 0 / 0 支</span>
+                            <span id="progressPercent" class="text-[11px] text-text-secondary">0%</span>
                         </div>
                     </div>
-                    <div style="margin-left:20px; flex-shrink:0; display:flex; align-items:center;">
+                    <div class="ml-5 flex shrink-0 items-center">
                         <button type="button" id="btnStopFilter" class="btn-stop-filter">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                                 <rect x="4" y="4" width="16" height="16" rx="2"></rect>
@@ -68,12 +65,12 @@
                     </div>
                 </div>
                 <!-- 初始空白狀態 -->
-                <div class="empty-state" id="emptyState">
+                <div class="empty-state flex flex-col items-center justify-center gap-4 p-8 text-text-muted" id="emptyState">
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <p>設定篩選條件後點擊「執行篩選」</p>
+                    <p class="text-sm">設定篩選條件後點擊「執行篩選」</p>
                 </div>
             </div>
         </div>

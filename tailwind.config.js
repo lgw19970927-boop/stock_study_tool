@@ -1,6 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./app/**/*.html", "./app/**/*.js"],
+  content: ["./app/**/*.html", "./app/**/*.js", "./app/**/*.py"],
+  safelist: [
+    'hidden',
+    'block',
+    'flex',
+    'inline-flex',
+    'items-center',
+    'justify-center',
+  ],
   theme: {
     extend: {
       colors: {

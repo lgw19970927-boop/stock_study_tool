@@ -115,7 +115,7 @@ window.ChartSettingsModal = {
                     this.closeColorPicker(false);
                 } else {
                     const modal = document.getElementById('chartSettingsModal');
-                    if (modal && modal.style.display !== 'none') {
+                    if (modal && !modal.classList.contains('is-hidden')) {
                         this.close();
                     }
                 }
@@ -169,6 +169,10 @@ window.ChartSettingsModal = {
      */
     open(target = null) {
         console.log('[ChartSettingsModal] 打開彈窗', target ? `(target: ${target})` : '');
+        if (!window.state || !window.state.chartIndicators) {
+            console.warn('[ChartSettingsModal] window.state 尚未就緒，取消開啟設定彈窗');
+            return;
+        }
         // BUG5 Fix: 確保 _generalConfig 以 defaultGeneralConfig 為基礎初始化（顏色預設正確）
         if (!this._generalConfig) {
             this._generalConfig = JSON.parse(JSON.stringify(this.defaultGeneralConfig));
@@ -246,7 +250,7 @@ window.ChartSettingsModal = {
         // 顯示彈窗
         const modal = document.getElementById('chartSettingsModal');
         if (modal) {
-            modal.style.display = 'flex';
+            modal.classList.remove('is-hidden');
         }
     },
 
@@ -257,7 +261,7 @@ window.ChartSettingsModal = {
         console.log('[ChartSettingsModal] 關閉彈窗');
         const modal = document.getElementById('chartSettingsModal');
         if (modal) {
-            modal.style.display = 'none';
+            modal.classList.add('is-hidden');
         }
         this.tempSettings = null;
     },
@@ -277,34 +281,34 @@ window.ChartSettingsModal = {
         return `
         <div class="settings-panel active">
             <h3 class="settings-title">常規設定</h3>
-            <div class="general-section">
-                <div class="general-row">
-                    <label>背景顏色</label>
-                    <select id="generalBgTheme" onchange="window.ChartSettingsModal.updateGeneralField('bgTheme',this.value)">
+            <div class="flex max-w-[520px] flex-col gap-4">
+                <div class="general-row flex items-center gap-4">
+                    <label class="min-w-[100px] text-sm text-text-secondary">背景顏色</label>
+                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="generalBgTheme" onchange="window.ChartSettingsModal.updateGeneralField('bgTheme',this.value)">
                         <option value="dark"   ${bg === 'dark'   ? 'selected' : ''}>時尚暗黑</option>
                         <option value="silver" ${bg === 'silver' ? 'selected' : ''}>淡雅銀灰</option>
                     </select>
                 </div>
-                <div class="general-row">
-                    <label>現價線</label>
-                    <div class="btn-toggle-group">
-                        <button class="btn-toggle-opt ${cfg.showPriceLine  ? 'active' : ''}"
+                <div class="general-row flex items-center gap-4">
+                    <label class="min-w-[100px] text-sm text-text-secondary">現價線</label>
+                    <div class="btn-toggle-group flex overflow-hidden rounded-sm border border-border-color">
+                        <button class="btn-toggle-opt border-0 border-r border-border-color bg-bg-primary px-3.5 py-1 text-sm text-text-secondary transition-all duration-fast hover:bg-bg-hover hover:text-text-primary [&.active]:bg-[#ff6b35] [&.active]:font-semibold [&.active]:text-white [&.active:hover]:bg-[#ff6b35] [&.active:hover]:text-white ${cfg.showPriceLine  ? 'active' : ''}"
                                 onclick="window.ChartSettingsModal.updateGeneralField('showPriceLine',true);this.parentNode.querySelectorAll('.btn-toggle-opt').forEach((b,i)=>b.classList.toggle('active',i===0))">開</button>
-                        <button class="btn-toggle-opt ${!cfg.showPriceLine ? 'active' : ''}"
+                        <button class="btn-toggle-opt border-0 bg-bg-primary px-3.5 py-1 text-sm text-text-secondary transition-all duration-fast hover:bg-bg-hover hover:text-text-primary [&.active]:bg-[#ff6b35] [&.active]:font-semibold [&.active]:text-white [&.active:hover]:bg-[#ff6b35] [&.active:hover]:text-white ${!cfg.showPriceLine ? 'active' : ''}"
                                 onclick="window.ChartSettingsModal.updateGeneralField('showPriceLine',false);this.parentNode.querySelectorAll('.btn-toggle-opt').forEach((b,i)=>b.classList.toggle('active',i===1))">關</button>
                     </div>
                 </div>
-                <div class="general-row">
-                    <label>十字線</label>
-                    <select id="generalTooltipMode" onchange="window.ChartSettingsModal.updateGeneralField('tooltipMode',this.value)">
+                <div class="general-row flex items-center gap-4">
+                    <label class="min-w-[100px] text-sm text-text-secondary">十字線</label>
+                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="generalTooltipMode" onchange="window.ChartSettingsModal.updateGeneralField('tooltipMode',this.value)">
                         <option value="floating"   ${tt === 'floating'   ? 'selected' : ''}>懸浮窗</option>
                         <option value="crosshair"  ${tt === 'crosshair'  ? 'selected' : ''}>跟隨懸浮窗</option>
                         <option value="hidden"     ${tt === 'hidden'     ? 'selected' : ''}>關閉</option>
                     </select>
                 </div>
-                <div class="general-row">
-                    <label>主圖類型</label>
-                    <select id="generalChartType" onchange="window.ChartSettingsModal.updateGeneralField('chartType',this.value);window.ChartSettingsModal._onGeneralChartTypeChange(this.value)">
+                <div class="general-row flex items-center gap-4">
+                    <label class="min-w-[100px] text-sm text-text-secondary">主圖類型</label>
+                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="generalChartType" onchange="window.ChartSettingsModal.updateGeneralField('chartType',this.value);window.ChartSettingsModal._onGeneralChartTypeChange(this.value)">
                         <option value="candlestick"      ${cfg.chartType === 'candlestick'      ? 'selected' : ''}>普通K線</option>
                         <option value="bar"              ${cfg.chartType === 'bar'              ? 'selected' : ''}>美國線</option>
                         <option value="line"             ${cfg.chartType === 'line'             ? 'selected' : ''}>收盤價線</option>
@@ -312,20 +316,20 @@ window.ChartSettingsModal = {
                         <option value="heikin_ashi"      ${cfg.chartType === 'heikin_ashi'      ? 'selected' : ''}>平均K線</option>
                     </select>
                 </div>
-                <div class="general-row" id="generalBullStyleRow" style="${isCandle ? '' : 'display:none'}">
-                    <label>陽線設定</label>
-                    <select id="generalBullStyle" onchange="window.ChartSettingsModal.updateGeneralField('bullStyle',this.value)">
+                <div class="general-row flex items-center gap-4${isCandle ? '' : ' is-hidden'}" id="generalBullStyleRow">
+                    <label class="min-w-[100px] text-sm text-text-secondary">陽線設定</label>
+                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="generalBullStyle" onchange="window.ChartSettingsModal.updateGeneralField('bullStyle',this.value)">
                         <option value="hollow" ${bs === 'hollow' ? 'selected' : ''}>空心陽線</option>
                         <option value="solid"  ${bs === 'solid'  ? 'selected' : ''}>實心陽線</option>
                     </select>
                 </div>
-                <div class="general-row" id="generalBullColorRow" style="${hideColor ? 'display:none' : ''}">
-                    <label>陽線顏色</label>
+                <div class="general-row flex items-center gap-4${hideColor ? ' is-hidden' : ''}" id="generalBullColorRow">
+                    <label class="min-w-[100px] text-sm text-text-secondary">陽線顏色</label>
                     <button class="color-picker-btn" id="generalBullColorBtn" style="background:${cfg.bullColor};"
                             onclick="window.ChartSettingsModal.openColorPickerForGeneral('bull')"></button>
                 </div>
-                <div class="general-row" id="generalBearColorRow" style="${hideColor ? 'display:none' : ''}">
-                    <label>陰線顏色</label>
+                <div class="general-row flex items-center gap-4${hideColor ? ' is-hidden' : ''}" id="generalBearColorRow">
+                    <label class="min-w-[100px] text-sm text-text-secondary">陰線顏色</label>
                     <button class="color-picker-btn" id="generalBearColorBtn" style="background:${cfg.bearColor};"
                             onclick="window.ChartSettingsModal.openColorPickerForGeneral('bear')"></button>
                 </div>
@@ -343,10 +347,11 @@ window.ChartSettingsModal = {
         const bearColorRow = document.getElementById('generalBearColorRow');
         const isCandle     = type === 'candlestick' || type === 'monochrome_candle';
         const isLine       = type === 'line';
+        const hideColor    = isLine || type === 'monochrome_candle';
 
-        if (bullStyleRow) bullStyleRow.style.display = isCandle ? '' : 'none';
-        if (bullColorRow) bullColorRow.style.display = isLine   ? 'none' : '';
-        if (bearColorRow) bearColorRow.style.display = isLine   ? 'none' : '';
+        if (bullStyleRow) bullStyleRow.classList.toggle('is-hidden', !isCandle);
+        if (bullColorRow) bullColorRow.classList.toggle('is-hidden', hideColor);
+        if (bearColorRow) bearColorRow.classList.toggle('is-hidden', hideColor);
 
         if (!this._generalConfig) return;
 
@@ -399,8 +404,6 @@ window.ChartSettingsModal = {
 
         // 是否顯示 Radio 區塊（只有普通坐標才顯示）
         const showRadios = mode === 'normal';
-        // 是否顯示等比坐標數值輸入框
-        const showIndexed = mode === 'indexed';
         // 依坐標設定決定顯示哪些 Radio 行
         const showLeft  = showRadios && (sp === 'left'  || sp === 'dual');
         const showRight = showRadios && (sp === 'right' || sp === 'dual');
@@ -408,26 +411,26 @@ window.ChartSettingsModal = {
         return `
         <div class="settings-panel active">
             <h3 class="settings-title">坐標軸設定</h3>
-            <div class="general-section">
-                <div class="general-row">
-                    <label>坐標切換</label>
-                    <select id="axisScaleMode" onchange="window.ChartSettingsModal._onAxisModeChange(this.value)">
+            <div class="flex max-w-[520px] flex-col gap-4">
+                <div class="general-row flex items-center gap-4">
+                    <label class="min-w-[100px] text-sm text-text-secondary">坐標切換</label>
+                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="axisScaleMode" onchange="window.ChartSettingsModal._onAxisModeChange(this.value)">
                         <option value="normal"      ${mode === 'normal'      ? 'selected':''}>一般</option>
                         <option value="logarithmic" ${mode === 'logarithmic' ? 'selected':''}>對數</option>
                         <option value="percentage"  ${mode === 'percentage'  ? 'selected':''}>百分比</option>
                         <option value="indexed"     ${mode === 'indexed'     ? 'selected':''}>指數 (Indexed to 100)</option>
                     </select>
                 </div>
-                <div class="general-row">
-                    <label>坐標設定</label>
-                    <select id="axisPlacement" onchange="window.ChartSettingsModal._onAxisPlacementChange(this.value)">
+                <div class="general-row flex items-center gap-4">
+                    <label class="min-w-[100px] text-sm text-text-secondary">坐標設定</label>
+                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="axisPlacement" onchange="window.ChartSettingsModal._onAxisPlacementChange(this.value)">
                         <option value="right" ${sp === 'right' ? 'selected':''}>右坐標</option>
                         <option value="left"  ${sp === 'left'  ? 'selected':''}>左坐標</option>
                         <option value="dual"  ${sp === 'dual'  ? 'selected':''}>雙邊坐標</option>
                     </select>
                 </div>
 
-                <div id="axisLeftRadioSection" style="display:${showLeft ? '' : 'none'};">
+                <div id="axisLeftRadioSection" class="${showLeft ? '' : 'is-hidden'}">
                     <div class="axis-radio-section">
                         <span class="axis-radio-label">左坐標</span>
                         <label class="axis-radio-item">
@@ -439,7 +442,7 @@ window.ChartSettingsModal = {
                     </div>
                 </div>
 
-                <div id="axisRightRadioSection" style="display:${showRight ? '' : 'none'};">
+                <div id="axisRightRadioSection" class="${showRight ? '' : 'is-hidden'}">
                     <div class="axis-radio-section">
                         <span class="axis-radio-label">右坐標</span>
                         <label class="axis-radio-item">
@@ -461,8 +464,12 @@ window.ChartSettingsModal = {
         const sp = (this._axisConfig || this.defaultAxisConfig).scalePlacement || 'right';
         const leftSec  = document.getElementById('axisLeftRadioSection');
         const rightSec = document.getElementById('axisRightRadioSection');
-        if (leftSec)  leftSec.style.display  = showRadios && (sp === 'left'  || sp === 'dual') ? '' : 'none';
-        if (rightSec) rightSec.style.display = showRadios && (sp === 'right' || sp === 'dual') ? '' : 'none';
+        if (leftSec) {
+            leftSec.classList.toggle('is-hidden', !(showRadios && (sp === 'left' || sp === 'dual')));
+        }
+        if (rightSec) {
+            rightSec.classList.toggle('is-hidden', !(showRadios && (sp === 'right' || sp === 'dual')));
+        }
     },
 
     /** 坐標設定下拉 onchange：更新 placement 及條件式 UI */
@@ -472,8 +479,12 @@ window.ChartSettingsModal = {
         const showRadios  = mode === 'normal';
         const leftSec  = document.getElementById('axisLeftRadioSection');
         const rightSec = document.getElementById('axisRightRadioSection');
-        if (leftSec)  leftSec.style.display  = showRadios && (value === 'left'  || value === 'dual') ? '' : 'none';
-        if (rightSec) rightSec.style.display = showRadios && (value === 'right' || value === 'dual') ? '' : 'none';
+        if (leftSec) {
+            leftSec.classList.toggle('is-hidden', !(showRadios && (value === 'left' || value === 'dual')));
+        }
+        if (rightSec) {
+            rightSec.classList.toggle('is-hidden', !(showRadios && (value === 'right' || value === 'dual')));
+        }
     },
 
     updateAxisField(field, value) {
@@ -507,17 +518,17 @@ window.ChartSettingsModal = {
         switch (tabName) {
             case 'indicators':
                 body.classList.remove('no-sidebar');
-                indicatorCategories.forEach(c => c.style.display = '');
-                if (patternSection) patternSection.style.display = 'none';
+                indicatorCategories.forEach(c => c.classList.remove('is-hidden'));
+                if (patternSection) patternSection.classList.add('is-hidden');
                 this.renderSettings();
                 break;
 
             case 'patterns':
                 body.classList.remove('no-sidebar');
-                indicatorCategories.forEach(c => c.style.display = 'none');
-                if (patternSection) patternSection.style.display = '';
+                indicatorCategories.forEach(c => c.classList.add('is-hidden'));
+                if (patternSection) patternSection.classList.remove('is-hidden');
                 this.renderPatternSidebar();
-                container.innerHTML = `<div class="settings-placeholder"><p>請選擇左側的型態</p></div>`;
+                container.innerHTML = `<div class="settings-placeholder flex h-full flex-col items-center justify-center text-text-muted"><p class="text-sm">請選擇左側的型態</p></div>`;
                 break;
 
             case 'general':
@@ -627,6 +638,10 @@ window.ChartSettingsModal = {
      */
     saveToLocalStorage() {
         try {
+            if (!window.state || !window.state.chartIndicators) {
+                console.warn('[ChartSettingsModal] window.state 尚未就緒，略過 localStorage 儲存');
+                return;
+            }
             const settings = {
                 MA:   window.state.chartIndicators.MA,
                 BOLL: window.state.chartIndicators.BOLL
@@ -656,6 +671,10 @@ window.ChartSettingsModal = {
      */
     loadFromLocalStorage() {
         try {
+            if (!window.state || !window.state.chartIndicators) {
+                console.warn('[ChartSettingsModal] window.state 尚未就緒，略過 localStorage 載入');
+                return;
+            }
             const saved = localStorage.getItem('chartIndicators');
             if (!saved) {
                 // ✅ 首次載入（沒有 localStorage）：使用預設 MA 配置（MA10/MA20 預設啟用）
@@ -790,8 +809,8 @@ window.ChartSettingsModal = {
             btnDefine.addEventListener('click', () => {
                 const panel = document.getElementById('customColorPanel');
                 if (!panel) return;
-                const isVisible = panel.style.display !== 'none';
-                panel.style.display = isVisible ? 'none' : 'block';
+                const isVisible = !panel.classList.contains('is-hidden');
+                panel.classList.toggle('is-hidden', isVisible);
                 if (!isVisible) {
                     // 同步當前選中色彩到面板狀態
                     const hex = this.colorPicker.currentColor || '#ff0000';
@@ -833,7 +852,7 @@ window.ChartSettingsModal = {
 
         const modal = document.getElementById('colorPickerModal');
         if (modal) {
-            modal.style.display = 'flex';
+            modal.classList.remove('is-hidden');
         }
     },
 
@@ -847,7 +866,7 @@ window.ChartSettingsModal = {
 
         const modal = document.getElementById('colorPickerModal');
         if (modal) {
-            modal.style.display = 'none';
+            modal.classList.add('is-hidden');
         }
 
         this.colorPicker.isOpen = false;
@@ -1155,6 +1174,7 @@ document.addEventListener('htmx:afterSwap', function (evt) {
 window.initChartSettingsModal = function () {
     if (window._chartSettingsModalInit) return;
     if (!document.getElementById('chartSettingsModal')) return;
+    if (!window.state || !window.state.chartIndicators) return;
     window._chartSettingsModalInit = true;
     window.ChartSettingsModal.init();
     window.ChartSettingsModal.loadFromLocalStorage();
@@ -1165,10 +1185,5 @@ document.addEventListener('DOMContentLoaded', window.initChartSettingsModal);
 
 // 2. HTMX 動態載入
 document.addEventListener('htmx:afterSettle', window.initChartSettingsModal);
-
-// 3. 若 JS 被動態載入且 DOMContentLoaded 已觸發過
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    window.initChartSettingsModal();
-}
 
 console.log('✅ 圖表設定彈窗模組已載入');

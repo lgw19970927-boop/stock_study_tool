@@ -62,8 +62,14 @@ window.ScreeningBlockTimeRange = {
     _togglePanels: function (mode) {
         const specificPanel = document.getElementById('specificDatePanel');
         const customRange = document.getElementById('customDateRange');
-        if (specificPanel) specificPanel.style.display = (mode === 'specific') ? 'block' : 'none';
-        if (customRange)   customRange.style.display   = (mode === 'custom')   ? 'flex'  : 'none';
+        if (specificPanel) {
+            specificPanel.classList.toggle('is-hidden', mode !== 'specific');
+            specificPanel.classList.toggle('is-block', mode === 'specific');
+        }
+        if (customRange) {
+            customRange.classList.toggle('is-hidden', mode !== 'custom');
+            customRange.classList.toggle('is-flex', mode === 'custom');
+        }
     },
 
     bindEvents: function () {

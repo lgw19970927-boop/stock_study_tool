@@ -24,7 +24,8 @@ secrets/
 
 # 參考資料（不需進入容器）
 reference/
-
+stock_study_tool_veryold/
+stock_study_tool_old/
 # 測試與文件
 Test/
 Docs/

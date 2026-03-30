@@ -382,7 +382,7 @@ window.StrategyManager = {
         const link = details.parentNode.querySelector('.strat-more-link');
 
         if (details) {
-            const isHidden = details.style.display === 'none' || !details.classList.contains('open');
+            const isHidden = !details.classList.contains('open');
             if (isHidden) {
                 details.classList.add('open');
                 if (link) link.textContent = '收起 ▲';

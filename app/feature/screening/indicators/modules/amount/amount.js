@@ -17,14 +17,14 @@ window.AmountIndicator = {
                      </div>
                      
                      <!-- Single Value Input -->
-                     <div class="param-group single-input-group" style="display: flex; gap: 8px; align-items: center;">
+                     <div class="param-group single-input-group is-flex" style="gap: 8px; align-items: center;">
                         <label style="width: 40px; font-size: 12px;">數值</label>
                         <input type="number" class="number-input single-val" value="1000" style="flex: 1;">
                         <span style="font-size: 11px; color: var(--text-muted);">萬</span>
                      </div>
 
                      <!-- Range Inputs (Hidden by default) -->
-                     <div class="param-group range-input-group" style="display: none; gap: 8px; align-items: center;">
+                     <div class="param-group range-input-group is-hidden" style="gap: 8px; align-items: center;">
                         <label style="width: 40px; font-size: 12px;">範圍</label>
                         <input type="number" class="number-input min-val" placeholder="Min" style="flex: 1;">
                         <span style="font-size: 12px;">~</span>
@@ -50,11 +50,15 @@ window.AmountIndicator = {
         const rangeGroup = container.querySelector('.range-input-group');
 
         if (selectElement.value === 'range') {
-            singleGroup.style.display = 'none';
-            rangeGroup.style.display = 'flex';
+            singleGroup.classList.add('is-hidden');
+            singleGroup.classList.remove('is-flex');
+            rangeGroup.classList.remove('is-hidden');
+            rangeGroup.classList.add('is-flex');
         } else {
-            singleGroup.style.display = 'flex';
-            rangeGroup.style.display = 'none';
+            singleGroup.classList.remove('is-hidden');
+            singleGroup.classList.add('is-flex');
+            rangeGroup.classList.add('is-hidden');
+            rangeGroup.classList.remove('is-flex');
         }
     },
 

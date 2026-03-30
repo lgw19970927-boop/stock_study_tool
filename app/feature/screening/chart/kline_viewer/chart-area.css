@@ -16,58 +16,124 @@
 }
 
 .chart-symbol {
-    @apply text-xl font-bold;
-    color: var(--accent-primary);
-    font-family: var(--font-mono);
+    @apply text-xl font-bold text-accent-primary font-mono;
 }
 
 .chart-name {
-    @apply text-sm;
-    color: var(--text-secondary);
+    @apply text-sm text-text-secondary;
 }
 
 .chart-controls {
+    @apply flex items-center gap-4;
+}
+
+/* Shared chart control toggles (moved from strategy-manager import dependency) */
+.chart-options {
     @apply flex items-center;
-    gap: var(--spacing-md);
+    gap: 12px;
+    padding: 0 8px;
 }
 
-.timeframe-group {
-    @apply flex;
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-md);
-    padding: 2px;
+.toggle-switch {
+    @apply relative flex cursor-pointer items-center;
+    gap: 12px;
 }
 
-.timeframe-btn {
-    @apply text-xs font-medium cursor-pointer;
-    padding: var(--spacing-xs) var(--spacing-md);
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-fast);
+.toggle-switch input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 
-.timeframe-btn:hover {
+.toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background-color: var(--bg-tertiary);
+    border-radius: 12px;
+    transition: background-color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform var(--transition-fast);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--accent-primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 0 2px var(--accent-primary-alpha);
+}
+
+.toggle-label {
+    @apply select-none text-sm;
     color: var(--text-primary);
 }
 
+.toggle-switch-small {
+    gap: 8px;
+}
+
+.toggle-switch-small .toggle-slider {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+}
+
+.toggle-switch-small .toggle-slider::before {
+    width: 14px;
+    height: 14px;
+    left: 3px;
+    top: 3px;
+}
+
+.toggle-switch-small input:checked + .toggle-slider::before {
+    transform: translateX(16px);
+}
+
+.toggle-switch-small .toggle-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.timeframe-group {
+    @apply flex bg-bg-tertiary rounded-md p-0.5;
+}
+
+.timeframe-btn {
+    @apply border-0 rounded-sm bg-transparent px-4 py-1 text-xs font-medium text-text-secondary transition-all duration-fast;
+}
+
+.timeframe-btn:hover {
+    @apply text-text-primary;
+}
+
 .timeframe-btn.active {
-    background: var(--accent-primary);
-    color: #000;
+    @apply bg-accent-primary text-black;
 }
 
 .chart-actions {
-    @apply flex;
-    gap: var(--spacing-xs);
+    @apply flex gap-1;
 }
 
 .chart-wrapper {
-    @apply flex-1 relative overflow-hidden;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    min-height: 300px;
+    @apply relative min-h-[300px] flex-1 overflow-hidden rounded-lg border border-border-color bg-bg-secondary;
 }
 
 /* Custom in-page fullscreen — covers the viewport without using the native API */
@@ -84,6 +150,14 @@
 
 #chart {
     @apply w-full h-full;
+}
+
+.chart-overlay-indicator {
+    @apply pointer-events-none absolute left-2 top-2 z-10;
+}
+
+.chart-overlay-annotation {
+    @apply pointer-events-none absolute inset-0 z-[5] h-full w-full;
 }
 
 .chart-placeholder {
@@ -167,8 +241,7 @@
 }
 
 .chart-tooltip-row {
-    display: flex;
-    justify-content: space-between;
+    @apply flex justify-between;
     gap: 16px;
 }
 

@@ -251,9 +251,8 @@ window.ScreeningPage = {
         });
 
         document.querySelectorAll('.tab-content').forEach(content => {
-            content.style.display = content.id === `${tabId}-tab` ? 'block' : 'none';
-            if (content.id === `${tabId}-tab`) content.classList.add('active');
-            else content.classList.remove('active');
+            const isActive = content.id === `${tabId}-tab`;
+            content.classList.toggle('active', isActive);
         });
     },
 
@@ -553,7 +552,8 @@ window.ScreeningPage = {
         dialog.style.left = '50%';
         dialog.style.top  = '30%';
         dialog.style.transform = 'translateX(-50%)';
-        dialog.style.display = 'block';
+        dialog.classList.remove('is-hidden');
+        dialog.classList.add('is-block');
         // 重置勾選框
         const cb = document.getElementById('cbShowPartialResults');
         if (cb) cb.checked = false;
@@ -561,12 +561,18 @@ window.ScreeningPage = {
 
     _cancelStop: function () {
         const dialog = document.getElementById('stopFilterDialog');
-        if (dialog) dialog.style.display = 'none';
+        if (dialog) {
+            dialog.classList.add('is-hidden');
+            dialog.classList.remove('is-block');
+        }
     },
 
     _confirmStop: function () {
         const dialog = document.getElementById('stopFilterDialog');
-        if (dialog) dialog.style.display = 'none';
+        if (dialog) {
+            dialog.classList.add('is-hidden');
+            dialog.classList.remove('is-block');
+        }
 
         const cb = document.getElementById('cbShowPartialResults');
         const showResults = cb && cb.checked;
@@ -604,14 +610,15 @@ window.ScreeningPage = {
                 // 勾選了但確實無任何結果
                 const emptyState = document.getElementById('emptyState');
                 if (emptyState) {
-                    emptyState.style.display = 'flex';
+                    emptyState.classList.remove('is-hidden');
+                    emptyState.classList.add('is-flex');
                     emptyState.innerHTML = `
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="8" x2="12" y2="12"></line>
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
-                        <p style="color:#f59e0b;">篩選已停止，目前尚無符合條件的結果</p>
+                        <p class="empty-state-warning">篩選已停止，目前尚無符合條件的結果</p>
                     `;
                 }
             }
@@ -633,7 +640,8 @@ window.ScreeningPage = {
                 }
             });
         }
-        emptyState.style.display = 'flex';
+        emptyState.classList.remove('is-hidden');
+        emptyState.classList.add('is-flex');
         emptyState.innerHTML = `
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -689,8 +697,12 @@ window.ScreeningPage = {
         const updateIcons = (isFull) => {
             const iconIn  = document.getElementById('iconFullscreen');
             const iconOut = document.getElementById('iconFullscreenExit');
-            if (iconIn)  iconIn.style.display  = isFull ? 'none' : '';
-            if (iconOut) iconOut.style.display = isFull ? '' : 'none';
+            if (iconIn) {
+                iconIn.classList.toggle('is-hidden', isFull);
+            }
+            if (iconOut) {
+                iconOut.classList.toggle('is-hidden', !isFull);
+            }
         };
 
         const resizeChart = () => {

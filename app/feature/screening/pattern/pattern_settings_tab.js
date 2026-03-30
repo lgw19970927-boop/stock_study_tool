@@ -26,11 +26,11 @@ Object.assign(window.ChartSettingsModal, {
             // Bug9: 左側 checkbox 為「總開關」，代表 masterVisible
             const masterOn = p.masterVisible !== false;
             return `
-            <div class="indicator-item" data-pattern="${key}">
+            <div class="indicator-item flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1 text-[0.875rem] text-text-primary transition-all duration-fast hover:bg-bg-hover" data-pattern="${key}">
                 <input type="checkbox" class="pattern-sidebar-cb" data-pattern-key="${key}"
                        ${masterOn ? 'checked' : ''}
                        onclick="event.stopPropagation(); window.ChartSettingsModal._toggleMasterVisible('${key}', this.checked)">
-                <span style="cursor:pointer;flex:1;"
+                <span class="flex-1 cursor-pointer"
                       onclick="window.ChartSettingsModal._selectPattern('${key}')">${this._patternNameMap[key]}</span>
             </div>`;
         }).join('');

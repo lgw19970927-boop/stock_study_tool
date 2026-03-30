@@ -48,6 +48,20 @@
     let isInitialized = false;
     let dragSrcEl = null;
 
+    // 移除容器中的空白文字節點與註解，避免在 content 區形成不可見但有高度的間隙
+    function pruneNonElementNodes(container) {
+        if (!container) return;
+        Array.from(container.childNodes).forEach(node => {
+            if (node.nodeType === Node.COMMENT_NODE) {
+                node.remove();
+                return;
+            }
+            if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) {
+                node.remove();
+            }
+        });
+    }
+
     // ============================================================
     // 初始化
     // ============================================================
@@ -59,13 +73,19 @@
         const fullPath = path.startsWith('/') ? path : '/' + path;
         const matched = TABS.find(t => t.url === fullPath) || TABS.find(t => t.id === path.replace(/^\//, '')) || TABS[0];
 
-        // Mark the initially loaded pane
+        // Mark the initially loaded pane — 不做 DOM 包裹，僅標記 data-pane-id
+        // 頁面已由 Jinja2 渲染出正確的 .page-content.active 結構與 inline style，
+        // 此處只補 layout 切頁所需的 pane 識別屬性。
         const contentArea = document.getElementById('content');
+        pruneNonElementNodes(contentArea);
         if (contentArea && contentArea.firstElementChild) {
             const firstPane = contentArea.firstElementChild;
             firstPane.setAttribute('data-pane-id', matched.id);
-            // 確保第一個面版有 active 和 page-content
-            firstPane.classList.add('page-content', 'active');
+            if (!firstPane.dataset.originalDisplay) {
+                firstPane.dataset.originalDisplay = firstPane.style.display || 'flex';
+            }
+            firstPane.classList.add('active');
+            firstPane.style.display = firstPane.dataset.originalDisplay;
         }
 
         activeTab = matched.id;
@@ -196,17 +216,25 @@
     function loadTabContent(id, url, skipPushState = false) {
         const contentArea = document.getElementById('content');
         if (!contentArea) return;
+        pruneNonElementNodes(contentArea);
 
         // 隱藏所有面板
         Array.from(contentArea.children).forEach(child => {
-            // Remove the active class that might be locked by screening.css
+            // Hide wrapper + inner page-content，避免 active/display 狀態殘留
             child.classList.remove('active');
-
-            if (!child.dataset.originalDisplay && child.style.display !== 'none') {
-                const style = window.getComputedStyle(child).display;
-                child.dataset.originalDisplay = (style !== 'none') ? style : 'flex';
+            if (!child.dataset.originalDisplay) {
+                child.dataset.originalDisplay = 'flex';
             }
             child.style.display = 'none';
+
+            const innerPage = child.querySelector('.page-content');
+            if (innerPage) {
+                innerPage.classList.remove('active');
+                if (!innerPage.dataset.originalDisplay) {
+                    innerPage.dataset.originalDisplay = 'flex';
+                }
+                innerPage.style.display = 'none';
+            }
         });
 
         // 尋找是否已有快取的面板
@@ -214,9 +242,17 @@
 
         if (pane) {
             // 已有快取，直接顯示
+            pruneNonElementNodes(pane);
             pane.style.display = pane.dataset.originalDisplay || 'flex';
-            // Also add active class so any inner elements that rely on it can show
+            pane.style.flexDirection = 'column';
+            pane.style.minHeight = '0';
             pane.classList.add('active');
+
+            const innerPage = pane.querySelector('.page-content');
+            if (innerPage) {
+                innerPage.classList.add('active');
+                innerPage.style.display = innerPage.dataset.originalDisplay || 'flex';
+            }
 
             if (!skipPushState && window.history.pushState) {
                 window.history.pushState({ tabId: id }, '', url);
@@ -232,6 +268,8 @@
             pane.style.height = '100%';
             pane.style.overflow = 'hidden';
             pane.style.display = 'flex';
+            pane.style.flexDirection = 'column';
+            pane.style.minHeight = '0';
             pane.dataset.originalDisplay = 'flex';
             
             pane.innerHTML = '<div class="flex items-center justify-center h-full w-full"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00d4aa]"></div></div>';
@@ -246,6 +284,17 @@
                         'HX-Request': 'true'
                     }
                 }).then(() => {
+                    pruneNonElementNodes(pane);
+                    const loadedPage = pane.querySelector('.page-content');
+                    if (loadedPage) {
+                        loadedPage.classList.add('active');
+                        loadedPage.style.display = 'flex';
+                        loadedPage.style.width = '100%';
+                        loadedPage.style.height = '100%';
+                        loadedPage.style.minHeight = '0';
+                        loadedPage.dataset.originalDisplay = 'flex';
+                    }
+
                     if (!skipPushState && window.history.pushState) {
                         window.history.pushState({ tabId: id }, '', url);
                     }

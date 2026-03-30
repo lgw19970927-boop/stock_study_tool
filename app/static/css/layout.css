@@ -1,16 +1,12 @@
 /* ===== Navbar ===== */
 .navbar {
-    @apply flex items-center justify-between sticky top-0;
-    padding: var(--spacing-md) var(--spacing-xl);
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
+    @apply flex items-center justify-between sticky top-0 px-8 py-4 bg-bg-secondary border-b border-border-color;
     z-index: 100;
     backdrop-filter: blur(10px);
 }
 
 .nav-brand {
-    @apply flex items-center;
-    gap: var(--spacing-sm);
+    @apply flex items-center gap-2;
 }
 
 .logo {
@@ -32,32 +28,20 @@
 }
 
 .nav-links {
-    @apply flex;
-    gap: var(--spacing-xs);
+    @apply flex gap-1;
 }
 
 .nav-link {
-    @apply font-medium;
-    padding: var(--spacing-sm) var(--spacing-md);
-    color: var(--text-secondary);
-    text-decoration: none;
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
+    @apply font-medium px-4 py-2 text-text-secondary no-underline rounded-md transition-all duration-fast;
 }
 
 .nav-link:hover {
-    color: var(--text-primary);
-    background: var(--bg-hover);
+    @apply text-text-primary bg-bg-hover;
 }
 
 .nav-link.active {
-    color: var(--accent-primary);
+    @apply text-accent-primary;
     background: rgba(0, 212, 170, 0.1);
-}
-
-.nav-actions {
-    @apply flex;
-    gap: var(--spacing-sm);
 }
 
 /* ===== Main Layout ===== */
@@ -117,11 +101,7 @@
 
 /* ===== Sidebar ===== */
 .sidebar {
-    @apply overflow-y-auto flex flex-col;
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border-color);
-    padding: var(--spacing-md);
-    gap: var(--spacing-md);
+    @apply overflow-y-auto flex flex-col bg-bg-secondary border-r border-border-color p-4 gap-4;
 }
 
 .sidebar::-webkit-scrollbar {
@@ -143,15 +123,5 @@
 
 /* ===== Content Area ===== */
 .content-area {
-    @apply flex flex-col overflow-hidden;
-    background: var(--bg-primary);
-}
-
-/* ===== Page Content (duplicate definition — last-write wins) ===== */
-.page-content {
-    display: none;
-}
-
-.page-content.active {
-    display: flex !important;
+    @apply flex flex-col overflow-hidden bg-bg-primary;
 }

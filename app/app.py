@@ -58,6 +58,10 @@ def create_app(config_name: str | None = None) -> FastAPI:
     async def root():
         return RedirectResponse(url="/screening")
 
+    @app.get("/favicon.ico")
+    async def favicon():
+        return RedirectResponse(url="/static/favicon.svg")
+
     # ---- 健康檢查 ----
     @app.get("/api/health")
     async def health():

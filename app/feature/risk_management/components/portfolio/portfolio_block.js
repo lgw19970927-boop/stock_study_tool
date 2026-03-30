@@ -73,7 +73,8 @@ window.PortfolioBlock = (function () {
         // F-1: Suggested shares
         let sugShares = null;
         if (avgStopPct !== null && Math.abs(avgStopPct) > 0 && avgPrice > 0) {
-            const multiplier = Math.max(1, maxRiskPct / Math.abs(avgStopPct));
+            // 讓單筆停損%永遠參與建議股數計算（不再以 1 為下限鉗制）
+            const multiplier = maxRiskPct / Math.abs(avgStopPct);
             sugShares = Math.floor((capitalPct / 100 * capital * multiplier) / avgPrice);
         }
 
@@ -291,7 +292,7 @@ window.PortfolioBlock = (function () {
         const plTxt = fmt.moneyStr(calc.plAmount);
         const plC   = clr.pnl(calc.plAmount);
         const col6 = '<div style="display:flex;flex-direction:column;gap:0.28rem;font-size:0.82rem;">' +
-            '<div>\u76c8\u864f\u6bd4: <strong class="pm-output-val pm-c-rr" style="color:' + rrC + ';">' + rrTxt + '</strong></div>' +
+            '<div>\u76c8\u8667\u6bd4: <strong class="pm-output-val pm-c-rr" style="color:' + rrC + ';">' + rrTxt + '</strong></div>' +
             '<div>\u91d1\u984d: <strong class="pm-output-val pm-c-plamount" style="color:' + plC + ';">' + plTxt + '</strong></div></div>';
 
         // col7: account contribution
@@ -678,7 +679,7 @@ window.PortfolioBlock = (function () {
     function exportCsv() {
         var headers = ['\u72c0\u614b','\u80a1\u7968\u4ee3\u78bc','\u65b9\u5411','\u8cb7\u5165\u5747\u50f9','\u9810\u8a08\u5009\u4f4d%',
             '\u505c\u640d\u6279\u6b21\u6578','\u5e73\u5747\u505c\u640d%','\u5efa\u8b70\u80a1\u6578','\u63a7\u98a8\u5009\u4f4d%',
-            '\u51fa\u5834\u6279\u6b21\u6578','\u5e73\u5747\u640d\u76ca%','\u76c8\u864f\u6bd4','\u640d\u76ca\u91d1\u984d','\u5e33\u6236\u8ca2\u737b%'];
+            '\u51fa\u5834\u6279\u6b21\u6578','\u5e73\u5747\u640d\u76ca%','\u76c8\u8667\u6bd4','\u640d\u76ca\u91d1\u984d','\u5e33\u6236\u8ca2\u737b%'];
         var stateMap = { planned: '\u898f\u5283', holding: '\u6301\u5009', closed: '\u5df2\u7d50\u6848' };
         var rowData = _rows.map(function(r) {
             var c = _calc(r), s = _getState(r);

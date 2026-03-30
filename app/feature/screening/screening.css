@@ -1,77 +1,349 @@
 /* Strategy Screening Page Specific Styles */
 
 .config-pill-btn {
-    padding: 6px 4px;
-    border: 1px solid var(--border-color);
-    background: transparent;
-    color: var(--text-secondary);
-    border-radius: 4px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
+    @apply py-1.5 px-1 border border-border-color bg-transparent text-text-secondary rounded text-xs cursor-pointer transition-all duration-200;
 }
 
 .config-pill-btn.active {
-    border-color: var(--accent-primary);
-    color: var(--accent-primary);
+    @apply border-accent-primary text-accent-primary;
     background: rgba(0, 212, 170, 0.1);
 }
 
 .condition-row {
-    display: grid;
+    @apply grid items-center gap-2;
     grid-template-columns: 80px 60px 80px 80px 60px 40px;
-    gap: 8px;
-    align-items: center;
 }
 
 .condition-row select,
 .condition-row input {
-    width: 100%;
-    padding: 4px;
+    @apply w-full p-1;
     font-size: 11px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
+    @apply bg-bg-primary border border-border-color text-text-primary rounded;
+}
+
+/* ===== Results Table (Wave F utility-first + minimal CSS only) ===== */
+.stock-list-container {
+    @apply flex flex-col overflow-x-auto overflow-y-hidden border-b border-border-color;
+    flex: 0 0 auto;
+    height: var(--stock-list-h, 280px);
+    min-height: 80px;
+    max-height: 70vh;
+}
+
+.stock-list-container::-webkit-scrollbar {
+    height: 8px;
+    width: 6px;
+}
+
+.stock-list-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.stock-list-container::-webkit-scrollbar-thumb {
+    background-color: var(--bg-hover);
     border-radius: 4px;
 }
 
-/* Strategy Card Styles */
-.strategy-card {
-    position: relative;
-    background: var(--bg-tertiary);
+.stock-list-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-muted);
+}
+
+.stock-list::-webkit-scrollbar {
+    width: 6px;
+    height: 8px;
+}
+
+.stock-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.stock-list::-webkit-scrollbar-thumb {
+    background-color: var(--bg-hover);
+    border-radius: 3px;
+}
+
+.stock-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-muted);
+}
+
+.stock-item.selected {
+    background: rgba(0, 212, 170, 0.1);
+    border-left-color: var(--accent-primary);
+}
+
+/* ===== Consolidated Screening Modules: market/time/pattern/indicator ===== */
+
+/* market_selection.css */
+.checkbox-group {
+    @apply flex flex-wrap;
+    gap: var(--spacing-sm);
+}
+
+.checkbox-item {
+    @apply flex items-center cursor-pointer bg-bg-tertiary border border-border-color rounded-sm;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.checkbox-item:hover {
+    border-color: var(--accent-primary);
+}
+
+.checkbox-item input[type="checkbox"] {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--bg-primary);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.checkbox-item input[type="checkbox"]:checked {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+.checkbox-item input[type="checkbox"]:checked::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 7px;
+    border: solid #000;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) translate(2px, -1px);
+}
+
+/* time-range-selector.css (keep only module-unique rules) */
+.date-input-group {
+    flex: 1;
+}
+
+.date-input-group label {
+    display: block;
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+.date-input {
+    @apply w-full text-xs bg-bg-tertiary border border-border-color rounded-sm text-text-primary;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-family: var(--font-family);
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.1);
+}
+
+.custom-date-range {
+    gap: var(--spacing-sm);
+}
+
+/* indicator-styles.css */
+.indicator-list {
+    @apply flex flex-col;
+    gap: var(--spacing-sm);
+}
+
+.indicator-card {
+    @apply bg-bg-tertiary border border-border-color rounded-md p-2;
+    transition: all var(--transition-fast);
+}
+
+.indicator-card:hover {
+    @apply border-accent-primary;
+}
+
+.indicator-header {
+    @apply flex items-center mb-2;
+    gap: var(--spacing-sm);
+}
+
+.indicator-header .select-input {
+    @apply flex-1;
+}
+
+.indicator-params {
+    @apply grid grid-cols-2;
+    gap: var(--spacing-sm);
+}
+
+.param-group {
+    @apply flex flex-col;
+    gap: 2px;
+}
+
+.param-group label {
+    @apply text-[0.625rem] uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+}
+
+.param-group.full-width {
+    grid-column: 1 / -1;
+}
+
+/* pattern-styles.css */
+.pattern-grid {
+    @apply grid grid-cols-2;
+    gap: var(--spacing-sm);
+}
+
+.pattern-card {
+    @apply flex flex-col items-center cursor-pointer bg-bg-tertiary border border-border-color rounded-md;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md) var(--spacing-sm);
+    transition: all var(--transition-fast);
+}
+
+.pattern-card:hover {
+    border-color: var(--accent-secondary);
+    transform: translateY(-2px);
+}
+
+.pattern-card input[type="checkbox"] {
+    display: none;
+}
+
+.pattern-card input[type="checkbox"]:checked + .pattern-icon {
+    color: var(--accent-secondary);
+}
+
+.pattern-card:has(input:checked) {
+    border-color: var(--accent-secondary);
+    background: rgba(124, 58, 237, 0.1);
+}
+
+.pattern-icon {
+    color: var(--text-muted);
+    transition: color var(--transition-fast);
+}
+
+.pattern-card span {
+    @apply text-xs font-medium text-text-secondary;
+}
+
+.range-wrapper {
+    @apply py-2;
+}
+
+.range-input {
+    @apply w-full cursor-pointer;
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    appearance: none;
+}
+
+.range-input::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-secondary);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: transform var(--transition-fast);
+}
+
+.range-input::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.range-labels {
+    @apply flex justify-between items-center;
+    margin-top: var(--spacing-xs);
+    font-size: 0.625rem;
+    color: var(--text-muted);
+}
+
+.range-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--accent-secondary);
+}
+
+.pattern-timeframe-row {
+    @apply flex items-end;
+    gap: 12px;
+}
+
+.pattern-timeframe-main {
+    @apply flex;
+    flex: 2;
+    gap: 8px;
+}
+
+.pattern-timeframe-field {
+    flex: 1;
+}
+
+.pattern-timeframe-label {
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.pattern-timeframe-note {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+/* Strategy Card Styles */
+.strategies-list {
+    @apply flex flex-col;
+    gap: var(--spacing-md);
+}
+
+.strategy-card {
+    @apply relative cursor-pointer overflow-hidden rounded-md border border-border-color bg-bg-tertiary p-4;
     margin-bottom: 10px;
-    transition: all 0.2s;
+    transition: all var(--transition-fast);
 }
 
 .strategy-card:hover {
+    @apply border-accent-primary bg-bg-elevated;
+    box-shadow: 0 0 12px rgba(0, 212, 170, 0.2);
+}
+
+.strategy-card.selected {
+    background: var(--bg-hover);
     border-color: var(--accent-primary);
-    background: var(--bg-elevated);
+    box-shadow: 0 0 16px rgba(0, 212, 170, 0.3);
+}
+
+.strategy-card.selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent-primary);
 }
 
 .strat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    @apply flex justify-between items-center;
     margin-bottom: 8px;
 }
 
 .strat-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
+    @apply text-sm font-semibold text-text-primary;
 }
 
 .strat-date {
-    font-size: 12px;
-    color: var(--text-muted);
+    @apply text-xs text-text-muted;
 }
 
 .strat-content {
-    font-size: 12px;
-    color: var(--text-secondary);
+    @apply text-xs text-text-secondary;
     line-height: 1.5;
     /* Ensure consistent line height */
 }
@@ -86,18 +358,9 @@
     /* Ensure block behavior */
 }
 
-.strat-indicator-text {
-    /* Removed special color to match other lines per user request */
-    /* color: #58a6ff; */
-}
-
 /* Hover Actions (Top Right) */
 .strat-actions {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: flex;
-    gap: 4px;
+    @apply absolute top-2 right-2 flex gap-1;
     opacity: 0;
     transition: opacity 0.2s;
     background: var(--bg-elevated);
@@ -111,23 +374,12 @@
 
 /* Action Buttons */
 .action-btn {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    color: var(--text-secondary);
-    cursor: pointer;
+    @apply w-6 h-6 flex items-center justify-center bg-transparent border border-transparent rounded text-text-secondary cursor-pointer;
     transition: all 0.2s;
 }
 
 .action-btn:hover {
-    color: var(--text-primary);
-    background: var(--bg-hover);
-    border-color: var(--border-color);
+    @apply text-text-primary bg-bg-hover border-border-color;
 }
 
 .action-btn svg {
@@ -142,9 +394,7 @@
 }
 
 .strat-more-link {
-    color: var(--accent-secondary);
-    font-size: 12px;
-    cursor: pointer;
+    @apply text-accent-secondary text-xs cursor-pointer;
     text-decoration: none;
 }
 
@@ -175,16 +425,12 @@
     }
 }
 
-/* Center Market and Frequency Groups (User Request) */
 /* Center Market and Frequency Groups (User Request: Reverted to Left) */
 .checkbox-group,
 .frequency-group {
-    display: flex;
-    justify-content: flex-start;
+    @apply m-0 flex w-full justify-start;
     /* Reverted to Left */
     gap: 12px;
-    margin: 0;
-    width: 100%;
 }
 
 /* Override for screening page specific container if needed */
@@ -193,8 +439,7 @@
 }
 
 .filter-label {
-    text-align: left;
-    margin-left: 0;
+    @apply ml-0 text-left;
 }
 
 #filter-design-tab .checkbox-group,
@@ -246,68 +491,10 @@
 
 /* Strategy Active State */
 .strategy-card.active {
-    border-color: var(--accent-primary);
+    @apply border-accent-primary;
     background: rgba(0, 212, 170, 0.05);
     /* Slight tint */
     box-shadow: 0 0 0 1px var(--accent-primary);
-}
-
-/* ===== Screening Results Horizontal Scrollbar ===== */
-/* 讓外層容器支援水平滑動 */
-.stock-list-container {
-    overflow-x: auto;
-}
-
-/* 確保表頭和列表的最小寬度，避免擠壓 */
-.list-header,
-.stock-item {
-    min-width: 800px;
-}
-
-/* 防止篩選標籤被擠壓斷行 */
-.pattern-tag {
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-/* --- 捲軸美化 (深色融合) --- */
-
-/* 外層水平捲軸 */
-.stock-list-container::-webkit-scrollbar {
-    height: 8px;
-    width: 6px;
-}
-
-.stock-list-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.stock-list-container::-webkit-scrollbar-thumb {
-    background-color: var(--bg-hover);
-    border-radius: 4px;
-}
-
-.stock-list-container::-webkit-scrollbar-thumb:hover {
-    background-color: var(--text-muted);
-}
-
-/* 內層垂直捲軸 */
-.stock-list::-webkit-scrollbar {
-    width: 6px;
-    height: 8px;
-}
-
-.stock-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.stock-list::-webkit-scrollbar-thumb {
-    background-color: var(--bg-hover);
-    border-radius: 3px;
-}
-
-.stock-list::-webkit-scrollbar-thumb:hover {
-    background-color: var(--text-muted);
 }
 
 /* 修正原生白光角落 */
@@ -317,20 +504,11 @@
 
 /* ===== 時間設定 Radio Group ===== */
 .time-range-radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 4px 0;
+    @apply flex flex-col gap-1.5 py-1;
 }
 
 .tr-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--text-primary);
-    user-select: none;
+    @apply flex cursor-pointer select-none items-center gap-2 text-[13px] text-text-primary;
 }
 
 .tr-option input[type="radio"] {
@@ -339,23 +517,18 @@
 }
 
 .tr-sub-panel {
-    margin-left: 22px;
-    padding: 6px 0 2px;
+    @apply ml-[22px] pb-0.5 pt-1.5;
 }
 
 .badge-sm {
-    font-size: 10px;
-    padding: 2px 6px;
-    border-radius: 4px;
+    @apply rounded px-1.5 py-0.5 text-[10px] font-medium;
     background: rgba(124, 58, 237, 0.2);
     color: #a78bfa;
-    font-weight: 500;
 }
 
 /* ===== 欄位排序 ===== */
 .list-header .sortable {
-    cursor: pointer;
-    user-select: none;
+    @apply cursor-pointer select-none;
     transition: color 0.15s;
 }
 
@@ -368,9 +541,8 @@
 }
 
 .sort-icon {
-    font-size: 11px;
+    @apply ml-0.5 text-[11px];
     opacity: 0.6;
-    margin-left: 2px;
 }
 
 .list-header .sortable.sorted .sort-icon {
@@ -381,19 +553,18 @@
 /* 空閒 / 篩選中：隱藏垂直 scrollbar */
 #stockList.state-idle,
 #stockList.state-progressing {
-    overflow-y: hidden;
+    @apply overflow-y-hidden;
 }
 
 /* 篩選完成後恢復 scrollbar（state-result 或無 state class） */
 #stockList.state-result {
-    overflow-y: auto;
+    @apply overflow-y-auto;
 }
 
 /* ===== Bug3 Fix: 空狀態與進度條垂直置中 ===== */
 /* 升級為 flex container，子元素才能用 flex: 1 真正填滿高度 */
 #stockList {
-    display: flex;
-    flex-direction: column;
+    @apply flex flex-col;
 }
 
 /* 空狀態圖示與篩選中進度條均撐滿剩餘空間，配合自身 align-items/justify-content 達成垂直置中 */
@@ -402,128 +573,23 @@
     flex: 1;
 }
 
-/* ===== Stop Filter Button (in progress area) ===== */
-.btn-stop-filter {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 16px;
-    border: 1px solid #ef5350;
-    border-radius: 6px;
-    background: transparent;
-    color: #ef5350;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-.btn-stop-filter:hover {
-    background: #ef5350;
-    color: #fff;
+.empty-state-warning {
+    color: #f59e0b;
 }
 
-/* ===== Stop Filter Draggable Dialog Window ===== */
-.stop-dialog-window {
-    position: fixed;
-    top: 30%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--bg-elevated, #1a1a2e);
-    border: 1px solid var(--border-color, #2a2a3e);
-    border-radius: 10px;
-    min-width: 300px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
-    z-index: 9999;
+.empty-state-danger,
+.empty-state-danger-sub {
+    color: #ff6b6b;
 }
-.stop-dialog-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 14px 16px 12px;
-    cursor: move;
-    user-select: none;
-    border-bottom: 1px solid var(--border-color, #2a2a3e);
+
+/* ===== Stop Filter Button (in progress area) ===== */
+.btn-stop-filter {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#ef5350] bg-transparent px-4 py-1.5 text-xs font-semibold text-[#ef5350] transition-colors duration-150;
 }
-.stop-dialog-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary, #e8e8f0);
-    line-height: 1.5;
+.btn-stop-filter:hover {
+    @apply bg-[#ef5350] text-white;
 }
-.stop-dialog-close {
-    flex-shrink: 0;
-    padding: 2px 4px;
-    border: none;
-    background: transparent;
-    color: var(--text-muted, #555577);
-    cursor: pointer;
-    border-radius: 4px;
-    transition: color 0.15s, background 0.15s;
-    line-height: 1;
-}
-.stop-dialog-close:hover {
-    color: var(--text-primary, #e8e8f0);
-    background: var(--bg-hover, #2a2a3e);
-}
-.stop-dialog-body {
-    padding: 14px 16px;
-}
-.stop-dialog-desc {
-    font-size: 13px;
-    color: var(--text-secondary, #8888aa);
-    margin: 0 0 10px 0;
-    line-height: 1.5;
-}
-.stop-dialog-checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--text-primary, #e8e8f0);
-    cursor: pointer;
-}
-.stop-dialog-checkbox-label input[type="checkbox"] {
-    width: 15px;
-    height: 15px;
-    cursor: pointer;
-    accent-color: var(--accent, #00d4aa);
-}
-.stop-dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 10px 16px 14px;
-    border-top: 1px solid var(--border-color, #2a2a3e);
-}
-.btn-dialog-cancel {
-    padding: 7px 16px;
-    border: 1px solid var(--border-color, #2a2a3e);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--text-secondary, #8888aa);
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
-}
-.btn-dialog-cancel:hover {
-    border-color: var(--text-secondary, #8888aa);
-    color: var(--text-primary, #e8e8f0);
-}
-.btn-dialog-confirm {
-    padding: 7px 16px;
-    border: none;
-    border-radius: 6px;
-    background: #ef5350;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.btn-dialog-confirm:hover {
-    background: #c62828;
-}
+
 
 /* ===== Responsive ===== */
 @media (max-width: 1200px) {

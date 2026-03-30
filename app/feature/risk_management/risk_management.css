@@ -11,14 +11,6 @@
  *     #risk-page 在 pane 內用 flex:1 撐滿
  */
 
-/* ── HTMX 動態建立的 pane 容器 ── */
-[data-pane-id="risk_management"] {
-    height: 100%;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
-}
-
 /* ── 頁面根容器 ──
    F5 直接載入時是 main(block) 的直接子元素 → height:100%
    HTMX 載入時在 pane(flex column) 內 → flex:1
@@ -111,7 +103,7 @@
 }
 
 #risk-page input.has-prefix {
-    padding-left: 1.4rem !important;
+    padding-left: 1.75rem !important;
 }
 
 #risk-page input.has-suffix {
@@ -247,6 +239,14 @@
     position: sticky;
     top: 0;
     z-index: 1;
+}
+
+#risk-page #rm-portfolioTable thead tr {
+    color: var(--text-primary);
+}
+
+#risk-page #rm-portfolioTable thead th {
+    text-align: center;
 }
 
 #risk-page th,

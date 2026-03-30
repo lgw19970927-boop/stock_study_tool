@@ -1,8 +1,130 @@
-/* ===== 圖表管理彈窗 — MA / BOLL 指標設定 + ITB 控制列 ===== */
+﻿
+.chart-modal-container.is-dragging,
+.color-picker-container.is-dragging {
+    user-select: none;
+    opacity: 0.94;
+    animation: none;
+}
 
-/* MA 設定列表 */
+.chart-tab-btn.active {
+    color: #ff6b35;
+    border-bottom-color: #ff6b35;
+}
+
+.chart-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chart-modal-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.settings-panel {
+    @apply hidden;
+}
+
+.settings-panel.active {
+    @apply block;
+}
+
+.settings-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.settings-tabs {
+    @apply flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-tab-btn {
+    padding: var(--spacing-xs) 0;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.settings-tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.settings-tab-btn.active {
+    color: #ff6b35;
+    border-bottom-color: #ff6b35;
+}
+
+.settings-actions {
+    @apply flex justify-end;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.chart-modal-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chart-modal-content::-webkit-scrollbar-track,
+.chart-modal-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chart-modal-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.indicator-item input[type="checkbox"],
+.pattern-cb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.indicator-item input[type="checkbox"]:checked {
+    background: #ff6b35;
+    border-color: #ff6b35;
+}
+
+.indicator-item input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.indicator-item input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+
+.indicator-item.selected {
+    background: var(--bg-hover);
+}
+
 .ma-list-header {
-    display: grid;
+    @apply grid;
     grid-template-columns: minmax(110px,1.5fr) 72px 50px 56px 64px 1fr 40px 32px;
     gap: var(--spacing-sm);
     padding: var(--spacing-xs) var(--spacing-sm);
@@ -17,16 +139,14 @@
 }
 
 .ma-list {
-    display: flex;
-    flex-direction: column;
+    @apply flex flex-col;
     gap: var(--spacing-sm);
 }
 
 .ma-line-item {
-    display: grid;
+    @apply grid items-center;
     grid-template-columns: minmax(110px,1.5fr) 72px 50px 56px 64px 1fr 40px 32px;
     gap: var(--spacing-sm);
-    align-items: center;
     padding: var(--spacing-sm);
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
@@ -39,8 +159,7 @@
 }
 
 .ma-line-item label {
-    display: flex;
-    align-items: center;
+    @apply flex items-center;
     gap: var(--spacing-xs);
     font-size: 0.875rem;
     color: var(--text-secondary);
@@ -161,10 +280,9 @@
     color: var(--color-danger);
 }
 
-/* BOLL 設定 */
+
 .boll-params {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    @apply grid grid-cols-2;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
     padding: var(--spacing-md);
@@ -174,8 +292,7 @@
 }
 
 .param-row {
-    display: flex;
-    flex-direction: column;
+    @apply flex flex-col;
     gap: var(--spacing-xs);
 }
 
@@ -202,17 +319,15 @@
 }
 
 .boll-lines {
-    display: flex;
-    flex-direction: column;
+    @apply flex flex-col;
     gap: var(--spacing-sm);
 }
 
-/* BOLL 各線 checkbox + 設定列（含啟用 checkbox） */
+
 .boll-line-config {
-    display: grid;
+    @apply grid items-center;
     grid-template-columns: 120px 60px 80px 120px 60px;
     gap: var(--spacing-sm);
-    align-items: center;
     padding: var(--spacing-sm);
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
@@ -220,8 +335,7 @@
 }
 
 .boll-line-config label {
-    display: flex;
-    align-items: center;
+    @apply flex items-center;
     gap: 5px;
     font-size: 0.875rem;
     font-weight: 600;
@@ -229,9 +343,9 @@
     cursor: pointer;
 }
 
-/* BOLL 線表頭 */
+
 .boll-lines-header {
-    display: grid;
+    @apply grid;
     grid-template-columns: 120px 60px 80px 120px 60px;
     gap: var(--spacing-sm);
     padding: 4px var(--spacing-sm);
@@ -281,17 +395,13 @@
     color: var(--text-secondary);
     text-align: right;
 }
-
-/* ===== Feature B: 指標控制列 (IndicatorTopBar) ===== */
-
 .itb-row {
-    display: flex;
-    align-items: center;
+    @apply flex items-center;
     gap: 6px;
     padding: 2px 6px;
     border-radius: 3px;
     background: rgba(0, 0, 0, 0.45);
-    pointer-events: none;    /* 容器不攔截事件；子元素覆寫 */
+    pointer-events: none;    
     margin-bottom: 3px;
     white-space: nowrap;
 }
@@ -318,8 +428,7 @@
 .itb-line-token {
     pointer-events: auto;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
+    @apply inline-flex items-center;
     gap: 2px;
     border-radius: 2px;
     padding: 0 2px;
@@ -329,3 +438,189 @@
 .itb-line-token:hover {
     background: rgba(255, 255, 255, 0.1);
 }
+
+.pattern-table-header,
+.pattern-table-row {
+    @apply grid items-center;
+    grid-template-columns: 48px 56px 1fr 1fr 60px 56px;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.pattern-table-header {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: var(--spacing-sm);
+    text-align: center;
+}
+
+.pattern-table-header span:nth-child(3),
+.pattern-table-header span:nth-child(4) {
+    text-align: left;
+}
+
+.pattern-table-row {
+    @apply bg-bg-tertiary border border-border-color rounded-sm;
+    padding: var(--spacing-md) var(--spacing-sm);
+}
+
+.pattern-cell-center {
+    @apply flex justify-center items-center;
+}
+
+.pattern-opacity-cell {
+    @apply flex items-center;
+    gap: var(--spacing-xs);
+}
+
+
+.pattern-cb:checked {
+    background: #ff6b35;
+    border-color: #ff6b35;
+}
+
+.pattern-cb:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 4px; height: 7px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -60%) rotate(45deg);
+}
+
+.pattern-color-btn {
+    width: 44px;
+    height: 26px;
+}
+
+.color-cell {
+    width: 44px;
+    height: 32px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.color-cell:hover {
+    border-color: var(--accent-primary);
+    transform: scale(1.1);
+}
+
+.color-cell.selected {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.3);
+}
+
+.color-grid.custom-colors .color-cell {
+    background: var(--bg-tertiary);
+    border-style: dashed;
+}
+
+
+
+
+.chart-modal-body.no-sidebar .chart-modal-sidebar {
+    display: none;
+}
+
+
+.axis-radio-section {
+    @apply flex items-center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-sm) 0;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: var(--spacing-sm);
+}
+
+.axis-radio-label {
+    min-width: 60px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.axis-radio-item {
+    @apply flex items-center cursor-pointer;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.axis-radio-item input[type="radio"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: border-color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.axis-radio-item input[type="radio"]:checked {
+    border-color: #ff6b35;
+}
+
+.axis-radio-item input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ff6b35;
+}
+
+
+.intro-panel {
+    line-height: 1.7;
+    color: var(--text-primary);
+}
+
+.intro-panel h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.intro-panel p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.intro-list {
+    @apply pl-6 mb-2;
+}
+
+.intro-list li {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.intro-list li strong {
+    color: var(--text-primary);
+}
+
+.intro-note {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    background: var(--bg-tertiary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    @apply inline-block;
+}
+
+
+
+

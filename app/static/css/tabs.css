@@ -1,120 +1,79 @@
 /* ===== Tab Styles ===== */
 .tabs-wrapper {
-    @apply flex flex-col overflow-hidden;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    margin-bottom: var(--spacing-md);
+    @apply flex flex-col overflow-hidden bg-bg-elevated border border-border-color rounded-lg mb-4;
 }
 
 .tabs-header {
-    @apply flex flex-col;
-    gap: 12px;
-    padding: 16px;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--bg-secondary);
+    @apply flex flex-col gap-3 p-4 border-b border-border-color bg-bg-secondary;
 }
 
 .tabs-title {
-    @apply flex items-center whitespace-nowrap;
-    margin: 0;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
+    @apply flex items-center whitespace-nowrap m-0 gap-2 text-[14px] font-semibold text-text-primary;
 }
 
 .tab-buttons {
-    @apply flex;
-    gap: 8px;
+    @apply flex gap-2;
 }
 
 .tab-btn {
-    @apply cursor-pointer whitespace-nowrap;
-    padding: 8px 16px;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: 500;
+    @apply cursor-pointer whitespace-nowrap px-4 py-2 bg-transparent border-0 text-text-secondary text-[14px] font-medium;
     transition: all var(--transition-fast);
     border-bottom: 2px solid transparent;
 }
 
 .tab-btn:hover {
-    color: var(--text-primary);
-    background: var(--bg-hover);
+    @apply text-text-primary bg-bg-hover;
 }
 
 .tab-btn.active {
-    color: var(--accent-primary);
-    border-bottom-color: var(--accent-primary);
+    @apply text-accent-primary border-b-accent-primary;
 }
 
 .tab-content {
-    display: none;
-    flex: 1;
-    overflow-y: auto;
+    @apply hidden flex-1 overflow-y-auto;
     max-height: calc(100vh - 200px);
 }
 
 .tab-content.active {
-    display: block;
+    @apply block;
 }
 
 .tabs-wrapper .tab-content {
-    padding: 0;
+    @apply p-0;
 }
 
 .tabs-wrapper .tab-content > section {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
+    @apply bg-bg-elevated border border-border-color rounded-md p-4 mb-2;
 }
 
 .tabs-wrapper .tab-content > section:first-child {
-    border-top: none;
-    margin-top: 0;
+    @apply border-t-0 mt-0;
 }
 
 .tabs-wrapper .tab-content > .button-group {
-    padding: 0 var(--spacing-md) var(--spacing-md) var(--spacing-md);
+    @apply pt-0 px-4 pb-4;
 }
 
 /* ===== Header Tab (VSCode 風格) ===== */
 
 /* tab 按鈕基底：全高、無 border、相對定位 */
 .htmx-tab-btn {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    height: 100%;
-    padding: 0;
-    background: transparent;
-    border: none;
+    @apply relative flex flex-col items-stretch h-full p-0 bg-transparent border-0;
     border-left: 1px solid #30363d;
     min-width: 0;
     transition: background 150ms ease;
-    outline: none;
+    @apply outline-none;
 }
 
 /* 頂部 highlight bar（高 2px，貼頂） */
 .htmx-tab-top-bar {
-    display: block;
-    height: 2px;
-    width: 100%;
-    flex-shrink: 0;
+    @apply block h-0.5 w-full shrink-0;
     transition: background 150ms ease;
 }
 
 /* 內容行：icon + label + 關閉 */
 .htmx-tab-inner {
-    @apply flex items-center flex-1 whitespace-nowrap;
-    gap: 6px;
-    padding: 0 14px;
+    @apply flex items-center flex-1 whitespace-nowrap gap-1.5 py-0 px-3.5;
 }
 
 .htmx-tab-label {
@@ -149,16 +108,14 @@
 
 /* 關閉按鈕 */
 .htmx-tab-close-btn {
-    @apply flex items-center justify-center cursor-pointer;
-    width: 16px;
-    height: 16px;
+    @apply flex items-center justify-center cursor-pointer w-4 h-4;
     border-radius: 3px;
     font-size: 14px;
     line-height: 1;
     opacity: 0;
     color: #8b949e;
     transition: opacity 150ms ease, background 150ms ease, color 150ms ease;
-    flex-shrink: 0;
+    @apply shrink-0;
 }
 
 .htmx-tab-btn:hover .htmx-tab-close-btn {
