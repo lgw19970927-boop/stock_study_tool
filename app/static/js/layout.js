@@ -244,7 +244,8 @@
             // 已有快取，直接顯示
             pruneNonElementNodes(pane);
             pane.style.display = pane.dataset.originalDisplay || 'flex';
-            pane.style.flexDirection = 'column';
+            // 注意：不要在此強制覆蓋 flexDirection，否則會破壞
+            // server-rendered 頁面（如 screening）的 row 佈局
             pane.style.minHeight = '0';
             pane.classList.add('active');
 

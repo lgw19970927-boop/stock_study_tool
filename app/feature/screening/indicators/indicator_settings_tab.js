@@ -228,7 +228,7 @@ Object.assign(window.ChartSettingsModal, {
             const l = lines[key] || {};
             return `
             <div class="boll-line-config" data-line="${key}">
-                <label style="display:flex;align-items:center;gap:4px;">
+                <label class="boll-line-label">
                     <input type="checkbox" ${l.isEnabled ? 'checked' : ''}
                            onchange="window.ChartSettingsModal.updateBOLLLineEnabled('${key}', this.checked)">
                     <span>${label}</span>

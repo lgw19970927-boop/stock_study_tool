@@ -1,19 +1,20 @@
-/* ===== Global (Phase 1 已遷移第一輪) ===== */
+/* ===== Global (Wave 1 收斂完成) ===== */
 @import "./variables.css";
 @import "./animations.css";
 @import "./layout.css";
 @import "./components.css";
 @import "./tabs.css";
 
-/* ===== Feature: screening（Phase 2 持續遷移中） ===== */
+/* ===== Feature: screening（Wave 2/3/4） ===== */
 @import "../../feature/screening/screening.css";
 @import "../../feature/screening/chart/kline_viewer/chart-area.css";
 @import "../../feature/screening/chart/chart_management/chart-modal.css";
 
-/* ===== Feature: risk_management（Phase 2 已遷移第一輪） ===== */
+/* ===== Feature: risk_management（Wave 5 收斂完成） ===== */
 @import "../../feature/risk_management/risk_management.css";
 
-/* Phase 3 收斂規則：僅在檔案不再含有效規則時才移除 @import */
+/* Wave 6 收尾規則：僅在檔案不再含有效規則時移除 @import。
+	目前 9 個來源檔仍包含白名單 custom 規則（keyframes/scrollbar/pseudo/高耦合狀態），故全部保留。 */
 
 @layer components {
 	.ui-focus-accent:focus {

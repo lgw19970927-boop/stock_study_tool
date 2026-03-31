@@ -5,75 +5,75 @@
 window.BollingerIndicator = {
     getConfigHTML: function () {
         return `
-            <div class="boll-config-container" style="padding: 12px 0; border-top: 1px solid var(--border-subtle); margin-top: 8px;">
+            <div class="boll-config-container ind-config-container">
                 <!-- 1. Period -->
-                <div class="config-row" style="margin-bottom: 12px;">
-                    <div class="config-label" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">週期</div>
-                    <div class="pill-group" style="display: flex; gap: 8px;">
-                        <button type="button" class="config-pill-btn active" style="flex: 1;">日K</button>
-                        <button type="button" class="config-pill-btn" style="flex: 1;">周K</button>
-                        <button type="button" class="config-pill-btn" style="flex: 1;">月K</button>
-                        <button type="button" class="config-pill-btn" style="flex: 1;">60分K</button>
+                <div class="config-row ind-config-row">
+                    <div class="config-label ind-config-label">週期</div>
+                    <div class="pill-group ind-pill-group">
+                        <button type="button" class="config-pill-btn active ind-pill-flex">日K</button>
+                        <button type="button" class="config-pill-btn ind-pill-flex">周K</button>
+                        <button type="button" class="config-pill-btn ind-pill-flex">月K</button>
+                        <button type="button" class="config-pill-btn ind-pill-flex">60分K</button>
                     </div>
                 </div>
 
                 <!-- 2. Range -->
-                <div class="config-row" style="margin-bottom: 12px;">
-                    <div class="config-label" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">範圍</div>
-                    <div class="pill-group" style="display: flex; gap: 8px;">
-                        <button type="button" class="config-pill-btn active" style="flex: 1;">當前值</button>
-                        <button type="button" class="config-pill-btn" style="flex: 1;">連續週期</button>
+                <div class="config-row ind-config-row">
+                    <div class="config-label ind-config-label">範圍</div>
+                    <div class="pill-group ind-pill-group">
+                        <button type="button" class="config-pill-btn active ind-pill-flex">當前值</button>
+                        <button type="button" class="config-pill-btn ind-pill-flex">連續週期</button>
                     </div>
                 </div>
 
                 <!-- 3. Conditions (Presets) -->
-                <div class="config-row" style="margin-bottom: 12px;">
-                    <div class="config-label" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">條件 (最多10個)</div>
-                    <div class="pill-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button type="button" class="config-pill-btn" style="flex: 1; min-width: 80px;">升穿上軌</button>
-                        <button type="button" class="config-pill-btn" style="flex: 1; min-width: 80px;">升穿中軌</button>
-                        <button type="button" class="config-pill-btn" style="flex: 1; min-width: 80px;">跌穿中軌</button>
-                        <button type="button" class="config-pill-btn" style="flex: 1; min-width: 80px;">跌穿下軌</button>
+                <div class="config-row ind-config-row">
+                    <div class="config-label ind-config-label">條件 (最多10個)</div>
+                    <div class="pill-group ind-pill-group-wrap">
+                        <button type="button" class="config-pill-btn ind-pill-flex ind-pill-min">升穿上軌</button>
+                        <button type="button" class="config-pill-btn ind-pill-flex ind-pill-min">升穿中軌</button>
+                        <button type="button" class="config-pill-btn ind-pill-flex ind-pill-min">跌穿中軌</button>
+                        <button type="button" class="config-pill-btn ind-pill-flex ind-pill-min">跌穿下軌</button>
                     </div>
-                     <div class="pill-group" style="display: flex; gap: 8px; margin-top: 8px;">
-                        <button type="button" class="config-pill-btn active" style="width: 100px; border-color: var(--color-warning); color: var(--color-warning);">自訂</button>
+                     <div class="pill-group ind-pill-group mt-2">
+                        <button type="button" class="config-pill-btn active ind-pill-warning">自訂</button>
                     </div>
                 </div>
                 
                 <!-- 4. Parameters -->
-                <div class="config-row" style="margin-bottom: 12px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 4px;">
-                     <div class="config-label" style="font-size: 12px; color: var(--text-primary); margin-bottom: 8px;">參數設定</div>
-                     <div style="display: flex; gap: 16px; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                             <label style="font-size: 12px; color: var(--text-secondary);">計算週期</label>
-                             <input type="number" class="number-input param-p" value="20" style="width: 60px;">
+                <div class="config-row ind-params-panel">
+                     <div class="config-label ind-config-label-primary">參數設定</div>
+                     <div class="ind-params-row">
+                        <div class="ind-param-inline">
+                             <label class="ind-config-label">計算週期</label>
+                             <input type="number" class="number-input param-p ind-input-60" value="20">
                         </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                             <label style="font-size: 12px; color: var(--text-secondary);">標準差</label>
-                             <input type="number" class="number-input param-std" value="2" style="width: 60px;">
+                        <div class="ind-param-inline">
+                             <label class="ind-config-label">標準差</label>
+                             <input type="number" class="number-input param-std ind-input-60" value="2">
                         </div>
                      </div>
                 </div>
 
                 <!-- 5. Dynamic Conditions List -->
-                <div class="conditions-list-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">添加條件</div>
+                <div class="conditions-list-container ind-conditions-list">
+                    <div class="ind-conditions-list-title">添加條件</div>
                      ${this.getConditionRowHTML()}
                 </div>
 
                 <!-- 6. Add Condition Link -->
-                <div style="margin-bottom: 16px;">
-                    <span class="btn-add-condition" style="font-size: 12px; color: var(--accent-primary); cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                <div class="ind-add-condition-wrap">
+                    <span class="btn-add-condition ind-add-condition">
                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         添加條件
                     </span>
                 </div>
 
                 <!-- 7. Footer -->
-                <div class="config-footer" style="display: flex; justify-content: flex-end; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
-                     <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn btn-sm btn-ghost btn-cancel-boll" style="padding: 4px 12px;">取消</button>
-                        <button type="button" class="btn btn-sm btn-secondary btn-confirm-boll" style="padding: 4px 12px;">確定</button>
+                <div class="config-footer ind-config-footer">
+                     <div class="ind-config-footer-actions">
+                        <button type="button" class="btn btn-sm btn-ghost btn-cancel-boll ind-btn-compact">取消</button>
+                        <button type="button" class="btn btn-sm btn-secondary btn-confirm-boll ind-btn-compact">確定</button>
                      </div>
                 </div>
             </div>
@@ -82,30 +82,30 @@ window.BollingerIndicator = {
 
     getConditionRowHTML: function () {
         return `
-            <div class="condition-row" style="display: flex; align-items: center; gap: 8px;">
-                <select class="select-input" style="flex: 1;">
+            <div class="condition-row ind-condition-row-flex">
+                <select class="select-input ind-select-flex">
                     <option value="upper" selected>UPPER</option>
                     <option value="middle">MIDDLER</option>
                     <option value="lower">LOWER</option>
                 </select>
                 
-                <select class="select-input" style="flex: 1;">
+                <select class="select-input ind-select-flex">
                     <option value="gt">大於</option>
                     <option value="lt">小於</option>
                     <option value="cross_up">升穿</option>
                     <option value="cross_down">跌破</option>
                 </select>
                 
-                <select class="select-input" style="flex: 1;">
+                <select class="select-input ind-select-flex">
                     <option value="middle" selected>MIDDLER</option>
                     <option value="lower">LOWER</option>
                     <option value="upper">UPPER</option>
                     <option value="price">最新價</option>
                     <option value="value">數值</option>
                 </select>
-                <input type="number" class="number-input is-hidden" placeholder="數值" style="width: 60px;">
+                <input type="number" class="number-input is-hidden ind-input-60" placeholder="數值">
 
-                <span class="btn-delete-row" style="color: var(--text-muted); cursor: pointer; font-size: 11px; text-decoration: underline; white-space: nowrap;">
+                <span class="btn-delete-row ind-delete-row">
                     刪除
                 </span>
             </div>
@@ -258,13 +258,11 @@ window.BollingerIndicator = {
 
         // 6. Render Summary
         const summaryHTML = `
-            <div class="indicator-summary-item" 
-                 data-config="${configJson}"
-                 style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-subtle);">
-                <div class="summary-text" style="color: #60a5fa; font-size: 14px; font-weight: 500;">
+            <div class="indicator-summary-item ind-summary-item" data-config="${configJson}">
+                <div class="summary-text ind-summary-text">
                     BOLL-${period}: ${conditionStr}
                 </div>
-                <div class="summary-actions" style="display: flex; gap: 8px;">
+                <div class="summary-actions ind-summary-actions">
                      <button type="button" class="btn-icon btn-edit-summary" title="編輯">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                      </button>
@@ -276,9 +274,7 @@ window.BollingerIndicator = {
         `;
 
         card.innerHTML = summaryHTML;
-        card.style.padding = '0';
-        card.style.border = 'none';
-        card.style.background = 'transparent';
+        card.classList.add('indicator-card--summary');
     },
 
     restoreState: function (container, config) {

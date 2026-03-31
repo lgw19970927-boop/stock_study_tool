@@ -281,34 +281,34 @@ window.ChartSettingsModal = {
         return `
         <div class="settings-panel active">
             <h3 class="settings-title">常規設定</h3>
-            <div class="flex max-w-[520px] flex-col gap-4">
-                <div class="general-row flex items-center gap-4">
-                    <label class="min-w-[100px] text-sm text-text-secondary">背景顏色</label>
-                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="generalBgTheme" onchange="window.ChartSettingsModal.updateGeneralField('bgTheme',this.value)">
+            <div class="settings-form">
+                <div class="settings-row">
+                    <label class="settings-label">背景顏色</label>
+                    <select class="settings-select" id="generalBgTheme" onchange="window.ChartSettingsModal.updateGeneralField('bgTheme',this.value)">
                         <option value="dark"   ${bg === 'dark'   ? 'selected' : ''}>時尚暗黑</option>
                         <option value="silver" ${bg === 'silver' ? 'selected' : ''}>淡雅銀灰</option>
                     </select>
                 </div>
-                <div class="general-row flex items-center gap-4">
-                    <label class="min-w-[100px] text-sm text-text-secondary">現價線</label>
-                    <div class="btn-toggle-group flex overflow-hidden rounded-sm border border-border-color">
-                        <button class="btn-toggle-opt border-0 border-r border-border-color bg-bg-primary px-3.5 py-1 text-sm text-text-secondary transition-all duration-fast hover:bg-bg-hover hover:text-text-primary [&.active]:bg-[#ff6b35] [&.active]:font-semibold [&.active]:text-white [&.active:hover]:bg-[#ff6b35] [&.active:hover]:text-white ${cfg.showPriceLine  ? 'active' : ''}"
+                <div class="settings-row">
+                    <label class="settings-label">現價線</label>
+                    <div class="btn-toggle-group">
+                        <button class="btn-toggle-opt ${cfg.showPriceLine ? 'active' : ''}"
                                 onclick="window.ChartSettingsModal.updateGeneralField('showPriceLine',true);this.parentNode.querySelectorAll('.btn-toggle-opt').forEach((b,i)=>b.classList.toggle('active',i===0))">開</button>
-                        <button class="btn-toggle-opt border-0 bg-bg-primary px-3.5 py-1 text-sm text-text-secondary transition-all duration-fast hover:bg-bg-hover hover:text-text-primary [&.active]:bg-[#ff6b35] [&.active]:font-semibold [&.active]:text-white [&.active:hover]:bg-[#ff6b35] [&.active:hover]:text-white ${!cfg.showPriceLine ? 'active' : ''}"
+                        <button class="btn-toggle-opt ${!cfg.showPriceLine ? 'active' : ''}"
                                 onclick="window.ChartSettingsModal.updateGeneralField('showPriceLine',false);this.parentNode.querySelectorAll('.btn-toggle-opt').forEach((b,i)=>b.classList.toggle('active',i===1))">關</button>
                     </div>
                 </div>
-                <div class="general-row flex items-center gap-4">
-                    <label class="min-w-[100px] text-sm text-text-secondary">十字線</label>
-                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="generalTooltipMode" onchange="window.ChartSettingsModal.updateGeneralField('tooltipMode',this.value)">
+                <div class="settings-row">
+                    <label class="settings-label">十字線</label>
+                    <select class="settings-select" id="generalTooltipMode" onchange="window.ChartSettingsModal.updateGeneralField('tooltipMode',this.value)">
                         <option value="floating"   ${tt === 'floating'   ? 'selected' : ''}>懸浮窗</option>
                         <option value="crosshair"  ${tt === 'crosshair'  ? 'selected' : ''}>跟隨懸浮窗</option>
                         <option value="hidden"     ${tt === 'hidden'     ? 'selected' : ''}>關閉</option>
                     </select>
                 </div>
-                <div class="general-row flex items-center gap-4">
-                    <label class="min-w-[100px] text-sm text-text-secondary">主圖類型</label>
-                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="generalChartType" onchange="window.ChartSettingsModal.updateGeneralField('chartType',this.value);window.ChartSettingsModal._onGeneralChartTypeChange(this.value)">
+                <div class="settings-row">
+                    <label class="settings-label">主圖類型</label>
+                    <select class="settings-select" id="generalChartType" onchange="window.ChartSettingsModal.updateGeneralField('chartType',this.value);window.ChartSettingsModal._onGeneralChartTypeChange(this.value)">
                         <option value="candlestick"      ${cfg.chartType === 'candlestick'      ? 'selected' : ''}>普通K線</option>
                         <option value="bar"              ${cfg.chartType === 'bar'              ? 'selected' : ''}>美國線</option>
                         <option value="line"             ${cfg.chartType === 'line'             ? 'selected' : ''}>收盤價線</option>
@@ -316,20 +316,20 @@ window.ChartSettingsModal = {
                         <option value="heikin_ashi"      ${cfg.chartType === 'heikin_ashi'      ? 'selected' : ''}>平均K線</option>
                     </select>
                 </div>
-                <div class="general-row flex items-center gap-4${isCandle ? '' : ' is-hidden'}" id="generalBullStyleRow">
-                    <label class="min-w-[100px] text-sm text-text-secondary">陽線設定</label>
-                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="generalBullStyle" onchange="window.ChartSettingsModal.updateGeneralField('bullStyle',this.value)">
+                <div class="settings-row${isCandle ? '' : ' is-hidden'}" id="generalBullStyleRow">
+                    <label class="settings-label">陽線設定</label>
+                    <select class="settings-select" id="generalBullStyle" onchange="window.ChartSettingsModal.updateGeneralField('bullStyle',this.value)">
                         <option value="hollow" ${bs === 'hollow' ? 'selected' : ''}>空心陽線</option>
                         <option value="solid"  ${bs === 'solid'  ? 'selected' : ''}>實心陽線</option>
                     </select>
                 </div>
-                <div class="general-row flex items-center gap-4${hideColor ? ' is-hidden' : ''}" id="generalBullColorRow">
-                    <label class="min-w-[100px] text-sm text-text-secondary">陽線顏色</label>
+                <div class="settings-row${hideColor ? ' is-hidden' : ''}" id="generalBullColorRow">
+                    <label class="settings-label">陽線顏色</label>
                     <button class="color-picker-btn" id="generalBullColorBtn" style="background:${cfg.bullColor};"
                             onclick="window.ChartSettingsModal.openColorPickerForGeneral('bull')"></button>
                 </div>
-                <div class="general-row flex items-center gap-4${hideColor ? ' is-hidden' : ''}" id="generalBearColorRow">
-                    <label class="min-w-[100px] text-sm text-text-secondary">陰線顏色</label>
+                <div class="settings-row${hideColor ? ' is-hidden' : ''}" id="generalBearColorRow">
+                    <label class="settings-label">陰線顏色</label>
                     <button class="color-picker-btn" id="generalBearColorBtn" style="background:${cfg.bearColor};"
                             onclick="window.ChartSettingsModal.openColorPickerForGeneral('bear')"></button>
                 </div>
@@ -411,19 +411,19 @@ window.ChartSettingsModal = {
         return `
         <div class="settings-panel active">
             <h3 class="settings-title">坐標軸設定</h3>
-            <div class="flex max-w-[520px] flex-col gap-4">
-                <div class="general-row flex items-center gap-4">
-                    <label class="min-w-[100px] text-sm text-text-secondary">坐標切換</label>
-                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="axisScaleMode" onchange="window.ChartSettingsModal._onAxisModeChange(this.value)">
+            <div class="settings-form">
+                <div class="settings-row">
+                    <label class="settings-label">坐標切換</label>
+                    <select class="settings-select" id="axisScaleMode" onchange="window.ChartSettingsModal._onAxisModeChange(this.value)">
                         <option value="normal"      ${mode === 'normal'      ? 'selected':''}>一般</option>
                         <option value="logarithmic" ${mode === 'logarithmic' ? 'selected':''}>對數</option>
                         <option value="percentage"  ${mode === 'percentage'  ? 'selected':''}>百分比</option>
                         <option value="indexed"     ${mode === 'indexed'     ? 'selected':''}>指數 (Indexed to 100)</option>
                     </select>
                 </div>
-                <div class="general-row flex items-center gap-4">
-                    <label class="min-w-[100px] text-sm text-text-secondary">坐標設定</label>
-                    <select class="min-w-[160px] rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary focus:border-accent-primary focus:outline-none" id="axisPlacement" onchange="window.ChartSettingsModal._onAxisPlacementChange(this.value)">
+                <div class="settings-row">
+                    <label class="settings-label">坐標設定</label>
+                    <select class="settings-select" id="axisPlacement" onchange="window.ChartSettingsModal._onAxisPlacementChange(this.value)">
                         <option value="right" ${sp === 'right' ? 'selected':''}>右坐標</option>
                         <option value="left"  ${sp === 'left'  ? 'selected':''}>左坐標</option>
                         <option value="dual"  ${sp === 'dual'  ? 'selected':''}>雙邊坐標</option>
@@ -528,7 +528,7 @@ window.ChartSettingsModal = {
                 indicatorCategories.forEach(c => c.classList.add('is-hidden'));
                 if (patternSection) patternSection.classList.remove('is-hidden');
                 this.renderPatternSidebar();
-                container.innerHTML = `<div class="settings-placeholder flex h-full flex-col items-center justify-center text-text-muted"><p class="text-sm">請選擇左側的型態</p></div>`;
+                container.innerHTML = '<div class="settings-placeholder"><p>請選擇左側的型態</p></div>';
                 break;
 
             case 'general':
@@ -904,7 +904,7 @@ window.ChartSettingsModal = {
             if (!cell.dataset.color) {
                 cell.style.background = color;
                 cell.dataset.color = color;
-                cell.style.borderStyle = 'solid';
+                cell.classList.add('is-custom-filled');
 
                 // 添加點擊事件
                 cell.addEventListener('click', () => {

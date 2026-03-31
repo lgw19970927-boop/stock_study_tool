@@ -26,11 +26,11 @@ Object.assign(window.ChartSettingsModal, {
             // Bug9: 左側 checkbox 為「總開關」，代表 masterVisible
             const masterOn = p.masterVisible !== false;
             return `
-            <div class="indicator-item flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1 text-[0.875rem] text-text-primary transition-all duration-fast hover:bg-bg-hover" data-pattern="${key}">
+            <div class="indicator-item chart-sidebar-item" data-pattern="${key}">
                 <input type="checkbox" class="pattern-sidebar-cb" data-pattern-key="${key}"
                        ${masterOn ? 'checked' : ''}
                        onclick="event.stopPropagation(); window.ChartSettingsModal._toggleMasterVisible('${key}', this.checked)">
-                <span class="flex-1 cursor-pointer"
+                <span class="chart-sidebar-item-label"
                       onclick="window.ChartSettingsModal._selectPattern('${key}')">${this._patternNameMap[key]}</span>
             </div>`;
         }).join('');
@@ -116,12 +116,12 @@ Object.assign(window.ChartSettingsModal, {
                             onclick="window.ChartSettingsModal.openColorPickerForPattern('${patternKey}','shape')"></button>
                 </div>
                 <div class="pattern-opacity-cell">
-                    <input type="range" value="${lineWidth}" min="1" max="5" step="0.5" style="flex:1;"
+                    <input type="range" class="pattern-range" value="${lineWidth}" min="1" max="5" step="0.5"
                            oninput="window.ChartSettingsModal.updatePatternField('${patternKey}','lineWidth',+this.value);document.getElementById('patternLwVal_${patternKey}').textContent=this.value">
                     <span id="patternLwVal_${patternKey}" class="opacity-value">${lineWidth}</span>
                 </div>
                 <div class="pattern-opacity-cell">
-                    <input type="range" value="${opacity}" min="0" max="100" style="flex:1;"
+                    <input type="range" class="pattern-range" value="${opacity}" min="0" max="100"
                            oninput="window.ChartSettingsModal.updatePatternField('${patternKey}','opacity',+this.value);document.getElementById('patternOpacityVal_${patternKey}').textContent=this.value">
                     <span id="patternOpacityVal_${patternKey}" class="opacity-value">${opacity}</span>
                 </div>

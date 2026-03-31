@@ -114,7 +114,7 @@ window.ScreeningBlockIndicator = {
                     if (card._savedSummaryHTML) {
                         // Editing an existing indicator — restore the saved summary
                         card.innerHTML = card._savedSummaryHTML;
-                        card.style.padding = '0';
+                        card.classList.add('indicator-card--summary');
                         card._savedSummaryHTML = null;
                     } else {
                         // New indicator — discard the card
@@ -189,6 +189,8 @@ window.ScreeningBlockIndicator = {
         const configArea = card.querySelector('.indicator-config-area');
         if (!configArea) return;
 
+        card.classList.remove('indicator-card--summary');
+
         const module = this.getIndicatorModule(type);
         if (module && typeof module.getConfigHTML === 'function') {
             configArea.innerHTML = module.getConfigHTML();
@@ -235,9 +237,7 @@ window.ScreeningBlockIndicator = {
         const type = config.type || 'sma';
 
         // 1. Restore Card Structure
-        card.style.padding = '';
-        card.style.border = '';
-        card.style.background = '';
+        card.classList.remove('indicator-card--summary');
 
         // Re-inject Header + Config Area
         card.innerHTML = `

@@ -717,20 +717,25 @@ window.ScreeningPage = {
             }
         };
 
-        btn.addEventListener('click', () => {
-            const isFull = wrapper.classList.toggle('chart-viewport-fullscreen');
+        const setFullscreenState = (isFull) => {
+            wrapper.classList.toggle('chart-viewport-fullscreen', isFull);
+            document.body.classList.toggle('is-chart-viewport-fullscreen', isFull);
             updateIcons(isFull);
             resizeChart();
+        };
+
+        btn.addEventListener('click', () => {
+            setFullscreenState(!wrapper.classList.contains('chart-viewport-fullscreen'));
         });
 
         // Allow Escape key to exit viewport fullscreen
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && wrapper.classList.contains('chart-viewport-fullscreen')) {
-                wrapper.classList.remove('chart-viewport-fullscreen');
-                updateIcons(false);
-                resizeChart();
+                setFullscreenState(false);
             }
         });
+
+        setFullscreenState(wrapper.classList.contains('chart-viewport-fullscreen'));
     },
 
     // ───────────────────────────────────────────────────────────

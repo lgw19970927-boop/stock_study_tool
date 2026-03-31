@@ -302,7 +302,7 @@ window.StrategyManager = {
         const strategies = window.state.savedStrategies || [];
 
         if (strategies.length === 0) {
-            container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-muted);">尚無已儲存的策略</div>';
+            container.innerHTML = '<div class="strategy-list-empty">尚無已儲存的策略</div>';
             return;
         }
 

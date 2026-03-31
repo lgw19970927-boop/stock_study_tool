@@ -79,7 +79,7 @@
 .htmx-tab-label {
     font-size: 13px;
     font-weight: 500;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-family);
     transition: color 150ms ease;
     pointer-events: none;
 }

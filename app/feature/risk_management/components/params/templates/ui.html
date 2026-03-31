@@ -1,28 +1,25 @@
 <!-- 風險參數設定 UI 片段 — 由 params_block.js 控制互動 -->
-<section class="rm-card" style="padding:1.25rem 1.5rem;">
-    <h2 style="font-size:1.2rem; font-weight:700; margin:0 0 0.25rem;">風險參數設定</h2>
-    <p class="text-muted" style="font-size:0.8rem; margin:0 0 1rem;">定義核心風險胃納，系統將自動計算建議倉位。</p>
-    <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:flex-end;">
+<section class="rm-card rm-params-card">
+    <h2 class="rm-section-title">風險參數設定</h2>
+    <p class="text-muted rm-section-desc">定義核心風險胃納，系統將自動計算建議倉位。</p>
+    <div class="rm-params-row">
         <!-- 初始資金（input） -->
-        <div style="display:flex; flex-direction:column; gap:0.4rem; min-width:200px;">
-            <label
-                style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#7fb3a0;">
+        <div class="rm-param-field rm-param-field-capital">
+            <label class="rm-param-label">
                 初始資金 (Capital)
             </label>
             <div class="rm-input-wrap">
                 <span class="rm-input-prefix">$</span>
-                <input type="text" id="rm-capitalInput" class="has-prefix" value="1,000,000"
-                    style="min-width:180px;">
+                <input type="text" id="rm-capitalInput" class="rm-param-input rm-capital-input has-prefix" value="1,000,000">
             </div>
         </div>
         <!-- 單筆停損%（input） -->
-        <div style="display:flex; flex-direction:column; gap:0.4rem; min-width:160px;">
-            <label
-                style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#7fb3a0;">
+        <div class="rm-param-field rm-param-field-risk">
+            <label class="rm-param-label">
                 單筆停損 (Risk per Trade)
             </label>
             <div class="rm-input-wrap">
-                <input type="text" id="rm-riskPctInput" class="has-suffix" value="1.0" style="min-width:140px;">
+                <input type="text" id="rm-riskPctInput" class="rm-param-input rm-risk-input has-suffix" value="1.0">
                 <span class="rm-input-suffix">%</span>
             </div>
         </div>

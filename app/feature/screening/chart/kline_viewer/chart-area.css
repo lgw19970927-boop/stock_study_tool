@@ -136,15 +136,19 @@
     @apply relative min-h-[300px] flex-1 overflow-hidden rounded-lg border border-border-color bg-bg-secondary;
 }
 
+body.is-chart-viewport-fullscreen {
+    overflow: hidden;
+}
+
 /* Custom in-page fullscreen — covers the viewport without using the native API */
 .chart-wrapper.chart-viewport-fullscreen {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 9999 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    border-radius: 0 !important;
-    border: none !important;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
     background: #131722;
 }
 

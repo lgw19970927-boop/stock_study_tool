@@ -1,6 +1,11 @@
 /* ===== Buttons ===== */
+.btn,
+.btn-icon {
+    @apply cursor-pointer transition-all duration-fast;
+}
+
 .btn {
-    @apply inline-flex items-center justify-center font-medium cursor-pointer whitespace-nowrap gap-2 px-4 py-2 text-sm border-0 rounded-md transition-all duration-fast;
+    @apply inline-flex items-center justify-center font-medium whitespace-nowrap gap-2 px-4 py-2 text-sm border-0 rounded-md;
 }
 
 .btn-primary {
@@ -38,7 +43,7 @@
 }
 
 .btn-icon {
-    @apply flex items-center justify-center cursor-pointer w-8 h-8 bg-transparent border-0 rounded-sm text-text-secondary transition-all duration-fast;
+    @apply flex items-center justify-center w-8 h-8 bg-transparent border-0 rounded-sm text-text-secondary;
 }
 
 .btn-icon:hover {

@@ -7,23 +7,115 @@
 window.RiskParams = (function () {
     'use strict';
 
-    let _capital = 1000000;   // 初始資金
-    let _riskPct = 1.0;       // 單筆停損 %
+    const LS_KEY = 'rm-risk-params-v1';
+    const DEFAULT_CAPITAL = 1000000;
+    const DEFAULT_RISK_PCT = 1.0;
+
+    let _capital = DEFAULT_CAPITAL;   // 初始資金
+    let _riskPct = DEFAULT_RISK_PCT;  // 單筆停損 %
 
     function _parseCapital(str) {
-        return parseFloat(String(str).replace(/,/g, '')) || 1000000;
+        const v = parseFloat(String(str).replace(/,/g, ''));
+        return (!isNaN(v) && v > 0) ? v : DEFAULT_CAPITAL;
     }
+
     function _parsePct(str) {
         const v = parseFloat(str);
-        return (!isNaN(v) && v > 0) ? v : 1.0;
+        return (!isNaN(v) && v > 0) ? v : DEFAULT_RISK_PCT;
+    }
+
+    function _formatCapital(value) {
+        const safe = (!isNaN(value) && value > 0) ? Math.round(value) : DEFAULT_CAPITAL;
+        return safe.toLocaleString('en-US');
+    }
+
+    function _formatPct(value) {
+        const safe = (!isNaN(value) && value > 0) ? value : DEFAULT_RISK_PCT;
+        return safe.toFixed(2).replace(/\.00$/, '.0').replace(/(\.\d)0$/, '$1');
+    }
+
+    function _saveToStorage() {
+        try {
+            localStorage.setItem(LS_KEY, JSON.stringify({
+                capital: _capital,
+                riskPct: _riskPct
+            }));
+        } catch (_) {}
+    }
+
+    function _loadFromStorage() {
+        try {
+            const raw = localStorage.getItem(LS_KEY);
+            if (!raw) return;
+
+            const data = JSON.parse(raw);
+            if (data && typeof data === 'object') {
+                if (typeof data.capital === 'number' && data.capital > 0) {
+                    _capital = data.capital;
+                }
+                if (typeof data.riskPct === 'number' && data.riskPct > 0) {
+                    _riskPct = data.riskPct;
+                }
+            }
+        } catch (_) {}
+    }
+
+    function _bindCapitalFormatter(capEl) {
+        if (!capEl) return;
+
+        capEl.addEventListener('input', () => {
+            const value = capEl.value;
+            const cursor = capEl.selectionStart || value.length;
+            const digitsBeforeCursor = value.slice(0, cursor).replace(/\D/g, '').length;
+            const digits = value.replace(/\D/g, '');
+
+            if (!digits) {
+                capEl.value = '';
+                return;
+            }
+
+            const formatted = Number(digits).toLocaleString('en-US');
+            capEl.value = formatted;
+
+            let next = formatted.length;
+            let seenDigits = 0;
+            for (let i = 0; i < formatted.length; i++) {
+                if (/\d/.test(formatted[i])) {
+                    seenDigits++;
+                }
+                if (seenDigits >= digitsBeforeCursor) {
+                    next = i + 1;
+                    break;
+                }
+            }
+            capEl.setSelectionRange(next, next);
+
+            _capital = _parseCapital(formatted);
+            _saveToStorage();
+        });
+
+        capEl.addEventListener('blur', () => {
+            _capital = _parseCapital(capEl.value);
+            capEl.value = _formatCapital(_capital);
+            _saveToStorage();
+        });
     }
 
     /** 從 DOM 讀取最新參數 */
     function read() {
         const capEl = document.getElementById('rm-capitalInput');
         const riskEl = document.getElementById('rm-riskPctInput');
-        if (capEl)  _capital = _parseCapital(capEl.value);
-        if (riskEl) _riskPct = _parsePct(riskEl.value);
+
+        if (capEl) {
+            _capital = _parseCapital(capEl.value);
+            capEl.value = _formatCapital(_capital);
+        }
+        if (riskEl) {
+            _riskPct = _parsePct(riskEl.value);
+            riskEl.value = _formatPct(_riskPct);
+        }
+
+        _saveToStorage();
     }
 
     /** 取得目前資金 */
@@ -37,6 +129,26 @@ window.RiskParams = (function () {
         const recalcBtn = document.getElementById('rm-recalcBtn');
         const capEl     = document.getElementById('rm-capitalInput');
         const riskEl    = document.getElementById('rm-riskPctInput');
+
+        _loadFromStorage();
+
+        if (capEl) capEl.value = _formatCapital(_capital);
+        if (riskEl) riskEl.value = _formatPct(_riskPct);
+
+        _bindCapitalFormatter(capEl);
+
+        if (riskEl) {
+            riskEl.addEventListener('input', () => {
+                _riskPct = _parsePct(riskEl.value);
+                _saveToStorage();
+            });
+
+            riskEl.addEventListener('blur', () => {
+                _riskPct = _parsePct(riskEl.value);
+                riskEl.value = _formatPct(_riskPct);
+                _saveToStorage();
+            });
+        }
 
         function _triggerRecalc() {
             read();

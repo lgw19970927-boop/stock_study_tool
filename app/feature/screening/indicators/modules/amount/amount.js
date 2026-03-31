@@ -5,11 +5,11 @@
 window.AmountIndicator = {
     getConfigHTML: function () {
         return `
-            <div class="amount-config-container" style="padding: 12px 0; border-top: 1px solid var(--border-subtle); margin-top: 8px;">
-                 <div class="indicator-params" style="display: flex; flex-direction: column; gap: 12px;">
-                     <div class="param-group" style="display: flex; gap: 8px; align-items: center;">
-                        <label style="width: 40px; font-size: 12px;">條件</label>
-                        <select class="select-input condition-select" style="flex: 1;" onchange="window.AmountIndicator.toggleInputs(this)">
+                <div class="amount-config-container ind-config-container">
+                      <div class="indicator-params flex flex-col gap-3">
+                            <div class="param-group ind-param-inline">
+                                <label class="ind-param-label-fixed">條件</label>
+                                <select class="select-input condition-select ind-select-flex" onchange="window.AmountIndicator.toggleInputs(this)">
                             <option value="gt">大於 (>)</option>
                             <option value="lt">小於 (<)</option>
                             <option value="range">範圍 (Range)</option>
@@ -17,27 +17,27 @@ window.AmountIndicator = {
                      </div>
                      
                      <!-- Single Value Input -->
-                     <div class="param-group single-input-group is-flex" style="gap: 8px; align-items: center;">
-                        <label style="width: 40px; font-size: 12px;">數值</label>
-                        <input type="number" class="number-input single-val" value="1000" style="flex: 1;">
-                        <span style="font-size: 11px; color: var(--text-muted);">萬</span>
+                            <div class="param-group single-input-group ind-param-inline is-flex">
+                                <label class="ind-param-label-fixed">數值</label>
+                                <input type="number" class="number-input single-val ind-input-flex" value="1000">
+                                <span class="ind-unit-note">萬</span>
                      </div>
 
                      <!-- Range Inputs (Hidden by default) -->
-                     <div class="param-group range-input-group is-hidden" style="gap: 8px; align-items: center;">
-                        <label style="width: 40px; font-size: 12px;">範圍</label>
-                        <input type="number" class="number-input min-val" placeholder="Min" style="flex: 1;">
-                        <span style="font-size: 12px;">~</span>
-                        <input type="number" class="number-input max-val" placeholder="Max" style="flex: 1;">
-                        <span style="font-size: 11px; color: var(--text-muted);">萬</span>
+                            <div class="param-group range-input-group ind-param-inline is-hidden">
+                                <label class="ind-param-label-fixed">範圍</label>
+                                <input type="number" class="number-input min-val ind-input-flex" placeholder="Min">
+                                <span class="text-xs">~</span>
+                                <input type="number" class="number-input max-val ind-input-flex" placeholder="Max">
+                                <span class="ind-unit-note">萬</span>
                      </div>
                 </div>
 
                 <!-- Footer -->
-                <div class="config-footer" style="display: flex; justify-content: flex-end; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 12px;">
-                     <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn btn-sm btn-ghost btn-cancel-amount" style="padding: 4px 12px;">取消</button>
-                        <button type="button" class="btn btn-sm btn-secondary btn-confirm-amount" style="padding: 4px 12px;">確定</button>
+                     <div class="config-footer ind-config-footer mt-3">
+                            <div class="ind-config-footer-actions">
+                                <button type="button" class="btn btn-sm btn-ghost btn-cancel-amount ind-btn-compact">取消</button>
+                                <button type="button" class="btn btn-sm btn-secondary btn-confirm-amount ind-btn-compact">確定</button>
                      </div>
                 </div>
             </div>
@@ -87,9 +87,9 @@ window.AmountIndicator = {
         const configJson = JSON.stringify(config).replace(/"/g, '&quot;');
 
         const summaryHTML = `
-            <div class="indicator-summary-item" data-config="${configJson}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-subtle);">
-                <div class="summary-text" style="color: #60a5fa; font-size: 14px; font-weight: 500;">成交額: ${displayStr}</div>
-                <div class="summary-actions" style="display: flex; gap: 8px;">
+            <div class="indicator-summary-item ind-summary-item" data-config="${configJson}">
+                <div class="summary-text ind-summary-text">成交額: ${displayStr}</div>
+                <div class="summary-actions ind-summary-actions">
                      <button type="button" class="btn-icon btn-edit-summary" title="編輯">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                      </button>
@@ -101,9 +101,7 @@ window.AmountIndicator = {
         `;
 
         card.innerHTML = summaryHTML;
-        card.style.padding = '0';
-        card.style.border = 'none';
-        card.style.background = 'transparent';
+        card.classList.add('indicator-card--summary');
     },
 
     restoreState: function (container, config) {

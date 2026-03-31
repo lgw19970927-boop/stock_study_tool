@@ -186,7 +186,7 @@ window.PortfolioBlock = (function () {
         const manualSum  = batches.slice(0, -1).reduce((s, b) => s + (b.pct || 0), 0);
         const pctExceed  = manualSum >= 100;
 
-        let html = '<div class="pm-batch-list">';
+        let html = '<div class="pm-batch-list pm-batch-list-centered">';
         batches.forEach(function(b, i) {
             const isLast  = (i === batches.length - 1);
             const dispPct = isLast ? locked : (b.pct || 0);
@@ -194,24 +194,24 @@ window.PortfolioBlock = (function () {
             const canDel  = !isLast && !isSlClosed && batches.length > 1;
             const delBtn  = canDel
                 ? '<button class="pm-batch-del-btn" data-batch="' + i + '" data-del-type="' + type + '" title="\u522a\u9664\u6b64\u6279\u6b21"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
-                : '<span style="display:inline-block;width:18px;flex-shrink:0;"></span>';
+                : '<span class="pm-inline-placeholder"></span>';
 
-            html += '<div class="pm-batch-row">' +
-                    '<span style="color:var(--text-muted);font-size:.7rem;flex-shrink:0;">$</span>' +
+            html += '<div class="pm-batch-row pm-batch-row-centered">' +
+                    '<span class="pm-batch-symbol">$</span>' +
                     '<input class="pm-batch-input pm-' + type + '-price' + (isSlClosed ? ' locked' : '') + '"' +
                     ' value="' + (b.price || '') + '" data-batch="' + i + '" data-btype="' + type + '"' +
                     ' type="number" step="any" placeholder="0"' + (isSlClosed ? ' readonly' : '') + '>' +
-                    '<span style="font-size:.7rem;color:var(--text-muted);flex-shrink:0;">@</span>' +
+                    '<span class="pm-batch-symbol">@</span>' +
                     '<input class="pm-batch-input pm-pct-input pm-' + type + '-pct' + (isLast || isSlClosed ? ' locked' : '') + warnCls + '"' +
                     ' value="' + dispPct.toFixed(1) + '" data-batch="' + i + '" data-btype="' + type + '"' +
                     ' type="number" step="0.1" min="0" max="100"' + (isLast || isSlClosed ? ' readonly' : '') + '>' +
-                    '<span style="font-size:.7rem;color:var(--text-muted);flex-shrink:0;">%</span>' +
+                    '<span class="pm-batch-symbol">%</span>' +
                     (isLast ? '<span class="pm-lock-icon">\ud83d\udd12</span>' : delBtn) +
                     '</div>';
         });
 
         if (!isSlClosed) {
-            html += '<button class="pm-add-batch-btn" data-add="' + type + '">\uff0b \u65b0\u589e' + label + '</button>';
+            html += '<button class="pm-add-batch-btn pm-add-batch-btn-center" data-add="' + type + '">\uff0b \u65b0\u589e' + label + '</button>';
         }
         html += '</div>';
         return html;
@@ -252,54 +252,54 @@ window.PortfolioBlock = (function () {
         const cl    = _contribLabel(state, calc.accountContrib);
 
         // col1: status badge + executed checkbox
-        const col1 = '<div style="display:flex;flex-direction:column;gap:0.32rem;align-items:flex-start;">' +
+        const col1 = '<div class="pm-cell-stack pm-cell-stack-start">' +
             _stateBadgeHTML(state) +
             '<label class="pm-executed-label">' +
             '<input type="checkbox" class="pm-executed-cb"' + (row.executed ? ' checked' : '') + '>' +
             '\u5df2\u9032\u5834</label></div>';
 
         // col2: ticker + direction
-        const col2 = '<div style="display:flex;flex-direction:column;gap:0.32rem;">' +
-            '<input class="rm-row-input pm-f-ticker" type="text" value="' + _esc(row.ticker) + '" placeholder="AAPL" style="width:80px;">' +
+        const col2 = '<div class="pm-cell-stack">' +
+            '<input class="rm-row-input pm-f-ticker pm-input-ticker" type="text" value="' + _esc(row.ticker) + '" placeholder="AAPL">' +
             '<button class="pm-direction-btn ' + row.direction + '">' + (row.direction === 'short' ? '\u7a7a \u2193' : '\u591a \u2191') + '</button>' +
             '</div>';
 
         // col3: entry plan (avg price / capital% / sugShares / ctrlPos)
         const sugTxt  = fmt.num(calc.sugShares);
         const ctrlTxt = calc.ctrlPosPct != null ? fmt.pct(calc.ctrlPosPct) : '--';
-        const col3 = '<div style="display:flex;flex-direction:column;gap:0.28rem;">' +
+        const col3 = '<div class="pm-cell-stack pm-cell-stack-compact pm-plan-col">' +
             '<div class="pm-field-row"><span class="pm-field-label">\u5747\u50f9</span>' +
-            '<span style="color:var(--text-muted);font-size:.7rem;">$</span>' +
-            '<input class="rm-row-input pm-f-avgprice" type="number" step="any" value="' + (row.avgPrice || '') + '" placeholder="0" style="width:66px;"></div>' +
+            '<span class="pm-unit-label">$</span>' +
+            '<input class="rm-row-input pm-f-avgprice pm-input-avgprice" type="number" step="any" value="' + (row.avgPrice || '') + '" placeholder="0"></div>' +
             '<div class="pm-field-row"><span class="pm-field-label">\u4f54\u6bd4</span>' +
-            '<input class="rm-row-input pm-f-capitalpct" type="number" step="any" value="' + (row.capitalPct || 5) + '" style="width:48px;">' +
-            '<span style="font-size:.7rem;color:var(--text-muted);">%</span></div>' +
+            '<input class="rm-row-input pm-f-capitalpct pm-input-capitalpct" type="number" step="any" value="' + (row.capitalPct || 5) + '">' +
+            '<span class="pm-unit-label">%</span></div>' +
             '<hr class="pm-cell-divider">' +
             '<div class="pm-field-row"><span class="pm-field-label">\u5efa\u8b70\u80a1\u6578</span>' +
-            '<strong class="pm-output-val pm-c-sugshares" style="color:var(--text-primary);">' + sugTxt + '</strong></div>' +
+            '<strong class="pm-output-val pm-c-sugshares pm-output-primary">' + sugTxt + '</strong></div>' +
             '<div class="pm-field-row"><span class="pm-field-label">\u63a7\u98a8\u5009\u4f4d</span>' +
-            '<strong class="pm-output-val pm-c-ctrlpos" style="color:var(--text-muted);">' + ctrlTxt + '</strong></div></div>';
+            '<strong class="pm-output-val pm-c-ctrlpos pm-output-muted">' + ctrlTxt + '</strong></div></div>';
 
         // col4: stop-loss batches
-        const col4 = '<div>' + _slCellHTML(row, calc, state) + '</div>';
+        const col4 = '<div class="pm-batch-col">' + _slCellHTML(row, calc, state) + '</div>';
 
         // col5: exit batches
-        const col5 = '<div>' + _exCellHTML(row, calc, state) + '</div>';
+        const col5 = '<div class="pm-batch-col">' + _exCellHTML(row, calc, state) + '</div>';
 
         // col6: trade performance (R/R, P&L amount)
         const rrTxt = fmt.rr(calc.rrRatio);
         const rrC   = clr.rr(calc.rrRatio);
         const plTxt = fmt.moneyStr(calc.plAmount);
         const plC   = clr.pnl(calc.plAmount);
-        const col6 = '<div style="display:flex;flex-direction:column;gap:0.28rem;font-size:0.82rem;">' +
+        const col6 = '<div class="pm-cell-stack pm-cell-stack-compact">' +
             '<div>\u76c8\u8667\u6bd4: <strong class="pm-output-val pm-c-rr" style="color:' + rrC + ';">' + rrTxt + '</strong></div>' +
             '<div>\u91d1\u984d: <strong class="pm-output-val pm-c-plamount" style="color:' + plC + ';">' + plTxt + '</strong></div></div>';
 
         // col7: account contribution
         const contribTxt = fmt.pctSign(calc.accountContrib);
         const contribC   = clr.contrib(calc.accountContrib);
-        const col7 = '<div style="display:flex;flex-direction:column;gap:0.2rem;font-size:0.82rem;">' +
-            '<span class="pm-c-contriblabel" style="font-size:0.72rem;color:' + cl.color + ';">' + cl.text + '</span>' +
+        const col7 = '<div class="pm-cell-stack pm-cell-stack-tight">' +
+            '<span class="pm-c-contriblabel" style="color:' + cl.color + ';">' + cl.text + '</span>' +
             '<strong class="pm-output-val pm-c-contrib" style="color:' + contribC + ';">' + contribTxt + '</strong></div>';
 
         // col8: delete button

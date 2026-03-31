@@ -21,6 +21,148 @@
     @apply bg-bg-primary border border-border-color text-text-primary rounded;
 }
 
+/* ===== Indicator Module Shared Styles (Wave 2) ===== */
+.ind-config-container {
+    @apply mt-2 border-t border-border-subtle py-3;
+}
+
+.ind-config-row {
+    @apply mb-3;
+}
+
+.ind-config-label {
+    @apply mb-1.5 text-xs text-text-secondary;
+}
+
+.ind-config-label-primary {
+    @apply mb-2 text-xs text-text-primary;
+}
+
+.ind-pill-group {
+    @apply flex gap-2;
+}
+
+.ind-pill-group-wrap {
+    @apply flex flex-wrap gap-2;
+}
+
+.ind-pill-flex {
+    @apply flex-1;
+}
+
+.ind-pill-min {
+    min-width: 80px;
+}
+
+.ind-pill-warning {
+    width: 100px;
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+}
+
+.ind-conditions-list {
+    @apply mb-3 flex flex-col gap-2;
+}
+
+.ind-conditions-list-title {
+    @apply mb-2 text-xs text-text-secondary;
+}
+
+.ind-add-condition-wrap {
+    @apply mb-4;
+}
+
+.ind-add-condition {
+    @apply inline-flex cursor-pointer items-center gap-1 text-xs text-accent-primary;
+}
+
+.ind-config-footer {
+    @apply flex items-center justify-end border-t border-border-subtle pt-3;
+}
+
+.ind-config-footer-actions {
+    @apply flex gap-2;
+}
+
+.ind-btn-compact {
+    @apply px-3 py-1;
+}
+
+.ind-condition-row-flex {
+    @apply flex items-center gap-2;
+}
+
+.ind-select-flex {
+    @apply flex-1;
+}
+
+.ind-input-flex {
+    flex: 1;
+}
+
+.ind-input-60 {
+    width: 60px;
+}
+
+.ind-delete-row {
+    @apply cursor-pointer whitespace-nowrap text-[11px] text-text-muted underline;
+}
+
+.ind-params-panel {
+    @apply mb-3 rounded-sm p-3;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.ind-params-row {
+    @apply flex items-center gap-4;
+}
+
+.ind-param-inline {
+    @apply flex items-center gap-2;
+}
+
+.ind-param-inline .ind-config-label {
+    @apply mb-0;
+}
+
+.ind-param-label-fixed {
+    width: 40px;
+    font-size: 12px;
+}
+
+.ind-unit-note {
+    @apply text-[11px] text-text-muted;
+}
+
+.ind-summary-item {
+    @apply flex items-center justify-between border-b border-border-subtle py-3;
+}
+
+.ind-summary-text {
+    @apply text-sm font-medium;
+    color: #60a5fa;
+}
+
+.ind-summary-actions {
+    @apply flex gap-2;
+}
+
+.indicator-card.indicator-card--summary {
+    @apply border-0 bg-transparent p-0;
+}
+
+.indicator-card.indicator-card--summary .indicator-summary-item:last-child {
+    @apply border-b-0;
+}
+
+.ind-module-missing {
+    @apply p-2.5 text-xs text-text-muted;
+}
+
+.strategy-list-empty {
+    @apply p-6 text-center text-text-muted;
+}
+
 /* ===== Results Table (Wave F utility-first + minimal CSS only) ===== */
 .stock-list-container {
     @apply flex flex-col overflow-x-auto overflow-y-hidden border-b border-border-color;
@@ -159,6 +301,10 @@
 
 .indicator-card:hover {
     @apply border-accent-primary;
+}
+
+.indicator-card.indicator-card--summary:hover {
+    @apply border-0 bg-transparent;
 }
 
 .indicator-header {
