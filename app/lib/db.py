@@ -19,11 +19,18 @@ from mysql.connector.cursor import MySQLCursor
 _config: dict = {}
 _market_pool: pooling.MySQLConnectionPool = None
 _user_pool: pooling.MySQLConnectionPool = None
+_pool_initialized: bool = False
 
 
 def init_db(config) -> None:
     """由 app.py 呼叫，注入 MySQL 設定並初始化 Connection Pool。"""
-    global _config, _market_pool, _user_pool
+    global _config, _market_pool, _user_pool, _pool_initialized
+    if _pool_initialized and _market_pool is not None and _user_pool is not None:
+        return
+
+    market_pool_size = max(1, int(getattr(config, "MYSQL_MARKET_POOL_SIZE", 10)))
+    user_pool_size = max(1, int(getattr(config, "MYSQL_USER_POOL_SIZE", 2)))
+
     _config = {
         "host":     config.MYSQL_HOST,
         "user":     config.MYSQL_USER,
@@ -34,10 +41,12 @@ def init_db(config) -> None:
     _config["market_db"] = config.MYSQL_MARKET_DB
     _config["user_db"]   = config.MYSQL_USER_DB
     
-    # 建立 Market DB 連線池 (篩選模組極度依賴並行，需要較大的 pool_size)
+    # 建立 Market DB 連線池。
+    # 注意：FastAPI 多 worker 時，每個 worker 都會建立自己的 pool。
+    # 因此 pool_size 需要保守，避免總連線數超過 MySQL max_connections。
     _market_pool = pooling.MySQLConnectionPool(
         pool_name="market_pool",
-        pool_size=32,
+        pool_size=market_pool_size,
         pool_reset_session=True,
         **{k: v for k, v in _config.items() if k not in ("market_db", "user_db")},
         database=_config["market_db"]
@@ -46,11 +55,13 @@ def init_db(config) -> None:
     # 建立 User DB 連線池
     _user_pool = pooling.MySQLConnectionPool(
         pool_name="user_pool",
-        pool_size=5,
+        pool_size=user_pool_size,
         pool_reset_session=True,
         **{k: v for k, v in _config.items() if k not in ("market_db", "user_db")},
         database=_config["user_db"]
     )
+
+    _pool_initialized = True
 
 # ==========================================
 # 連線 Context Manager

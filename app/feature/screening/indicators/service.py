@@ -139,11 +139,18 @@ def resolve_analysis_dates(
 INTERVAL_TO_DB = {
     "1D": "1d", "1W": "1d", "1M": "1d",
     "1H": "1h", "4H": "1h",
-    "1min": "1m", "3min": "3m", "5min": "5m",
-    "15min": "15m", "30min": "30m",
+    "1min": "1m", "3min": "1m", "5min": "5m",
+    "15min": "5m", "30min": "5m",
 }
 
-RESAMPLE_RULES = {"1W": "W-FRI", "1M": "ME", "4H": "4h"}
+RESAMPLE_RULES = {
+    "1W": "W-FRI",
+    "1M": "ME",
+    "4H": "4h",
+    "3min": "3min",
+    "15min": "15min",
+    "30min": "30min",
+}
 
 
 def interval_to_db_format(interval: str) -> str:
@@ -155,7 +162,7 @@ def needs_resample(interval: str) -> bool:
 
 
 def resample_prices(df: pd.DataFrame, interval: str) -> pd.DataFrame:
-    """將日線重採樣為目標週期（週線/月線/4H）"""
+    """將來源資料重採樣為目標週期（含 3min/15min/30min/4H/週/月）。"""
     rule = RESAMPLE_RULES.get(interval)
     if not rule or df.empty:
         return df

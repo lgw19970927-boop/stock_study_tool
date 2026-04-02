@@ -6,12 +6,15 @@ import pandas as pd
 import logging
 
 
+logger = logging.getLogger(__name__)
+
+
 def validate_market_data(df) -> tuple[bool, str]:
     """
     驗證 OHLCV 資料品質。
 
     Args:
-        df: Pandas DataFrame，需包含欄位 ['Open', 'High', 'Low', 'Close', 'Volume']
+        df: Pandas DataFrame，需包含欄位 ['Open', 'High', 'Low', 'Close']
 
     Returns:
         (is_valid: bool, error_message: str)
@@ -28,6 +31,18 @@ def validate_market_data(df) -> tuple[bool, str]:
         if (df[required_cols] <= 0).any().any():
             invalid_rows = df[(df[required_cols] <= 0).any(axis=1)]
             return False, f"Found {len(invalid_rows)} rows with zero or negative prices"
+
+        # Allow zero volume but filter out any negative volume rows.
+        if 'Volume' in df.columns:
+            volume = pd.to_numeric(df['Volume'], errors='coerce')
+            negative_volume_mask = volume < 0
+            if negative_volume_mask.any():
+                negative_count = int(negative_volume_mask.sum())
+                logger.warning(f"Filtered {negative_count} rows with negative volume")
+                df.drop(index=df.index[negative_volume_mask], inplace=True)
+
+                if df.empty:
+                    return False, "All rows filtered out due to negative volume"
 
         if (df['High'] < df['Low']).any():
             invalid_rows = df[df['High'] < df['Low']]

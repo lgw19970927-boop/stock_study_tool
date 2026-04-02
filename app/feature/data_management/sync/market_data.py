@@ -27,10 +27,14 @@ def _resample(df: pd.DataFrame, rule: str) -> pd.DataFrame:
     return df.resample(rule).agg(agg).dropna().reset_index()
 
 
-RESAMPLE_RULES = {
-    "1w": "W-MON",
-    "1M": "MS",
-    "1y": "YS",
+RESAMPLE_CONFIG = {
+    "3m": {"source": "1m", "rule": "3min"},
+    "15m": {"source": "5m", "rule": "15min"},
+    "30m": {"source": "5m", "rule": "30min"},
+    "4h": {"source": "1h", "rule": "4h"},
+    "1w": {"source": "1d", "rule": "W-MON"},
+    "1M": {"source": "1d", "rule": "MS"},
+    "1y": {"source": "1d", "rule": "YS"},
 }
 
 
@@ -151,9 +155,10 @@ def get_market_data(
 ):
     """獲取股票 K 線數據（MySQL 版）"""
     try:
-        # 週/月/年線從日線重採樣
-        source_interval = "1d" if interval in RESAMPLE_RULES else interval
-        do_resample     = interval in RESAMPLE_RULES
+        # 需要重採樣的 timeframe 先映射到原始來源 timeframe
+        resample_cfg = RESAMPLE_CONFIG.get(interval)
+        source_interval = resample_cfg["source"] if resample_cfg else interval
+        resample_rule = resample_cfg["rule"] if resample_cfg else None
 
         # 計算日期範圍
         if start_date and end_date:
@@ -201,9 +206,8 @@ def get_market_data(
 
         df = pd.DataFrame(rows)
 
-        if do_resample:
-            rule = RESAMPLE_RULES[interval]
-            df   = _resample(df, rule)
+        if resample_rule:
+            df = _resample(df, resample_rule)
 
         bars = [
             OHLCBar(

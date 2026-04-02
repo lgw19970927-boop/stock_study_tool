@@ -1,6 +1,7 @@
 FROM ubuntu:22.04
 
 WORKDIR /workspace
+ENV PYTHONPATH=/workspace
 
 # 安裝系統依賴 + Python
 RUN apt-get update && apt-get install -y \

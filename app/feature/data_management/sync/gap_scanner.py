@@ -14,7 +14,19 @@ from app.feature.data_management.sync.sync_market_data import get_tickers_from_d
 
 logger = logging.getLogger(__name__)
 
-GAP_THRESHOLD = timedelta(days=7)
+GAP_THRESHOLDS = {
+    '1d': timedelta(days=7),
+    '1h': timedelta(hours=24),
+    '5m': timedelta(hours=4),
+    '1m': timedelta(hours=2),
+}
+
+INTERVAL_STEP = {
+    '1d': timedelta(days=1),
+    '1h': timedelta(hours=1),
+    '5m': timedelta(minutes=5),
+    '1m': timedelta(minutes=1),
+}
 
 
 def _record_data_gap(cursor, symbol: str, interval: str, gap_start: datetime, gap_end: datetime) -> None:
@@ -43,7 +55,12 @@ def scan_gaps(tickers: list = None, interval: str = '1d', auto_fill: bool = Fals
     if not tickers:
         tickers = get_tickers_from_db()
 
-    logger.info(f"Starting Gap Scan for {len(tickers)} tickers. Interval: {interval}")
+    threshold = GAP_THRESHOLDS.get(interval, GAP_THRESHOLDS['1d'])
+    step = INTERVAL_STEP.get(interval, INTERVAL_STEP['1d'])
+
+    logger.info(
+        f"Starting Gap Scan for {len(tickers)} tickers. Interval: {interval}, threshold={threshold}"
+    )
 
     total_gaps = 0
 
@@ -65,9 +82,12 @@ def scan_gaps(tickers: list = None, interval: str = '1d', auto_fill: bool = Fals
 
             for i in range(len(dates) - 1):
                 diff = dates[i + 1] - dates[i]
-                if diff > GAP_THRESHOLD:
-                    gap_start = dates[i]     + timedelta(days=1)
-                    gap_end   = dates[i + 1] - timedelta(days=1)
+                if diff > threshold:
+                    gap_start = dates[i] + step
+                    gap_end = dates[i + 1] - step
+
+                    if gap_start > gap_end:
+                        continue
 
                     logger.warning(
                         f"Gap detected for {ticker}: {gap_start.date()} → {gap_end.date()} ({diff.days} days)"

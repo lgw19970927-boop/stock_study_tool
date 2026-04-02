@@ -25,6 +25,16 @@ def _read_secret(var_name: str, default: str | None = None) -> str | None:
     return default
 
 
+def _read_int(var_name: str, default: int) -> int:
+    raw = os.environ.get(var_name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
 class BaseConfig:
     SECRET_KEY = _read_secret("SECRET_KEY", "dev-secret")
 
@@ -34,6 +44,11 @@ class BaseConfig:
     MYSQL_PASSWORD = _read_secret("MYSQL_PASSWORD", "stockapp_password")
     MYSQL_PORT     = int(os.environ.get("MYSQL_PORT", 3306))
     MYSQL_CHARSET  = "utf8mb4"
+
+    # Connection pool sizes (per process).
+    # Keep defaults conservative because FastAPI uses multiple worker processes.
+    MYSQL_MARKET_POOL_SIZE = _read_int("MYSQL_MARKET_POOL_SIZE", 10)
+    MYSQL_USER_POOL_SIZE   = _read_int("MYSQL_USER_POOL_SIZE", 2)
 
     # 兩個獨立 schema
     MYSQL_MARKET_DB = os.environ.get("MYSQL_MARKET_DB", "market_data")
