@@ -1,32 +1,42 @@
-﻿import os
+import os
 import sys
-import pandas as pd
+from pathlib import Path
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
+import pytest
 
-from app.Feature.Screening.service import screen_single_stock
-from app.Lib.db import init_db
-from app.config import Settings
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
 
-if __name__ == "__main__":
-    init_db(Settings())
-    
+from app.config import get_config
+from app.feature.screening.service import screen_single_stock
+from app.lib.db import init_db
+
+
+@pytest.mark.skipif(
+    os.environ.get("RUN_SCREENING_DB_SMOKE") != "1",
+    reason="Set RUN_SCREENING_DB_SMOKE=1 to run DB-backed screening smoke test.",
+)
+def test_aame_screening_smoke():
+    init_db(get_config())
+
     indicators = [
         {
-            "type": "sma", 
-            "parameters": {"period": 20}, 
-            "conditions": [{"left": "MA20", "operator": ">", "right": "MA50"}]
+            "type": "sma",
+            "timeframe": "1d",
+            "parameters": {"period": 20},
+            "conditions": [{"left": "MA20", "operator": ">", "right": "MA50"}],
         }
     ]
-    
+
     result = screen_single_stock(
-        symbol="AAME", 
-        name="Atlantic American Corporation", 
-        market="listed", 
-        indicators=indicators, 
+        symbol="AAME",
+        name="Atlantic American Corporation",
+        market="listed",
+        indicators=indicators,
         timeframe="1d",
         start_date="2025-01-01",
-        end_date="2025-02-25"
+        end_date="2025-02-25",
     )
-    
-    print("Screening Result:", result)
+
+    assert result is None or isinstance(result, dict)

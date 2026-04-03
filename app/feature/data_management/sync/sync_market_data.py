@@ -90,6 +90,36 @@ def _interval_rows_per_day(interval: str) -> int:
     return {'1d': 1, '1h': 7, '5m': 78, '1m': 390}.get(interval, 1)
 
 
+def _get_provider_probe_symbols() -> list[str]:
+    configured = config.RATE_LIMIT_CONFIG.get('provider_probe_symbols')
+    symbols: list[str] = []
+
+    if isinstance(configured, str):
+        symbols = [s.strip() for s in configured.split(',') if s and s.strip()]
+    elif isinstance(configured, (list, tuple, set)):
+        symbols = [str(s).strip() for s in configured if str(s).strip()]
+
+    if not symbols:
+        single_symbol = str(config.RATE_LIMIT_CONFIG.get('provider_probe_symbol', 'AAPL')).strip()
+        if single_symbol:
+            symbols = [single_symbol]
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for symbol in symbols:
+        key = symbol.upper()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(symbol)
+
+    return deduped[:5]
+
+
+def _provider_probe_hard_fail_enabled() -> bool:
+    return bool(config.RATE_LIMIT_CONFIG.get('provider_probe_hard_fail', False))
+
+
 def _probe_yfinance_provider(force: bool = False) -> bool:
     if not bool(config.RATE_LIMIT_CONFIG.get('provider_probe_enabled', True)):
         return True
@@ -102,75 +132,77 @@ def _probe_yfinance_provider(force: bool = False) -> bool:
     if not force and checked_at > 0 and (now_ts - checked_at) < cached_ttl:
         return bool(_PROVIDER_PROBE_CACHE.get('ok', False))
 
-    symbol = str(config.RATE_LIMIT_CONFIG.get('provider_probe_symbol', 'AAPL'))
+    probe_symbols = _get_provider_probe_symbols()
     timeout_seconds = int(config.RATE_LIMIT_CONFIG.get('download_timeout_seconds', 30))
     timeout_seconds = max(5, min(timeout_seconds, 20))
 
-    probe_url = (
-        f"https://query1.finance.yahoo.com/v8/finance/chart/{quote(symbol)}"
-        "?interval=1d&range=5d"
-    )
     retry_after_seconds = 0
 
-    http_ok = False
-    try:
-        request = Request(
-            probe_url,
-            headers={
-                'User-Agent': (
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                    'AppleWebKit/537.36 (KHTML, like Gecko) '
-                    'Chrome/123.0.0.0 Safari/537.36'
+    def _probe_symbol(symbol: str) -> bool:
+        nonlocal retry_after_seconds
+
+        probe_url = (
+            f"https://query1.finance.yahoo.com/v8/finance/chart/{quote(symbol)}"
+            "?interval=1d&range=5d"
+        )
+
+        http_ok = False
+        try:
+            request = Request(
+                probe_url,
+                headers={
+                    'User-Agent': (
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                        'AppleWebKit/537.36 (KHTML, like Gecko) '
+                        'Chrome/123.0.0.0 Safari/537.36'
+                    )
+                },
+            )
+
+            with urlopen(request, timeout=timeout_seconds) as response:
+                status_code = int(getattr(response, 'status', 200) or 200)
+                content_type = str(response.headers.get('Content-Type', '')).lower()
+                sample = response.read(256)
+
+            sample_text = sample.decode('utf-8', errors='ignore').lower()
+            http_ok = status_code == 200 and (
+                ('json' in content_type) or ('chart' in sample_text)
+            )
+
+            if not http_ok:
+                logger.warning(
+                    f"Provider probe unexpected response for {symbol}: "
+                    f"status={status_code}, content_type={content_type}"
                 )
-            },
-        )
+                return False
+        except HTTPError as probe_error:
+            retry_after = None
+            if probe_error.headers:
+                retry_after = probe_error.headers.get('Retry-After')
 
-        with urlopen(request, timeout=timeout_seconds) as response:
-            status_code = int(getattr(response, 'status', 200) or 200)
-            content_type = str(response.headers.get('Content-Type', '')).lower()
-            sample = response.read(256)
+            if retry_after:
+                try:
+                    retry_after_seconds = max(retry_after_seconds, int(retry_after))
+                except (TypeError, ValueError):
+                    pass
 
-        sample_text = sample.decode('utf-8', errors='ignore').lower()
-        http_ok = status_code == 200 and (
-            ('json' in content_type) or ('chart' in sample_text)
-        )
+            if int(probe_error.code) == 429:
+                retry_after_seconds = max(retry_after_seconds, 300)
+                logger.warning(
+                    f"Provider probe HTTP 429 for {symbol}; cooldown {retry_after_seconds}s"
+                )
+            else:
+                logger.warning(
+                    f"Provider probe HTTP {probe_error.code} for {symbol}: {probe_error.reason}"
+                )
+            return False
+        except URLError as probe_error:
+            logger.warning(f"Provider probe network error for {symbol}: {probe_error.reason}")
+            return False
+        except Exception as probe_error:
+            logger.warning(f"Provider probe failed for {symbol}: {probe_error}")
+            return False
 
-        if not http_ok:
-            logger.warning(
-                f"Provider probe unexpected response for {symbol}: "
-                f"status={status_code}, content_type={content_type}"
-            )
-    except HTTPError as probe_error:
-        retry_after = None
-        if probe_error.headers:
-            retry_after = probe_error.headers.get('Retry-After')
-
-        if retry_after:
-            try:
-                retry_after_seconds = int(retry_after)
-            except (TypeError, ValueError):
-                retry_after_seconds = 0
-
-        if int(probe_error.code) == 429:
-            retry_after_seconds = max(retry_after_seconds, 300)
-            logger.warning(
-                f"Provider probe HTTP 429 for {symbol}; cooldown {retry_after_seconds}s"
-            )
-        else:
-            logger.warning(
-                f"Provider probe HTTP {probe_error.code} for {symbol}: {probe_error.reason}"
-            )
-
-        http_ok = False
-    except URLError as probe_error:
-        logger.warning(f"Provider probe network error for {symbol}: {probe_error.reason}")
-        http_ok = False
-    except Exception as probe_error:
-        logger.warning(f"Provider probe failed for {symbol}: {probe_error}")
-        http_ok = False
-
-    ok = False
-    if http_ok:
         yf_logger = logging.getLogger('yfinance')
         previous_level = yf_logger.level
         try:
@@ -185,14 +217,21 @@ def _probe_yfinance_provider(force: bool = False) -> bool:
                 progress=False,
                 timeout=timeout_seconds,
             )
-            ok = probe_df is not None and not probe_df.empty
-            if not ok:
+            if probe_df is None or probe_df.empty:
                 logger.warning(f"Provider probe yfinance returned empty for {symbol}")
+                return False
+            return True
         except Exception as probe_error:
             logger.warning(f"Provider probe yfinance error for {symbol}: {probe_error}")
-            ok = False
+            return False
         finally:
             yf_logger.setLevel(previous_level)
+
+    ok = False
+    for probe_symbol in probe_symbols:
+        if _probe_symbol(probe_symbol):
+            ok = True
+            break
 
     cache_ttl = float(max(cache_seconds, retry_after_seconds))
 
@@ -202,11 +241,45 @@ def _probe_yfinance_provider(force: bool = False) -> bool:
 
     if not ok:
         logger.warning(
-            f"Provider unavailable for {symbol}; "
-            f"skip sync and retry probe after {int(cache_ttl)}s."
+            f"Provider probe failed for symbols={','.join(probe_symbols)}; "
+            f"next probe after {int(cache_ttl)}s."
         )
 
     return ok
+
+
+def _ensure_provider_ready(max_wait_seconds: int | None = None, retry_interval_seconds: int = 30) -> bool:
+    """Provider readiness gate. Default behavior is best-effort (non-blocking)."""
+    if _probe_yfinance_provider():
+        return True
+
+    if not _provider_probe_hard_fail_enabled():
+        logger.warning(
+            'Provider probe failed; continue in best-effort mode '
+            '(set provider_probe_hard_fail=true to enforce blocking).'
+        )
+        return True
+
+    if max_wait_seconds is None:
+        max_wait_seconds = int(config.RATE_LIMIT_CONFIG.get('provider_probe_wait_seconds', 300))
+
+    if max_wait_seconds <= 0:
+        return False
+
+    logger.warning(
+        f"Provider unavailable. Will retry probe for up to {max_wait_seconds}s "
+        f"(interval={retry_interval_seconds}s)."
+    )
+
+    started_at = time.time()
+    while (time.time() - started_at) < max_wait_seconds:
+        time.sleep(max(1, retry_interval_seconds))
+        if _probe_yfinance_provider(force=True):
+            logger.info('Provider recovered; continue sync flow.')
+            return True
+
+    logger.warning(f"Provider still unavailable after waiting {max_wait_seconds}s.")
+    return False
 
 
 # ================================================================
@@ -927,7 +1000,8 @@ def download_chunk(cursor, tickers: list[str], interval: str, period, start, end
             )
 
             if data.empty:
-                if len(tickers) > 1 and not _probe_yfinance_provider(force=True):
+                provider_ok = _probe_yfinance_provider(force=True)
+                if len(tickers) > 1 and (not provider_ok) and _provider_probe_hard_fail_enabled():
                     raise RuntimeError('yfinance provider unavailable during batch download')
                 valid_cnt = single_ticker_fallback()
                 logger.info(f"Saved {valid_cnt}/{len(tickers)} in chunk (fallback after empty batch).")
@@ -946,7 +1020,8 @@ def download_chunk(cursor, tickers: list[str], interval: str, period, start, end
                     _record_download_failure(cursor, ticker, interval, f"Process error: {ticker_error}")
 
             if valid_cnt == 0 and len(tickers) > 1:
-                if not _probe_yfinance_provider(force=True):
+                provider_ok = _probe_yfinance_provider(force=True)
+                if (not provider_ok) and _provider_probe_hard_fail_enabled():
                     raise RuntimeError('yfinance provider unavailable during zero-valid chunk')
                 valid_cnt = single_ticker_fallback()
                 logger.info(f"Saved {valid_cnt}/{len(tickers)} in chunk (single ticker fallback).")
@@ -980,11 +1055,17 @@ def sync_market_data(
         logger.warning('No tickers provided.')
         return
 
-    if not _probe_yfinance_provider():
+    provider_probe_ok = _probe_yfinance_provider()
+    if not provider_probe_ok and _provider_probe_hard_fail_enabled():
         logger.warning(
-            f"Skip sync for job={job_name} interval={interval}: yfinance provider unavailable."
+            f"Skip sync for job={job_name} interval={interval}: provider unavailable and hard-fail is enabled."
         )
         return
+    if not provider_probe_ok:
+        logger.warning(
+            f"Provider probe failed for job={job_name} interval={interval}; "
+            'continuing with best-effort download flow.'
+        )
 
     chunk_size = int(config.RATE_LIMIT_CONFIG['chunk_size'])
     delay = float(config.RATE_LIMIT_CONFIG['batch_delay_seconds'])
@@ -1081,7 +1162,7 @@ def sync_market_data(
 
 def incremental_update(interval: str = '1d') -> None:
     logger.info(f"Running Incremental Update for {interval}...")
-    if not _probe_yfinance_provider():
+    if not _ensure_provider_ready():
         logger.warning(f"Skip incremental update for {interval}: yfinance provider unavailable.")
         return
 
@@ -1145,7 +1226,7 @@ def incremental_update(interval: str = '1d') -> None:
 
 def progressive_backfill(interval: str = '1d') -> None:
     logger.info(f"Running Progressive Backfill for {interval}...")
-    if not _probe_yfinance_provider():
+    if not _ensure_provider_ready():
         logger.warning(f"Skip progressive backfill for {interval}: yfinance provider unavailable.")
         return
 
@@ -1204,7 +1285,7 @@ def ensure_data(tickers: list[str], interval: str, start, end) -> None:
         logger.info(f'ensure_data skipped for {interval}: no tickers.')
         return
 
-    if not _probe_yfinance_provider():
+    if not _ensure_provider_ready():
         logger.warning(f"Skip ensure_data for {interval}: yfinance provider unavailable.")
         return
 

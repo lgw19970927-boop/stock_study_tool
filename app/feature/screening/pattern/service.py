@@ -55,10 +55,16 @@ def get_yolo_model():
 def resolve_analysis_dates(
     time_range: Optional[str],
     start_date: Optional[str],
-    end_date: Optional[str]
+    end_date: Optional[str],
+    max_bars: int = 120,
 ) -> Tuple[str, str]:
     if start_date and end_date:
         return start_date, end_date
+
+    if end_date and not start_date:
+        end = date.fromisoformat(end_date)
+        days_back = int(max_bars * 1.5) + 30
+        return (end - timedelta(days=days_back)).isoformat(), end_date
 
     today = date.today()
     delta_map = {
@@ -174,6 +180,58 @@ def get_stocks_by_markets(markets: List[str]) -> List[Dict[str, Any]]:
 # ═══════════════════════════════════════════════════════════════════
 # ④ 盤整區規則法（Consolidation Rule-Based）
 # ═══════════════════════════════════════════════════════════════════
+def _to_date_only(value: Any) -> date | None:
+    if value is None:
+        return None
+    text = str(value).split(" ")[0]
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def _evaluate_consolidation_chunk(chunk: List[Dict[str, Any]], threshold: float) -> tuple[bool, float]:
+    highs  = [float(c["high"]) for c in chunk]
+    lows   = [float(c["low"]) for c in chunk]
+    closes = [float(c["close"]) for c in chunk]
+
+    max_high = max(highs)
+    min_low  = min(lows)
+
+    if min_low == 0:
+        return False, 0.0
+
+    amplitude = (max_high - min_low) / min_low
+    if amplitude > threshold:
+        return False, 0.0
+
+    x = np.arange(len(closes))
+    slope = np.polyfit(x, closes, 1)[0]
+    mean_close = np.mean(closes)
+    if mean_close > 0 and abs(slope / mean_close) > 0.005:
+        return False, 0.0
+
+    upper_band = max_high * 0.98
+    lower_band = min_low * 1.02
+    touches_upper = any(h >= upper_band for h in highs)
+    touches_lower = any(l <= lower_band for l in lows)
+    if not (touches_upper and touches_lower):
+        return False, 0.0
+
+    confidence = round(max(0.0, (threshold - amplitude) / threshold) * 100, 1)
+    return True, confidence
+
+
+def _build_consolidation_result(chunk: List[Dict[str, Any]], confidence: float) -> Dict[str, Any]:
+    return {
+        "name": "consolidation",
+        "display_name": "盤整區",
+        "confidence": confidence,
+        "start_date": str(chunk[0]["time"]).split(" ")[0],
+        "end_date": str(chunk[-1]["time"]).split(" ")[0],
+    }
+
+
 def _detect_consolidation(
     prices: List[Dict[str, Any]],
     min_bars: int,
@@ -194,46 +252,67 @@ def _detect_consolidation(
             if len(chunk) < min_bars:
                 break
 
-            highs  = [float(c["high"])  for c in chunk]
-            lows   = [float(c["low"])   for c in chunk]
-            closes = [float(c["close"]) for c in chunk]
-
-            max_high = max(highs)
-            min_low  = min(lows)
-
-            if min_low == 0:
+            is_cons, confidence = _evaluate_consolidation_chunk(chunk, threshold)
+            if not is_cons:
                 continue
 
-            amplitude = (max_high - min_low) / min_low
-            if amplitude > threshold:
-                continue
-
-            x = np.arange(len(closes))
-            slope = np.polyfit(x, closes, 1)[0]
-            mean_close = np.mean(closes)
-            if mean_close > 0 and abs(slope / mean_close) > 0.005:
-                continue
-
-            upper_band = max_high * 0.98
-            lower_band = min_low  * 1.02
-            touches_upper = any(h >= upper_band for h in highs)
-            touches_lower = any(l <= lower_band for l in lows)
-            if not (touches_upper and touches_lower):
-                continue
-
-            confidence = round(max(0.0, (threshold - amplitude) / threshold) * 100, 1)
-
-            results.append({
-                "name":         "consolidation",
-                "display_name": "盤整區",
-                "confidence":   confidence,
-                "start_date":   str(chunk[0]["time"]).split(" ")[0],
-                "end_date":     str(chunk[-1]["time"]).split(" ")[0],
-            })
+            results.append(_build_consolidation_result(chunk, confidence))
             break
 
     results.sort(key=lambda r: r["confidence"], reverse=True)
     return results[:3]
+
+
+def detect_consolidation_containing_date(
+    prices: List[Dict[str, Any]],
+    target_date: str,
+    min_bars: int,
+    max_bars: int,
+    sensitivity: int,
+    max_results: int = 5,
+) -> List[Dict[str, Any]]:
+    """Find consolidation windows that explicitly contain the target date."""
+    if len(prices) < min_bars:
+        return []
+
+    target_dt = _to_date_only(target_date)
+    if target_dt is None:
+        return []
+
+    effective_idx = None
+    for idx, row in enumerate(prices):
+        row_dt = _to_date_only(row.get("time"))
+        if row_dt and row_dt <= target_dt:
+            effective_idx = idx
+
+    if effective_idx is None:
+        return []
+
+    threshold = 0.05 + (sensitivity / 100) * 0.08
+    total = len(prices)
+    best_by_span: dict[tuple[str, str], Dict[str, Any]] = {}
+
+    for window_size in range(min_bars, min(max_bars, total) + 1):
+        start_min = max(0, effective_idx - window_size + 1)
+        start_max = min(effective_idx, total - window_size)
+        for start in range(start_min, start_max + 1):
+            chunk = prices[start:start + window_size]
+            if len(chunk) < min_bars:
+                continue
+
+            is_cons, confidence = _evaluate_consolidation_chunk(chunk, threshold)
+            if not is_cons:
+                continue
+
+            item = _build_consolidation_result(chunk, confidence)
+            key = (item["start_date"], item["end_date"])
+            existing = best_by_span.get(key)
+            if not existing or float(item["confidence"]) > float(existing["confidence"]):
+                best_by_span[key] = item
+
+    results = list(best_by_span.values())
+    results.sort(key=lambda r: r["confidence"], reverse=True)
+    return results[:max_results] if max_results > 0 else results
 
 # ═══════════════════════════════════════════════════════════════════
 # ⑤ YOLO 推理（W底、頭肩頂底、三角收斂）

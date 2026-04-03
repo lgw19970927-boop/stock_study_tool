@@ -70,6 +70,12 @@ def _fetchall_dict(conn, query: str, params: tuple[Any, ...] | None = None) -> l
         return cur.fetchall()
 
 
+def _fetchone_dict(conn, query: str, params: tuple[Any, ...] | None = None) -> dict[str, Any] | None:
+    with conn.cursor(dictionary=True) as cur:
+        cur.execute(query, params or ())
+        return cur.fetchone()
+
+
 def _fetchone_scalar(conn, query: str, params: tuple[Any, ...] | None = None) -> Any:
     with conn.cursor() as cur:
         cur.execute(query, params or ())
@@ -105,14 +111,19 @@ def _query_job_state(conn, status: str | None, limit: int) -> list[dict[str, Any
 
 
 def _query_coverage(conn) -> list[dict[str, Any]]:
-    query = (
-        "SELECT timeframe, COUNT(*) AS row_count, COUNT(DISTINCT symbol) AS symbol_count, "
-        "MAX(datetime) AS latest_dt "
-        "FROM market_data_ohlcv "
-        "GROUP BY timeframe "
-        "ORDER BY FIELD(timeframe, '1d', '1h', '5m', '1m'), timeframe"
-    )
-    return _fetchall_dict(conn, query)
+    rows: list[dict[str, Any]] = []
+    for timeframe in INCREMENTAL_INTERVALS:
+        latest_dt = _fetchone_scalar(
+            conn,
+            "SELECT datetime FROM market_data_ohlcv "
+            "WHERE timeframe = %s ORDER BY datetime DESC LIMIT 1",
+            (timeframe,),
+        )
+        rows.append({
+            "timeframe": timeframe,
+            "latest_dt": latest_dt,
+        })
+    return rows
 
 
 def _query_backfill_non_completed(conn, limit: int) -> list[dict[str, Any]]:
@@ -313,20 +324,166 @@ def _collect_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         has_backfill_history = _table_exists(conn, "backfill_history", args.database)
         has_market_data = _table_exists(conn, "market_data_ohlcv", args.database)
 
+        coverage_rows = _query_coverage(conn) if has_market_data else []
+        coverage_map: dict[str, dict[str, Any]] = {}
+        for row in coverage_rows:
+            timeframe = str(row.get("timeframe") or "")
+            coverage_map[timeframe] = row
+
         if has_job_state:
             running = _query_job_state(conn, "running", args.limit)
             completed = _query_job_state(conn, "completed", args.limit)
             interrupted = _query_job_state(conn, "interrupted", args.limit)
             pending = _pending_interval_checks(conn)
             source_mode = "job_state"
+
+            total_tickers = 0
+            try:
+                if _table_exists(conn, "tickers", args.database):
+                    total_tickers = int(
+                        _fetchone_scalar(
+                            conn,
+                            "SELECT COUNT(*) FROM tickers WHERE is_active = 1 AND is_suspected_delisted = 0",
+                        )
+                        or 0
+                    )
+                elif _table_exists(conn, "stock_meta", args.database):
+                    total_tickers = int(
+                        _fetchone_scalar(
+                            conn,
+                            "SELECT COUNT(*) FROM stock_meta WHERE status = 'Active'",
+                        )
+                        or 0
+                    )
+            except Error as count_error:
+                pending.append(f"ticker count unavailable: {count_error}")
         else:
             raw_logs = _get_container_logs(args.container_name, args.log_tail)
             running, completed, interrupted = _parse_log_progress(raw_logs)
             pending = ["job_state table missing: using log fallback mode"]
             source_mode = "container_logs"
+            total_tickers = 0
 
-        coverage_rows = _query_coverage(conn) if has_market_data else []
         backfill_non_completed = _query_backfill_non_completed(conn, args.limit) if has_backfill_history else []
+
+        timeframe_status: list[dict[str, Any]] = []
+        if has_job_state:
+            for interval in INCREMENTAL_INTERVALS:
+                running_now = int(
+                    _fetchone_scalar(
+                        conn,
+                        "SELECT COUNT(*) FROM job_state "
+                        "WHERE status = 'running' AND interval_type = %s AND job_name LIKE %s",
+                        (interval, f"incremental_{interval}_%"),
+                    )
+                    or 0
+                )
+                completed_today = int(
+                    _fetchone_scalar(
+                        conn,
+                        "SELECT COUNT(*) FROM job_state "
+                        "WHERE status = 'completed' AND interval_type = %s "
+                        "AND job_name LIKE %s AND DATE(updated_at) = CURDATE()",
+                        (interval, f"incremental_{interval}_%"),
+                    )
+                    or 0
+                )
+
+                latest_row = _fetchone_dict(
+                    conn,
+                    "SELECT job_name, interval_type, status, last_chunk_idx, updated_at "
+                    "FROM job_state "
+                    "WHERE interval_type = %s AND job_name LIKE %s "
+                    "ORDER BY updated_at DESC, id DESC LIMIT 1",
+                    (interval, f"incremental_{interval}_%"),
+                )
+
+                chunk_idx = latest_row.get("last_chunk_idx") if latest_row else None
+                progress_done = (chunk_idx + 1) * args.chunk_size if isinstance(chunk_idx, int) and chunk_idx >= 0 else 0
+                progress_total = total_tickers if total_tickers > 0 else None
+
+                if running_now > 0:
+                    status_label = "RUNNING"
+                elif completed_today > 0:
+                    status_label = "DONE"
+                else:
+                    status_label = "PENDING"
+
+                timeframe_status.append(
+                    {
+                        "timeframe": interval,
+                        "job_type": "INCREMENTAL",
+                        "status": status_label,
+                        "progress_done": progress_done,
+                        "progress_total": progress_total,
+                        "coverage": _fmt_dt((coverage_map.get(interval) or {}).get("latest_dt")),
+                    }
+                )
+
+            for interval in BACKFILL_INTERVALS:
+                running_now = int(
+                    _fetchone_scalar(
+                        conn,
+                        "SELECT COUNT(*) FROM job_state "
+                        "WHERE status = 'running' AND interval_type = %s "
+                        "AND (job_name = %s OR job_name = %s)",
+                        (interval, f"backfill_{interval}", f"startup_backfill_{interval}"),
+                    )
+                    or 0
+                )
+                completed_today = int(
+                    _fetchone_scalar(
+                        conn,
+                        "SELECT COUNT(*) FROM job_state "
+                        "WHERE status = 'completed' AND interval_type = %s "
+                        "AND (job_name = %s OR job_name = %s) AND DATE(updated_at) = CURDATE()",
+                        (interval, f"backfill_{interval}", f"startup_backfill_{interval}"),
+                    )
+                    or 0
+                )
+
+                latest_row = _fetchone_dict(
+                    conn,
+                    "SELECT job_name, interval_type, status, last_chunk_idx, updated_at "
+                    "FROM job_state "
+                    "WHERE interval_type = %s AND (job_name = %s OR job_name = %s) "
+                    "ORDER BY updated_at DESC, id DESC LIMIT 1",
+                    (interval, f"backfill_{interval}", f"startup_backfill_{interval}"),
+                )
+
+                chunk_idx = latest_row.get("last_chunk_idx") if latest_row else None
+                progress_done = (chunk_idx + 1) * args.chunk_size if isinstance(chunk_idx, int) and chunk_idx >= 0 else 0
+                progress_total = total_tickers if total_tickers > 0 else None
+
+                if running_now > 0:
+                    status_label = "RUNNING"
+                elif completed_today > 0:
+                    status_label = "DONE"
+                else:
+                    status_label = "PENDING"
+
+                oldest_reached = "-"
+                if has_backfill_history:
+                    oldest_val = _fetchone_scalar(
+                        conn,
+                        "SELECT MIN(start_date) FROM backfill_history "
+                        "WHERE interval_type = %s AND status = 'completed'",
+                        (interval,),
+                    )
+                    oldest_reached = _fmt_dt(oldest_val)
+
+                timeframe_status.append(
+                    {
+                        "timeframe": interval,
+                        "job_type": "BACKFILL",
+                        "status": status_label,
+                        "progress_done": progress_done,
+                        "progress_total": progress_total,
+                        "coverage": oldest_reached,
+                    }
+                )
+        else:
+            timeframe_status = []
     except (Error, RuntimeError) as error:
         return {"error": str(error)}
     finally:
@@ -346,11 +503,8 @@ def _collect_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         if active_job.get("progress_total") is not None:
             maybe_total = int(active_job.get("progress_total") or 0)
             progress_total = maybe_total if maybe_total > 0 else None
-
-    coverage_map: dict[str, dict[str, Any]] = {}
-    for row in coverage_rows:
-        timeframe = str(row.get("timeframe") or "")
-        coverage_map[timeframe] = row
+        if progress_total is None and total_tickers > 0:
+            progress_total = total_tickers
 
     unfinished_count = len(interrupted)
     if has_backfill_history:
@@ -358,10 +512,21 @@ def _collect_snapshot(args: argparse.Namespace) -> dict[str, Any]:
 
     last_completed_at = completed[0].get("updated_at") if completed else None
 
+    active_ticker = active_job.get("last_ticker") if active_job else None
+    active_time_range = None
+    if active_job:
+        active_time_range = {
+            "start": active_job.get("target_start"),
+            "end": active_job.get("target_end"),
+        }
+
     return {
         "snapshot_at": datetime.now(),
         "source_mode": source_mode,
         "active_job": active_job,
+        "active_ticker": active_ticker,
+        "active_time_range": active_time_range,
+        "total_tickers": total_tickers,
         "progress_done": progress_done,
         "progress_total": progress_total,
         "completed_count": len(completed),
@@ -369,6 +534,7 @@ def _collect_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "pending_count": len(pending),
         "pending": pending,
         "coverage_map": coverage_map,
+        "timeframe_status": timeframe_status,
         "last_completed_at": last_completed_at,
     }
 
@@ -399,12 +565,18 @@ def _snapshot_to_lines(snapshot: dict[str, Any], args: argparse.Namespace) -> li
         pending_text = " | ".join(pending_items[:2])
 
     coverage_map = snapshot.get("coverage_map") or {}
+    active_ticker = snapshot.get("active_ticker") or "-"
+    active_range = snapshot.get("active_time_range") or {}
+    active_start = _fmt_dt(active_range.get("start")) if active_range else "-"
+    active_end = _fmt_dt(active_range.get("end")) if active_range else "-"
 
-    return [
+    lines = [
         "Data Sync Observer Dashboard",
         f"snapshot: {snapshot['snapshot_at'].strftime('%Y-%m-%d %H:%M:%S')}  source_mode: {snapshot.get('source_mode')}",
         f"db: {args.host}:{args.port}/{args.database}",
         f"active_job: {active_label}",
+        f"active_ticker: {active_ticker}",
+        f"active_range: {active_start} ~ {active_end}",
         f"progress: {progress}",
         (
             "counters: "
@@ -414,23 +586,51 @@ def _snapshot_to_lines(snapshot: dict[str, Any], args: argparse.Namespace) -> li
         ),
         f"last_completed_at: {_fmt_dt(snapshot.get('last_completed_at'))}",
         f"pending_detail: {pending_text}",
-        (
-            "coverage_latest: "
-            f"{_fmt_timeframe_cell(coverage_map, '1d')}  |  "
-            f"{_fmt_timeframe_cell(coverage_map, '1h')}"
-        ),
-        (
-            "coverage_latest: "
-            f"{_fmt_timeframe_cell(coverage_map, '5m')}  |  "
-            f"{_fmt_timeframe_cell(coverage_map, '1m')}"
-        ),
-        "Ctrl+C to stop watching",
+        "",
+        "TIMEFRAME STATUS TABLE (Coverage Latest / Oldest Reached)",
+        "TF  | Type        | Status   | Progress      | Coverage",
+        "----|-------------|----------|---------------|---------------------",
     ]
+
+    timeframe_status = snapshot.get("timeframe_status") or []
+    if timeframe_status:
+        for row in timeframe_status:
+            done = int(row.get("progress_done") or 0)
+            total = row.get("progress_total")
+            progress_text = f"{done}/{total}" if total else (f"{done}/-" if done else "-")
+            lines.append(
+                f"{str(row.get('timeframe', '-')):<3} | "
+                f"{str(row.get('job_type', '-')):<11} | "
+                f"{str(row.get('status', '-')):<8} | "
+                f"{progress_text:<13} | "
+                f"{str(row.get('coverage', '-'))}"
+            )
+    else:
+        lines.append("-   | -           | -        | -             | -")
+
+    lines.extend(
+        [
+            "",
+            (
+                "coverage_latest: "
+                f"{_fmt_timeframe_cell(coverage_map, '1d')}  |  "
+                f"{_fmt_timeframe_cell(coverage_map, '1h')}"
+            ),
+            (
+                "coverage_latest: "
+                f"{_fmt_timeframe_cell(coverage_map, '5m')}  |  "
+                f"{_fmt_timeframe_cell(coverage_map, '1m')}"
+            ),
+            "Ctrl+C to stop watching",
+        ]
+    )
+
+    return lines
 
 
 def _render_in_place(lines: list[str], previous_line_count: int, use_ansi: bool) -> int:
     if not use_ansi or not sys.stdout.isatty():
-        print("\n".join(lines))
+        print("\n".join(lines), flush=True)
         return len(lines)
 
     if previous_line_count > 0:

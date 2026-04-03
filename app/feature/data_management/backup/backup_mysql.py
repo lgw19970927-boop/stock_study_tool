@@ -19,15 +19,15 @@ CONTAINER_NAME  = os.environ.get("MYSQL_CONTAINER", "stock-mysql")
 MYSQL_USER      = os.environ.get("MYSQL_USER",      "stockapp")
 MYSQL_PASSWORD  = os.environ.get("MYSQL_PASSWORD",  "stockapp_password")
 
-# 專案根目錄 = 此檔案往上四層（data_sync → Lib → App → project root）
-PROJECT_ROOT   = Path(__file__).resolve().parents[3]
-BACKUP_DIR     = PROJECT_ROOT / "Env" / "mysql" / "seed"
+# 專案根目錄（.../app/feature/data_management/backup/backup_mysql.py -> parents[4]）
+PROJECT_ROOT   = Path(__file__).resolve().parents[4]
+BACKUP_DIR     = PROJECT_ROOT / "env" / "mysql" / "seed"
 USER_DATA_FILE = BACKUP_DIR / "seed_user_data.sql"
 
 
 def backup_user_data() -> None:
     """
-    將 MySQL user_data schema 備份至 Env/mysql/seed/seed_user_data.sql。
+    將 MySQL user_data schema 備份至 env/mysql/seed/seed_user_data.sql。
     透過 `docker exec` 呼叫容器內的 mysqldump，覆寫舊備份檔。
     """
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
@@ -79,7 +79,7 @@ def backup_user_data() -> None:
 
 def backup_market_data() -> None:
     """
-    將 MySQL market_data schema 備份至 Env/mysql/seed/seed_market_data.sql。
+    將 MySQL market_data schema 備份至 env/mysql/seed/seed_market_data.sql。
     此函數由爾蹫（sync_market_data.py）在 incremental_update /
     progressive_backfill 完成後自動呼叫。
     """

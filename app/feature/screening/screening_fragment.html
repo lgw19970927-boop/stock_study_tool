@@ -7,14 +7,14 @@
 <div class="page-content page-content--fill active" id="page-screening">
 
     <!-- 左側 Sidebar（獨立 CSS，☰ 漢堡收合） -->
-    <aside class="sidebar" id="app-sidebar">
+    <aside class="sidebar" id="app-sidebar" style="container-type: inline-size; container-name: sidebar-left;">
         {% include "screening/components/time_range_selector/templates/ui.html" %}
         <!-- 股票篩選器 Tab 容器 -->
         <div class="tabs-wrapper">
             <div class="tabs-header">
                 <h3 class="tabs-title">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                     </svg>
                     股票篩選器
                 </h3>
@@ -61,6 +61,7 @@
 <script src="/feature/screening/indicators/indicator_registry.js"></script>
 <script src="/feature/screening/chart/kline_viewer/chart_renderer.js"></script>
 <script src="/feature/screening/indicators/chart_indicators.js"></script>
+<script src="/feature/screening/indicators/shared/format_helpers.js"></script>
 
 <!-- 指標模組（各指標垂直切片） -->
 <script src="/feature/screening/indicators/modules/sma/sma.js"></script>

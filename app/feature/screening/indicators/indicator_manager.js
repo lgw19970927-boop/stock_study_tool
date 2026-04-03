@@ -80,23 +80,45 @@ window.ScreeningBlockIndicator = {
 
                 // Handle Pill Buttons in Config
                 if (e.target.classList.contains('config-pill-btn')) {
-                    e.target.classList.toggle('active');
-                    // Enforce single select for Period/Range
-                    const row = e.target.closest('.config-row');
-                    if (row) {
-                        const label = row.querySelector('.config-label').textContent;
-                        if (label.includes('週期') || label.includes('範圍')) {
-                            if (e.target.classList.contains('active')) {
-                                row.querySelectorAll('.config-pill-btn').forEach(btn => {
-                                    if (btn !== e.target) btn.classList.remove('active');
-                                });
-                            } else {
-                                // Enforce at least one? Or allow toggle off?
-                                // Previous logic was simple toggle. 
-                                // But let's re-add the UX improvement: "Always one active" if it is a radio-like behavior
-                                e.target.classList.add('active');
+                    const clickedBtn = e.target;
+                    clickedBtn.classList.toggle('active');
+
+                    const exclusiveGroup = clickedBtn.dataset.group;
+                    if (exclusiveGroup) {
+                        const groupSelector = `.config-pill-btn[data-group="${exclusiveGroup}"]`;
+                        const groupButtons = card.querySelectorAll(groupSelector);
+
+                        if (clickedBtn.classList.contains('active')) {
+                            groupButtons.forEach(btn => {
+                                if (btn !== clickedBtn) btn.classList.remove('active');
+                            });
+                        } else {
+                            const hasAnyActive = Array.from(groupButtons).some(btn => btn.classList.contains('active'));
+                            if (!hasAnyActive) clickedBtn.classList.add('active');
+                        }
+                    } else {
+                        // Backward-compatible fallback for modules without data-group.
+                        const row = clickedBtn.closest('.config-row');
+                        if (row) {
+                            const labelNode = row.querySelector('.config-label');
+                            const label = labelNode ? labelNode.textContent : '';
+                            if (label.includes('週期') || label.includes('範圍')) {
+                                if (clickedBtn.classList.contains('active')) {
+                                    row.querySelectorAll('.config-pill-btn').forEach(btn => {
+                                        if (btn !== clickedBtn) btn.classList.remove('active');
+                                    });
+                                } else {
+                                    clickedBtn.classList.add('active');
+                                }
                             }
                         }
+                    }
+
+                    const select = card.querySelector('.indicator-type-select');
+                    const type = select ? select.value : 'sma';
+                    const module = this.getIndicatorModule(type);
+                    if (module && typeof module.onPillStateChanged === 'function') {
+                        module.onPillStateChanged(card, clickedBtn);
                     }
                 }
 
@@ -194,6 +216,11 @@ window.ScreeningBlockIndicator = {
         const module = this.getIndicatorModule(type);
         if (module && typeof module.getConfigHTML === 'function') {
             configArea.innerHTML = module.getConfigHTML();
+            if (typeof module.afterRender === 'function') {
+                module.afterRender(card);
+            } else if (typeof module.onPillStateChanged === 'function') {
+                module.onPillStateChanged(card);
+            }
         } else {
             console.warn(`Indicator module for '${type}' not found or invalid.`);
             configArea.innerHTML = `<div style="padding:10px; color:var(--text-muted); font-size:12px;">模組尚未載入: ${type}</div>`;
@@ -271,17 +298,81 @@ window.ScreeningBlockIndicator = {
         }
     },
 
+    removeSummaryCondition: function (removeButton) {
+        const summaryItem = removeButton ? removeButton.closest('.indicator-summary-item') : null;
+        const card = removeButton ? removeButton.closest('.indicator-card') : null;
+        if (!summaryItem || !card) return;
+
+        const configStr = summaryItem.getAttribute('data-config');
+        if (!configStr) {
+            card.remove();
+            this.updateState();
+            return;
+        }
+
+        let config;
+        try {
+            config = JSON.parse(configStr.replace(/&quot;/g, '"'));
+        } catch (error) {
+            console.error('Failed to parse summary config', error);
+            card.remove();
+            this.updateState();
+            return;
+        }
+
+        const lineIndex = Math.max(0, parseInt(summaryItem.getAttribute('data-line-index') || '0', 10) || 0);
+
+        const removeAt = (arr, idx) => {
+            if (Array.isArray(arr) && idx >= 0 && idx < arr.length) {
+                arr.splice(idx, 1);
+            }
+        };
+
+        const hasPreset = Array.isArray(config.presets)
+            && config.presets.some(v => String(v || '').trim() && String(v || '').trim() !== '自訂');
+
+        if (hasPreset) {
+            removeAt(config.presets, lineIndex);
+            removeAt(config.conditions, lineIndex);
+        } else if (Array.isArray(config.custom) && config.custom.length > 0) {
+            removeAt(config.custom, lineIndex);
+            removeAt(config.conditions, lineIndex);
+        } else {
+            removeAt(config.conditions, lineIndex);
+        }
+
+        const remainingPreset = Array.isArray(config.presets)
+            && config.presets.some(v => String(v || '').trim() && String(v || '').trim() !== '自訂');
+        const remainingCustom = Array.isArray(config.custom) && config.custom.length > 0;
+        const remainingConditions = Array.isArray(config.conditions) && config.conditions.length > 0;
+
+        if (!remainingPreset && !remainingCustom && !remainingConditions) {
+            card.remove();
+            this.updateState();
+            return;
+        }
+
+        const type = (config.type || 'sma').toLowerCase();
+        this.editIndicatorConfig(card, config);
+        this.confirmIndicatorConfig(card, type);
+        this.updateState();
+    },
+
 
     /**
      * Updates the global window.state.filters.indicators
      */
     updateState: function () {
         const indicators = [];
+        const seenConfig = new Set();
         document.querySelectorAll('.indicator-summary-item').forEach(item => {
             const configStr = item.getAttribute('data-config');
             if (configStr) {
                 try {
-                    indicators.push(JSON.parse(configStr.replace(/&quot;/g, '"')));
+                    const normalizedConfig = configStr.replace(/&quot;/g, '"');
+                    if (seenConfig.has(normalizedConfig)) return;
+                    seenConfig.add(normalizedConfig);
+                    indicators.push(JSON.parse(normalizedConfig));
                 } catch (e) {
                     console.error('Failed to parse indicator config', e);
                 }

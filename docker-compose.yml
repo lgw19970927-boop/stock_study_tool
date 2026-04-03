@@ -91,6 +91,12 @@ services:
         condition: service_healthy
     secrets:
       - mysql_user_password
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+        delay: 10s
 
 volumes:
   mysql_data:

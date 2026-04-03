@@ -14,7 +14,10 @@ RATE_LIMIT_CONFIG = {
     'single_ticker_fallback_delay_seconds': 0.35,
     'provider_probe_enabled': True,
     'provider_probe_symbol': 'AAPL',
+    'provider_probe_symbols': ['AAPL', 'MSFT', 'SPY'],
+    'provider_probe_hard_fail': False,
     'provider_probe_cache_seconds': 120,
+    'provider_probe_wait_seconds': 300,
 }
 
 # Sync Schedules

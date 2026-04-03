@@ -31,7 +31,7 @@ window.StrategyManager = {
         const filters = JSON.parse(JSON.stringify(window.state.filters)); // Deep copy
 
         // 4. 生成描述行
-        const descLines = this._generateDescription(filters);
+        const descLines = this._generateDescriptionFromData(filters);
 
         // 5. 保存策略
         const strategies = window.state.savedStrategies || [];
@@ -81,31 +81,24 @@ window.StrategyManager = {
      * @private
      */
     _generateDescription(filters) {
+        return this._generateDescriptionFromData(filters);
+    },
+
+    _generateDescriptionFromData(filters) {
         const descLines = [];
 
-        // Line 1: 市場 & 頻率
         const marketMap = { 'listed': '上市', 'otc': '上櫃', 'ipo': '興櫃' };
         const freqMap = { 'daily': '每日', 'weekly': '每周', 'monthly': '每月' };
 
-        const markets = filters.markets.map(m => marketMap[m] || m).join('/');
+        const markets = (filters.markets || []).map(m => marketMap[m] || m).join('/');
         const frequency = freqMap[filters.frequency] || filters.frequency;
-
         descLines.push(`市場範圍: ${markets} | 篩選頻率: ${frequency}`);
 
-        // 指標 - 從 Summary 讀取
-        const indicatorCards = document.querySelectorAll('.indicator-card');
-        indicatorCards.forEach(card => {
-            const summaryItem = card.querySelector('.indicator-summary-item');
-            if (!summaryItem) return;
-
-            // 提取文字（移除按鈕）
-            const clone = summaryItem.cloneNode(true);
-            clone.querySelectorAll('button, .btn-icon').forEach(btn => btn.remove());
-            const line = clone.textContent.trim();
-            descLines.push(line);
+        (filters.indicators || []).forEach(indicator => {
+            const lines = this._buildIndicatorSummaryLines(indicator);
+            lines.forEach(line => descLines.push(line));
         });
 
-        // 技術型態
         if (filters.patterns && filters.patterns.length > 0) {
             const patternMap = {
                 'consolidation': '盤整區',
@@ -117,10 +110,7 @@ window.StrategyManager = {
             const patternNames = filters.patterns.map(p => patternMap[p] || p).join(', ');
 
             const parts = [`技術型態: ${patternNames}`];
-
-            if (filters.sensitivity) {
-                parts.push(`敏感度: ${filters.sensitivity}%`);
-            }
+            if (filters.sensitivity) parts.push(`敏感度: ${filters.sensitivity}%`);
 
             if (filters.patternTimeframe) {
                 const pt = filters.patternTimeframe;
@@ -133,6 +123,77 @@ window.StrategyManager = {
         }
 
         return descLines;
+    },
+
+    _buildIndicatorSummaryLines(indicator) {
+        const helper = window.IndicatorFormatHelpers;
+        const type = (indicator.type || '').toLowerCase();
+        const indicatorName = type === 'sma' ? 'MA' : (type === 'bollinger' ? 'BOLL' : (indicator.type || '').toUpperCase());
+        const periodText = indicator.period || (helper && helper.toPeriodText ? helper.toPeriodText(indicator.timeframe) : '日K');
+        const n = indicator.range === '連續週期'
+            ? Math.max(1, parseInt(indicator.range_n || 1, 10) || 1)
+            : 1;
+
+        let conditionLines = [];
+        if (Array.isArray(indicator.presets) && indicator.presets.length > 0) {
+            conditionLines = indicator.presets.map(v => String(v));
+        } else if (Array.isArray(indicator.custom) && indicator.custom.length > 0) {
+            if (type === 'sma') {
+                conditionLines = indicator.custom.map(cfg => this._formatSmaCustomCondition(cfg));
+            } else if (type === 'bollinger') {
+                conditionLines = indicator.custom.map(cfg => this._formatBollCustomCondition(cfg, indicator.parameters || {}));
+            }
+        } else if (Array.isArray(indicator.conditions) && indicator.conditions.length > 0) {
+            conditionLines = indicator.conditions.map(cfg => this._formatBackendCondition(cfg));
+        }
+
+        conditionLines = conditionLines.filter(Boolean);
+        if (conditionLines.length === 0) conditionLines = ['自訂條件'];
+
+        if (helper && typeof helper.buildSummaryLines === 'function') {
+            return helper.buildSummaryLines(indicatorName, periodText, conditionLines, n);
+        }
+
+        const prefix = n > 1 ? `連續${n}次` : '';
+        return conditionLines.map(cond => `${indicatorName}-${prefix}${periodText}: ${cond}`);
+    },
+
+    _formatSmaCustomCondition(cfg) {
+        const opMap = { gt: '>', lt: '<', gte: '>=', lte: '<=', cross_up: '升穿', cross_down: '跌破' };
+        const left = cfg.t1 === 'Price' ? '價格' : `MA${cfg.v1}`;
+        const op = opMap[cfg.op] || cfg.op || '';
+        let right = '';
+        if (cfg.t2 === 'Value') right = cfg.v2;
+        else if (cfg.t2 === 'Price') right = '價格';
+        else right = `MA${cfg.v2}`;
+        return `${left}${op}${right}`;
+    },
+
+    _formatBollCustomCondition(cfg, params) {
+        const p = parseInt(params.period || params.p || 20, 10) || 20;
+        const stdRaw = params.std_dev !== undefined ? params.std_dev : (params.std !== undefined ? params.std : 2);
+        const stdNum = parseFloat(stdRaw);
+        const std = Number.isFinite(stdNum) ? (stdNum % 1 === 0 ? String(parseInt(stdNum, 10)) : String(stdNum)) : '2';
+
+        const opMap = { gt: '>', lt: '<', gte: '>=', lte: '<=', cross_up: '>', cross_down: '<' };
+        const op = opMap[cfg.op] || cfg.op || '';
+        const sideMap = {
+            upper: `UPPER${p}_${std}`,
+            middle: `MIDDLER${p}_${std}`,
+            lower: `LOWER${p}_${std}`,
+            price: '價格'
+        };
+        const left = sideMap[cfg.left] || cfg.left;
+        const right = cfg.right === 'value' ? String(cfg.val) : (sideMap[cfg.right] || cfg.right);
+        return `${left}${op}${right}`;
+    },
+
+    _formatBackendCondition(cfg) {
+        if (!cfg) return '';
+        const left = cfg.left === 'close' ? '價格' : String(cfg.left || '');
+        const right = cfg.right === 'close' ? '價格' : String(cfg.right || '');
+        const op = String(cfg.operator || '');
+        return `${left}${op}${right}`;
     },
 
     /**
@@ -284,7 +345,7 @@ window.StrategyManager = {
      * @param {string} id - 策略 ID
      */
     select(id) {
-        window.state.currentStrategyId = id;
+        window.state.currentStrategyId = window.state.currentStrategyId === id ? null : id;
         this.renderList();
     },
 
@@ -307,6 +368,10 @@ window.StrategyManager = {
         }
 
         strategies.forEach(strat => {
+            if (strat.data) {
+                strat.descLines = this._generateDescriptionFromData(strat.data);
+            }
+
             // 時間格式化：YYYY/MM/DD
             const date = new Date(strat.timestamp);
             const year = date.getFullYear();
@@ -323,7 +388,7 @@ window.StrategyManager = {
             const previewHTML = previewLines.map(line => `<div class="strat-line">${line}</div>`).join('');
 
             const detailsHTML = detailLines.map(line => {
-                const isIndicator = line.includes('MA-') || line.includes('成交額');
+                const isIndicator = line.includes('MA-') || line.includes('BOLL-') || line.includes('成交額');
                 const className = isIndicator ? 'strat-line strat-indicator-text' : 'strat-line';
                 return `<div class="${className}">${line}</div>`;
             }).join('');

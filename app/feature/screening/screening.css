@@ -10,15 +10,27 @@
 }
 
 .condition-row {
-    @apply grid items-center gap-2;
-    grid-template-columns: 80px 60px 80px 80px 60px 40px;
+    @apply flex flex-wrap items-center;
+    gap: 4px;
 }
 
-.condition-row select,
-.condition-row input {
-    @apply w-full p-1;
+.condition-row select {
+    flex: 1 1 70px;
+    min-width: 60px;
+    @apply p-1 bg-bg-primary border border-border-color text-text-primary rounded;
     font-size: 11px;
-    @apply bg-bg-primary border border-border-color text-text-primary rounded;
+}
+
+.condition-row input[type="number"] {
+    flex: 0 0 50px;
+    width: 50px;
+    @apply p-1 bg-bg-primary border border-border-color text-text-primary rounded;
+    font-size: 11px;
+}
+
+.condition-row .btn-delete-row,
+.condition-row .ind-delete-row {
+    flex: 0 0 auto;
 }
 
 /* ===== Indicator Module Shared Styles (Wave 2) ===== */
@@ -54,10 +66,38 @@
     min-width: 80px;
 }
 
+.ind-pill-group-wrap.ind-boll-presets {
+    @apply grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.ind-pill-group-wrap.ind-boll-presets .ind-pill-min {
+    width: 100%;
+    min-width: 0;
+}
+
+@container sidebar-left (min-width: 420px) {
+    .ind-pill-group-wrap.ind-boll-presets {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
 .ind-pill-warning {
     width: 100px;
-    border-color: var(--color-warning);
-    color: var(--color-warning);
+}
+
+.ind-pill-warning.active {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: rgba(0, 212, 170, 0.1);
+}
+
+.ind-params-panel input:disabled {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .ind-conditions-list {
@@ -123,6 +163,10 @@
 
 .ind-param-inline .ind-config-label {
     @apply mb-0;
+}
+
+.ind-consecutive-row .ind-param-inline {
+    @apply gap-2;
 }
 
 .ind-param-label-fixed {
@@ -217,8 +261,36 @@
 
 /* market_selection.css */
 .checkbox-group {
-    @apply flex flex-wrap;
+    @apply w-full;
+}
+
+#filter-design-tab .checkbox-group {
+    @apply grid;
+    grid-template-columns: 1fr;
     gap: var(--spacing-sm);
+}
+
+#filter-design-tab .checkbox-item {
+    width: 100%;
+    white-space: normal;
+}
+
+#app-sidebar.sidebar--market-wide #filter-design-tab .checkbox-group {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#app-sidebar.sidebar--market-wide #filter-design-tab .checkbox-item {
+    white-space: nowrap;
+}
+
+@supports not (container-type: inline-size) {
+    #app-sidebar.sidebar--preset-narrow .ind-pill-group-wrap.ind-boll-presets {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #app-sidebar.sidebar--preset-wide .ind-pill-group-wrap.ind-boll-presets {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
 }
 
 .checkbox-item {
@@ -561,22 +633,20 @@
 /* Mobile tweaks */
 @media (max-width: 450px) {
     .condition-row {
-        grid-template-columns: 1fr 1fr;
-        gap: 4px;
+        @apply items-stretch;
     }
 
     .btn-delete-row {
-        grid-column: span 2;
+        width: 100%;
         text-align: center;
     }
 }
 
-/* Center Market and Frequency Groups (User Request: Reverted to Left) */
-.checkbox-group,
+/* Center Frequency Group */
 .frequency-group {
-    @apply m-0 flex w-full justify-start;
-    /* Reverted to Left */
+    @apply m-0 flex w-full;
     gap: 12px;
+    justify-content: space-evenly;
 }
 
 /* Override for screening page specific container if needed */
@@ -588,9 +658,8 @@
     @apply ml-0 text-left;
 }
 
-#filter-design-tab .checkbox-group,
 #filter-design-tab .frequency-group {
-    justify-content: flex-start;
+    justify-content: space-evenly;
 }
 
 /* Fix Checkmark Alignment (User Request: Move black checkmark right, no !important) */
@@ -693,6 +762,10 @@
 
 .list-header .sortable.sorted .sort-icon {
     opacity: 1;
+}
+
+.list-header > div {
+    @apply flex items-center;
 }
 
 /* ===== 篩選狀態 Scrollbar 控制 ===== */

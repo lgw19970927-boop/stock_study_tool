@@ -748,6 +748,59 @@ window.ScreeningPage = {
         const pageContent = document.getElementById('page-screening');
         if (!handle || !sidebar || !pageContent) return;
 
+        const syncSidebarWidthState = () => {
+            const width = sidebar.getBoundingClientRect().width;
+            const isLegacyWide = width >= 240;
+            const isPresetWide = width >= 420;
+
+            let isMarketWide = false;
+            const marketGroup = sidebar.querySelector('#filter-design-tab .checkbox-group');
+            if (marketGroup) {
+                const labels = Array.from(marketGroup.querySelectorAll('.checkbox-item'));
+                const computed = window.getComputedStyle(marketGroup);
+                const gap = parseFloat(computed.columnGap || computed.gap || '0') || 0;
+
+                let maxCardNoWrapWidth = 0;
+                labels.forEach((label) => {
+                    const prevWhiteSpace = label.style.whiteSpace;
+                    const prevWidth = label.style.width;
+
+                    label.style.whiteSpace = 'nowrap';
+                    label.style.width = 'auto';
+                    maxCardNoWrapWidth = Math.max(maxCardNoWrapWidth, label.scrollWidth);
+
+                    label.style.whiteSpace = prevWhiteSpace;
+                    label.style.width = prevWidth;
+                });
+
+                const requiredWidth = (maxCardNoWrapWidth * 3) + (gap * 2);
+                const groupWidth = marketGroup.getBoundingClientRect().width;
+                const availableWidth = groupWidth > 0 ? groupWidth : Math.max(width - 24, 0);
+
+                if (maxCardNoWrapWidth > 0) {
+                    isMarketWide = labels.length === 3 && availableWidth >= requiredWidth;
+                } else {
+                    isMarketWide = width >= 520;
+                }
+            }
+
+            // Backward-compatible classes
+            sidebar.classList.toggle('sidebar--wide', isLegacyWide);
+            sidebar.classList.toggle('sidebar--narrow', !isLegacyWide);
+
+            // Fallback classes for browsers without container queries
+            sidebar.classList.toggle('sidebar--market-wide', isMarketWide);
+            sidebar.classList.toggle('sidebar--market-narrow', !isMarketWide);
+            sidebar.classList.toggle('sidebar--preset-wide', isPresetWide);
+            sidebar.classList.toggle('sidebar--preset-narrow', !isPresetWide);
+        };
+
+        syncSidebarWidthState();
+        if (window.ResizeObserver && !this._sidebarWidthObserver) {
+            this._sidebarWidthObserver = new ResizeObserver(() => syncSidebarWidthState());
+            this._sidebarWidthObserver.observe(sidebar);
+        }
+
         handle.addEventListener('mousedown', (e) => {
             const startX = e.clientX;
             const startW = sidebar.getBoundingClientRect().width;
@@ -759,6 +812,7 @@ window.ScreeningPage = {
                 const delta = ev.clientX - startX;
                 const newW = Math.max(200, Math.min(600, startW + delta));
                 pageContent.style.setProperty('--sidebar-w', newW + 'px');
+                syncSidebarWidthState();
             };
             const onUp = () => {
                 handle.classList.remove('is-dragging');

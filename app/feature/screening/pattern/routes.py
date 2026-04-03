@@ -6,6 +6,7 @@ GET /api/screening/pattern-recognition/stream
 import asyncio
 import json
 import logging
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter
@@ -19,6 +20,7 @@ from .service import (
     fetch_stock_prices,
     get_stocks_by_markets,
     recognize_patterns,
+    detect_consolidation_containing_date,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,8 +48,9 @@ async def pattern_recognition_stream(
 
     async def event_stream():
         try:
-            s_date, e_date = resolve_analysis_dates(time_range, start_date, end_date)
+            s_date, e_date = resolve_analysis_dates(time_range, start_date, end_date, pattern_max)
             db_interval    = interval_to_db_format(interval)
+            is_single_date_mode = (not start_date) and bool(end_date)
 
             if stock_symbols:
                 all_stocks = {s["symbol"]: s for s in get_stocks_by_markets(markets)}
@@ -108,6 +111,63 @@ async def pattern_recognition_stream(
                     recognize_patterns,
                     prices_raw, patterns, sensitivity, pattern_min, pattern_max
                 )
+
+                if is_single_date_mode:
+                    def _to_date(value):
+                        if not value:
+                            return None
+                        text = str(value).split(" ")[0]
+                        try:
+                            return datetime.fromisoformat(text).date()
+                        except ValueError:
+                            return None
+
+                    target_date = _to_date(end_date)
+                    if target_date:
+                        available_dates = []
+                        for price_row in prices_raw:
+                            row_date = _to_date(price_row.get("time") or price_row.get("datetime"))
+                            if row_date and row_date <= target_date:
+                                available_dates.append(row_date)
+
+                        effective_date = max(available_dates) if available_dates else target_date
+                        anchored = []
+                        for pattern_item in (found or []):
+                            start_dt = _to_date(pattern_item.get("start_date"))
+                            end_dt = _to_date(pattern_item.get("end_date"))
+
+                            if start_dt and end_dt and start_dt <= effective_date <= end_dt:
+                                anchored.append(pattern_item)
+
+                        if not anchored:
+                            if "consolidation" in patterns:
+                                targeted_cons = detect_consolidation_containing_date(
+                                    prices=prices_raw,
+                                    target_date=effective_date.isoformat(),
+                                    min_bars=pattern_min,
+                                    max_bars=pattern_max,
+                                    sensitivity=sensitivity,
+                                )
+                                if targeted_cons:
+                                    seen = {
+                                        (
+                                            str(item.get("name")),
+                                            str(item.get("start_date")),
+                                            str(item.get("end_date")),
+                                        )
+                                        for item in anchored
+                                    }
+                                    for item in targeted_cons:
+                                        key = (
+                                            str(item.get("name")),
+                                            str(item.get("start_date")),
+                                            str(item.get("end_date")),
+                                        )
+                                        if key not in seen:
+                                            anchored.append(item)
+                                            seen.add(key)
+
+                        found = anchored
 
                 if not found:
                     continue

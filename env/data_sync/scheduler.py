@@ -35,12 +35,27 @@ BACKFILL_INTERVALS = ['1d', '1h', '5m']
 STARTUP_BACKFILL_INTERVALS = ['1d', '1h']
 
 
-def _init_runtime_dependencies() -> None:
-    config = get_config()
-    init_db(config)
-    _ensure_runtime_tables()
-    _recover_stale_job_state()
-    logger.info('[scheduler] DB pool initialized')
+def _init_runtime_dependencies(max_retries: int = 30, retry_interval: int = 5) -> None:
+    """Initialize runtime dependencies with bounded retry/backoff."""
+    for attempt in range(1, max_retries + 1):
+        try:
+            config = get_config()
+            init_db(config)
+            _ensure_runtime_tables()
+            _recover_stale_job_state()
+            logger.info('[scheduler] DB pool initialized OK')
+            return
+        except Exception as error:
+            if attempt >= max_retries:
+                logger.error(f"[scheduler] DB init failed after {max_retries} retries: {error}")
+                raise
+
+            wait_seconds = min(retry_interval * attempt, 60)
+            logger.warning(
+                f"[scheduler] DB init attempt {attempt}/{max_retries} failed: {error}. "
+                f"Retry in {wait_seconds}s..."
+            )
+            time.sleep(wait_seconds)
 
 
 def _ensure_runtime_tables() -> None:

@@ -9,6 +9,7 @@ import logging
 
 from ...lib.db import get_market_cursor
 from .indicators.service import calculate_indicators, evaluate_condition
+from .indicators.shared.format_helpers import build_tag, build_insufficient_tag, to_period_abbr
 
 logger = logging.getLogger(__name__)
 
@@ -132,8 +133,10 @@ def screen_single_stock(
         if not rows:
             return None
 
-        # 3. 大盤基準日防呆檢查 (停牌容忍)
-        if benchmark_date:
+        # 3. 停牌防呆檢查
+        # 若使用者指定了歷史 end_date，應以該日期為基準，而非最新大盤日期。
+        reference_date = end_date or benchmark_date
+        if reference_date:
             last_record_date = rows[-1]["datetime"]
             if isinstance(last_record_date, str):
                 last_record_date = last_record_date.split(" ")[0]
@@ -141,10 +144,12 @@ def screen_single_stock(
                 last_record_date = last_record_date.strftime('%Y-%m-%d')
                 
             try:
-                bm_dt = pd.to_datetime(benchmark_date)
+                bm_dt = pd.to_datetime(reference_date)
                 lr_dt = pd.to_datetime(last_record_date)
                 if (bm_dt - lr_dt).days > 5:
-                    logger.debug(f"{symbol}: 最後交易日 {last_record_date} 距離基準日 {benchmark_date} 超過 5 天，視為停牌")
+                    logger.debug(
+                        f"{symbol}: 最後交易日 {last_record_date} 距離參考日 {reference_date} 超過 5 天，視為停牌"
+                    )
                     return None
             except Exception as e:
                 logger.warning(f"日期比對失敗: {e}")
@@ -187,16 +192,33 @@ def screen_single_stock(
         insufficient        = []
 
         for indicator in indicators:
-            ind_type   = indicator.get("type", "unknown")
-            params     = indicator.get("parameters", indicator.get("params", {}))
+            ind_type = indicator.get("type", "unknown")
+            params = indicator.get("parameters", indicator.get("params", {}))
             conditions = indicator.get("conditions", [])
+            indicator_timeframe = indicator.get("timeframe", timeframe)
+            period_abbr = to_period_abbr(indicator_timeframe)
+
+            if ind_type == "sma":
+                indicator_label = "MA"
+            elif ind_type == "bollinger":
+                indicator_label = "BOLL"
+            else:
+                indicator_label = str(ind_type).upper()
+
+            range_mode = indicator.get("range", "當前值")
+            try:
+                range_n = int(indicator.get("range_n", 1) or 1)
+            except (ValueError, TypeError):
+                range_n = 1
+            range_n = max(1, min(range_n, 100))
+            is_consecutive = range_mode == "連續週期" and range_n > 1
 
             req_period = params.get("period", params.get("p", 20))
             try:
                 req_period = int(req_period)
             except (ValueError, TypeError):
                 req_period = 20
-                
+
             for cond in conditions:
                 for key in ("left", "right"):
                     val = cond.get(key)
@@ -205,6 +227,10 @@ def screen_single_stock(
                             req_period = max(req_period, int(val[2:]))
                         except ValueError:
                             pass
+
+            if is_consecutive and len(eval_df) < range_n:
+                insufficient.append(build_insufficient_tag(f"連續{range_n}次", period_abbr))
+                continue
 
             # 資料不足：放行並標記
             if len(df) < req_period:
@@ -220,60 +246,88 @@ def screen_single_stock(
                     label = f"BOLL({req_period},{std_str})"
                 else:
                     label = f"{ind_type.capitalize()}({req_period})"
-                insufficient.append(label)
+                insufficient.append(build_insufficient_tag(label, period_abbr))
                 continue
 
-            # 資料足夠：嚴格評估最後一根 K 棒
-            indicator_met      = True
-            condition_displays = []
+            indicator_met = True
 
-            for cond in conditions:
-                try:
-                    result_series = evaluate_condition(eval_df, cond)
-                    last_val = result_series.iloc[-1]
-                        
-                    if pd.isna(last_val) or not last_val:
-                        indicator_met = False
-                        break
-                    
-                    if "display" in cond:
-                        condition_displays.append(cond["display"])
-                    else:
-                        left  = cond.get("left", "")
-                        right = cond.get("right", "")
-                        
-                        if ind_type == "bollinger":
-                            # 嘗試從 params 還原週期與標準差資訊
-                            p = params.get("period", params.get("p", 20))
-                            std = params.get("std_dev", params.get("std", 2.0))
-                            std_str = int(std) if float(std) == int(std) else std
-                            
-                            def map_boll_operand(op_val: str) -> str:
-                                if op_val == "close":
-                                    return "最新價"
-                                elif op_val == "BB_UPPER":
-                                    return f"UPPER{p}_{std_str}"
-                                elif op_val == "BB_MIDDLE":
-                                    return f"MIDDLER{p}_{std_str}"
-                                elif op_val == "BB_LOWER":
-                                    return f"LOWER{p}_{std_str}"
-                                else:
-                                    return str(op_val)
-                            
-                            left_str = map_boll_operand(left)
-                            right_str = map_boll_operand(right)
-                            condition_displays.append(f"BOLL {left_str}{cond.get('operator','')}{right_str}")
-                        else:
-                            left_str = "價格" if left == "close" else left
-                            right_str = "價格" if right == "close" else right
-                            condition_displays.append(f"{left_str}{cond.get('operator','')}{right_str}")
-                except Exception as e:
-                    logger.warning(f"{symbol}: 條件評估失敗 - {e}")
-                    indicator_met = False
-                    break
+            def _format_condition_display(cond: Dict[str, Any]) -> str:
+                if "display" in cond:
+                    return str(cond["display"])
+
+                left = cond.get("left", "")
+                right = cond.get("right", "")
+                operator = cond.get("operator", "")
+
+                if ind_type == "bollinger":
+                    p = params.get("period", params.get("p", 20))
+                    std = params.get("std_dev", params.get("std", 2.0))
+                    try:
+                        p = int(p)
+                    except (ValueError, TypeError):
+                        p = 20
+                    try:
+                        std = float(std)
+                    except (ValueError, TypeError):
+                        std = 2.0
+                    std_str = int(std) if std == int(std) else std
+
+                    def map_boll_operand(op_val: Any) -> str:
+                        if op_val == "close":
+                            return "價格"
+                        if op_val == "BB_UPPER":
+                            return f"UPPER{p}_{std_str}"
+                        if op_val == "BB_MIDDLE":
+                            return f"MIDDLER{p}_{std_str}"
+                        if op_val == "BB_LOWER":
+                            return f"LOWER{p}_{std_str}"
+                        return str(op_val)
+
+                    left_str = map_boll_operand(left)
+                    right_str = map_boll_operand(right)
+                    return f"{left_str}{operator}{right_str}"
+
+                left_str = "價格" if left == "close" else str(left)
+                right_str = "價格" if right == "close" else str(right)
+                return f"{left_str}{operator}{right_str}"
+
+            try:
+                if is_consecutive:
+                    target_slice = eval_df.iloc[-range_n:]
+                    for _, row_data in target_slice.iterrows():
+                        row_df = pd.DataFrame([row_data])
+                        for cond in conditions:
+                            result_series = evaluate_condition(row_df, cond)
+                            last_val = result_series.iloc[-1]
+                            if pd.isna(last_val) or not last_val:
+                                indicator_met = False
+                                break
+                        if not indicator_met:
+                            break
+                else:
+                    for cond in conditions:
+                        result_series = evaluate_condition(eval_df, cond)
+                        last_val = result_series.iloc[-1]
+                        if pd.isna(last_val) or not last_val:
+                            indicator_met = False
+                            break
+            except Exception as e:
+                logger.warning(f"{symbol}: 條件評估失敗 - {e}")
+                indicator_met = False
 
             if indicator_met:
-                matched_names.append(" 且 ".join(condition_displays) if condition_displays else ind_type.upper())
+                preset_conditions = [
+                    str(v)
+                    for v in indicator.get("presets", [])
+                    if str(v).strip() and str(v).strip() != "自訂"
+                ]
+                condition_displays = [_format_condition_display(cond) for cond in conditions]
+                condition_text = " 且 ".join(preset_conditions or condition_displays)
+                if not condition_text:
+                    condition_text = str(ind_type).upper()
+
+                tag_n = range_n if is_consecutive else 1
+                matched_names.append(build_tag(indicator_label, period_abbr, condition_text, tag_n))
             else:
                 all_conditions_met = False
                 break
