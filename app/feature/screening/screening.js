@@ -18,74 +18,7 @@ window.state = {
         analysis_end_date: '',        // 自訂模式用
     },
     currentStrategyId: null,
-    savedStrategies: [
-        {
-            id: 'default-strat-1',
-            name: '測試選型態功能',
-            timestamp: Date.now(),
-            descLines: ['市場範圍: 上市/上櫃/興櫃 | 篩選頻率: 每日', '技術型態: 頭肩底 | 敏感度: 40% | 週期: 8~50根 (1D)'],
-            data: {
-                markets: ['listed', 'otc', 'ipo'],
-                frequency: 'daily',
-                indicators: [],
-                patterns: ['head_shoulders_bottom'],
-                sensitivity: 40,
-                patternTimeframe: { min: 8, max: 50, interval: '1D' }
-            }
-        },
-        {   // default-strat-2 end
-            id: 'default-strat-2',
-            name: '測試指標篩選功能',
-            timestamp: Date.now(),
-            descLines: ['市場範圍: 上市/上櫃/興櫃 | 篩選頻率: 每日', 'MA-日K: MA20 > MA50'],
-            data: {
-                markets: ['listed', 'otc', 'ipo'],
-                frequency: 'daily',
-                indicators: [
-                    {
-                        type: 'sma',
-                        timeframe: '1d',
-                        period: '日K',
-                        range: '當前值',
-                        presets: [],
-                        custom: [{ t1: 'MA', v1: '20', op: 'gt', t2: 'MA', v2: '50' }],
-                        conditions: [{ left: 'MA20', operator: '>', right: 'MA50' }]
-                    }
-                ],
-                patterns: [],
-                sensitivity: 75,
-                patternTimeframe: { min: 20, max: 60, interval: '1D' }
-            }
-        },
-        {
-            id: 'default-strat-3',
-            name: '測試指標+型態功能',
-            timestamp: Date.now(),
-            descLines: [
-                '市場範圍: 上市/上櫃/興櫃 | 篩選頻率: 每日',
-                'MA-日K: MA20 > MA50',
-                '技術型態: 盤整區 W底 三角收斂 | 敏感度: 40% | 週期: 8~150根 (1D)'
-            ],
-            data: {
-                markets: ['listed', 'otc', 'ipo'],
-                frequency: 'daily',
-                indicators: [
-                    {
-                        type: 'sma',
-                        timeframe: '1d',
-                        period: '日K',
-                        range: '當前值',
-                        presets: [],
-                        custom: [{ t1: 'MA', v1: '20', op: 'gt', t2: 'MA', v2: '50' }],
-                        conditions: [{ left: 'MA20', operator: '>', right: 'MA50' }]
-                    }
-                ],
-                patterns: ['consolidation', 'w_bottom', 'triangle'],
-                sensitivity: 40,
-                patternTimeframe: { min: 8, max: 150, interval: '1D' }
-            }
-        }
-    ],
+    savedStrategies: [],
     // ✅ Phase 1 SSOT: 圖表指標狀態（與篩選條件完全獨立）
     // 指標控制列 / Canvas / Modal 三者共讀同一份資料來源
     chartIndicators: {
@@ -110,6 +43,7 @@ window.ScreeningPage = {
     _sortState: { field: null, order: null },
     _lastRenderStocks: null,
     _lastRenderStats: null,
+    _selectedStockIndex: null,
 
     init: function () {
         console.log('ScreeningPage Initializing...');
@@ -128,6 +62,11 @@ window.ScreeningPage = {
 
         this.bindEvents();
         this.setupTabs();
+
+        if (window.StrategyManager && typeof window.StrategyManager.init === 'function') {
+            window.StrategyManager.init();
+        }
+
         // setupTimeRange 已委託給 ScreeningBlockTimeRange，此處不再重複呼叫
 
         // ✅ Phase 1 重構：使用 ChartController 初始化圖表
@@ -239,6 +178,11 @@ window.ScreeningPage = {
         const btnCloseStopDialog = document.getElementById('btnCloseStopDialog');
         if (btnCloseStopDialog) btnCloseStopDialog.addEventListener('click', () => this._cancelStop());
 
+        if (!this._stockListKeydownBound) {
+            document.addEventListener('keydown', (e) => this._handleStockListArrowNavigation(e));
+            this._stockListKeydownBound = true;
+        }
+
     },
 
     setupTabs: function (tabId) {
@@ -261,7 +205,13 @@ window.ScreeningPage = {
         if (tabId === 'my-strategies') {
             // ✅ Phase 2: 委託給 StrategyManager
             if (window.StrategyManager) {
-                window.StrategyManager.renderList();
+                if (typeof window.StrategyManager.init === 'function') {
+                    window.StrategyManager.init().then(() => {
+                        window.StrategyManager.renderList();
+                    });
+                } else {
+                    window.StrategyManager.renderList();
+                }
             }
         }
     },
@@ -875,6 +825,49 @@ window.ScreeningPage = {
             document.addEventListener('mousemove', onMove);
             document.addEventListener('mouseup', onUp);
         });
+    },
+
+    _handleStockListArrowNavigation: function (e) {
+        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+
+        const activeEl = document.activeElement;
+        const activeTag = activeEl && activeEl.tagName ? activeEl.tagName : '';
+        if (['INPUT', 'SELECT', 'TEXTAREA'].includes(activeTag)) return;
+        if (activeEl && activeEl.isContentEditable) return;
+
+        const items = [...document.querySelectorAll('#stockList .stock-item')];
+        if (!items.length) return;
+
+        const currentIdx = this._selectedStockIndex;
+        if (currentIdx === null || currentIdx === undefined) return;
+        if (currentIdx < 0 || currentIdx >= items.length) return;
+
+        e.preventDefault();
+
+        let newIdx = currentIdx;
+        if (e.key === 'ArrowDown') {
+            newIdx = Math.min(currentIdx + 1, items.length - 1);
+        } else if (e.key === 'ArrowUp') {
+            newIdx = Math.max(currentIdx - 1, 0);
+        }
+
+        this._selectedStockIndex = newIdx;
+
+        items.forEach((el, idx) => {
+            const isSelected = idx === newIdx;
+            el.classList.toggle('stock-item--selected', isSelected);
+            el.classList.toggle('selected', isSelected);
+        });
+
+        const target = items[newIdx];
+        if (target) {
+            target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            const symbol = (target.dataset.symbol || '').trim()
+                || target.querySelector('.stock-symbol')?.textContent?.trim();
+            if (symbol) {
+                this.onStockClick(symbol);
+            }
+        }
     },
 
 };

@@ -57,7 +57,7 @@ def calculate_indicators(df: pd.DataFrame, indicators: list) -> pd.DataFrame:
 
     for indicator in indicators:
         ind_type = indicator.get("type", "").lower()
-        params   = indicator.get("parameters", {})
+        params   = indicator.get("parameters", indicator.get("params", {}))
 
         if ind_type == "sma":
             needed_ma_periods.add(params.get("period", 20))

@@ -3,7 +3,7 @@ App/Feature/models.py
 所有 Feature 共用的 Pydantic 模型（原 backend/api/models.py）
 """
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 
 # ==========================================
@@ -74,6 +74,33 @@ class ScreeningResponse(BaseModel):
     total:      int
     stocks:     List[StockResult]
     statistics: dict
+
+
+class StrategyCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255, description="策略名稱")
+    configuration: Dict[str, Any] = Field(..., description="策略設定 JSON")
+    description: Optional[str] = Field(None, description="策略描述")
+
+
+class StrategyUpdateRequest(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255, description="策略名稱")
+    configuration: Optional[Dict[str, Any]] = Field(None, description="策略設定 JSON")
+    description: Optional[str] = Field(None, description="策略描述")
+
+
+class StrategyItem(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    configuration: Dict[str, Any]
+    is_active: bool
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class StrategyListResponse(BaseModel):
+    total: int
+    strategies: List[StrategyItem]
 
 
 # ==========================================

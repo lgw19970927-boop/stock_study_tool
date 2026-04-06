@@ -7,6 +7,7 @@ window.ScreeningBlockIndicator = {
     init: function () {
         this.bindEvents();
         this.syncFromState();
+        this.syncSummaryLayout();
     },
 
     syncFromState: function () {
@@ -45,6 +46,8 @@ window.ScreeningBlockIndicator = {
                 module.confirmConfig(card);
             }
         });
+
+        this.syncSummaryLayout();
     },
 
     bindEvents: function () {
@@ -60,6 +63,13 @@ window.ScreeningBlockIndicator = {
             list.addEventListener('click', (e) => {
                 const card = e.target.closest('.indicator-card');
                 if (!card) return;
+
+                if (e.target.closest('.btn-remove-indicator')) {
+                    card.remove();
+                    this.syncSummaryLayout();
+                    this.updateState();
+                    return;
+                }
 
                 // Handle "Add Condition" button
                 if (e.target.closest('.btn-add-condition')) {
@@ -142,6 +152,9 @@ window.ScreeningBlockIndicator = {
                         // New indicator — discard the card
                         card.remove();
                     }
+
+                    this.syncSummaryLayout();
+                    this.updateState();
                 }
 
                 // Handle Edit (From Summary)
@@ -205,6 +218,7 @@ window.ScreeningBlockIndicator = {
         // Initialize the new card with SMA template immediately
         const newCard = document.getElementById(id);
         this.updateIndicatorConfig(newCard, 'sma');
+        this.syncSummaryLayout();
     },
 
     updateIndicatorConfig: function (card, type) {
@@ -212,6 +226,7 @@ window.ScreeningBlockIndicator = {
         if (!configArea) return;
 
         card.classList.remove('indicator-card--summary');
+        this.syncSummaryLayout();
 
         const module = this.getIndicatorModule(type);
         if (module && typeof module.getConfigHTML === 'function') {
@@ -231,6 +246,8 @@ window.ScreeningBlockIndicator = {
         const module = this.getIndicatorModule(type);
         if (module && typeof module.confirmConfig === 'function') {
             module.confirmConfig(card);
+            this.syncSummaryLayout();
+            this.updateState();
         }
     },
 
@@ -265,6 +282,7 @@ window.ScreeningBlockIndicator = {
 
         // 1. Restore Card Structure
         card.classList.remove('indicator-card--summary');
+        this.syncSummaryLayout();
 
         // Re-inject Header + Config Area
         card.innerHTML = `
@@ -298,6 +316,47 @@ window.ScreeningBlockIndicator = {
         }
     },
 
+    syncSummaryLayout: function () {
+        const list = document.getElementById('indicatorList');
+        if (!list) return;
+
+        const cards = Array.from(list.querySelectorAll('.indicator-card'));
+        if (cards.length === 0) {
+            list.classList.remove('indicator-list--summary-aligned');
+            list.style.removeProperty('--summary-align-width');
+            return;
+        }
+
+        const summaryCards = cards.filter(card => card.classList.contains('indicator-card--summary'));
+        if (summaryCards.length === 0) {
+            list.classList.remove('indicator-list--summary-aligned');
+            list.style.removeProperty('--summary-align-width');
+            return;
+        }
+
+        // Measure with alignment class disabled to get natural max-content width.
+        list.classList.remove('indicator-list--summary-aligned');
+
+        let maxSummaryWidth = 0;
+        summaryCards.forEach(card => {
+            const inner = card.querySelector('.ind-summary-inner');
+            const measured = inner
+                ? Math.ceil(inner.getBoundingClientRect().width)
+                : Math.ceil(card.getBoundingClientRect().width);
+            if (Number.isFinite(measured) && measured > maxSummaryWidth) {
+                maxSummaryWidth = measured;
+            }
+        });
+
+        if (maxSummaryWidth > 0) {
+            list.style.setProperty('--summary-align-width', `${maxSummaryWidth}px`);
+        } else {
+            list.style.removeProperty('--summary-align-width');
+        }
+
+        list.classList.add('indicator-list--summary-aligned');
+    },
+
     removeSummaryCondition: function (removeButton) {
         const summaryItem = removeButton ? removeButton.closest('.indicator-summary-item') : null;
         const card = removeButton ? removeButton.closest('.indicator-card') : null;
@@ -306,6 +365,7 @@ window.ScreeningBlockIndicator = {
         const configStr = summaryItem.getAttribute('data-config');
         if (!configStr) {
             card.remove();
+            this.syncSummaryLayout();
             this.updateState();
             return;
         }
@@ -316,6 +376,7 @@ window.ScreeningBlockIndicator = {
         } catch (error) {
             console.error('Failed to parse summary config', error);
             card.remove();
+            this.syncSummaryLayout();
             this.updateState();
             return;
         }
@@ -348,6 +409,7 @@ window.ScreeningBlockIndicator = {
 
         if (!remainingPreset && !remainingCustom && !remainingConditions) {
             card.remove();
+            this.syncSummaryLayout();
             this.updateState();
             return;
         }
@@ -355,6 +417,7 @@ window.ScreeningBlockIndicator = {
         const type = (config.type || 'sma').toLowerCase();
         this.editIndicatorConfig(card, config);
         this.confirmIndicatorConfig(card, type);
+        this.syncSummaryLayout();
         this.updateState();
     },
 

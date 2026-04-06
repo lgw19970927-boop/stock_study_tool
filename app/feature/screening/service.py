@@ -14,6 +14,97 @@ from .indicators.shared.format_helpers import build_tag, build_insufficient_tag,
 logger = logging.getLogger(__name__)
 
 
+BOLL_CROSSOVER_PRESETS = {
+    "升穿上軌": ("BB_UPPER", ">"),
+    "升穿中軌": ("BB_MIDDLE", ">"),
+    "跌穿中軌": ("BB_MIDDLE", "<"),
+    "跌穿下軌": ("BB_LOWER", "<"),
+}
+
+
+def _parse_bollinger_params(params: Dict[str, Any]) -> tuple[int, float, str]:
+    p_raw = params.get("period", params.get("p", 20))
+    std_raw = params.get("std_dev", params.get("std", 2.0))
+
+    try:
+        p = int(p_raw)
+    except (ValueError, TypeError):
+        p = 20
+
+    try:
+        std = float(std_raw)
+    except (ValueError, TypeError):
+        std = 2.0
+
+    std_str = str(int(std)) if std == int(std) else str(std)
+    return p, std, std_str
+
+
+def _format_bollinger_preset_label(preset_name: str, params: Dict[str, Any]) -> str:
+    p, _, std_str = _parse_bollinger_params(params)
+    return f"{preset_name}({p},{std_str})"
+
+
+def _evaluate_bollinger_preset_crossover(
+    eval_df: pd.DataFrame,
+    preset_name: str,
+    range_n: int,
+    is_consecutive: bool,
+) -> bool:
+    """
+    評估 BOLL Preset 的升穿/跌穿語意。
+
+    - 當前值：前一根在軌道另一側，當前根突破到目標側。
+    - 連續週期 N：N+1 前一根未突破，後 N 根全部站穩於目標側（Plan A）。
+    """
+    band_col, direction = BOLL_CROSSOVER_PRESETS[preset_name]
+
+    if is_consecutive:
+        pre_bar = eval_df.iloc[-(range_n + 1)]
+        window = eval_df.iloc[-range_n:]
+
+        pre_close = pre_bar.get("close")
+        pre_band = pre_bar.get(band_col)
+        if pd.isna(pre_close) or pd.isna(pre_band):
+            return False
+
+        close_series = window.get("close")
+        band_series = window.get(band_col)
+        if close_series is None or band_series is None:
+            return False
+        if close_series.isna().any() or band_series.isna().any():
+            return False
+
+        if direction == ">":
+            breakout_valid = pre_close <= pre_band
+            sustained = bool((close_series > band_series).all())
+        else:
+            breakout_valid = pre_close >= pre_band
+            sustained = bool((close_series < band_series).all())
+
+        return bool(breakout_valid and sustained)
+
+    pre_bar = eval_df.iloc[-2]
+    cur_bar = eval_df.iloc[-1]
+
+    pre_close = pre_bar.get("close")
+    pre_band = pre_bar.get(band_col)
+    cur_close = cur_bar.get("close")
+    cur_band = cur_bar.get(band_col)
+
+    if (
+        pd.isna(pre_close)
+        or pd.isna(pre_band)
+        or pd.isna(cur_close)
+        or pd.isna(cur_band)
+    ):
+        return False
+
+    if direction == ">":
+        return bool((pre_close <= pre_band) and (cur_close > cur_band))
+    return bool((pre_close >= pre_band) and (cur_close < cur_band))
+
+
 # ==========================================
 # 數據重採樣
 # ==========================================
@@ -210,8 +301,20 @@ def screen_single_stock(
                 range_n = int(indicator.get("range_n", 1) or 1)
             except (ValueError, TypeError):
                 range_n = 1
-            range_n = max(1, min(range_n, 100))
+            range_n = max(1, min(range_n, 250))
             is_consecutive = range_mode == "連續週期" and range_n > 1
+
+            preset_name = next(
+                (
+                    str(v).strip()
+                    for v in indicator.get("presets", [])
+                    if str(v).strip() and str(v).strip() != "自訂"
+                ),
+                "",
+            )
+            is_boll_preset_crossover = (
+                ind_type == "bollinger" and preset_name in BOLL_CROSSOVER_PRESETS
+            )
 
             req_period = params.get("period", params.get("p", 20))
             try:
@@ -228,8 +331,15 @@ def screen_single_stock(
                         except ValueError:
                             pass
 
-            if is_consecutive and len(eval_df) < range_n:
-                insufficient.append(build_insufficient_tag(f"連續{range_n}次", period_abbr))
+            required_eval_rows = range_n if is_consecutive else 1
+            if is_boll_preset_crossover:
+                required_eval_rows = (range_n + 1) if is_consecutive else 2
+
+            if len(eval_df) < required_eval_rows:
+                if is_consecutive:
+                    insufficient.append(build_insufficient_tag(f"連續{range_n}次", period_abbr))
+                elif is_boll_preset_crossover:
+                    insufficient.append(build_insufficient_tag(preset_name, period_abbr))
                 continue
 
             # 資料不足：放行並標記
@@ -237,13 +347,8 @@ def screen_single_stock(
                 if ind_type == "sma":
                     label = f"MA{req_period}"
                 elif ind_type == "bollinger":
-                    std_val = params.get('std_dev', params.get('std', 2.0))
-                    try:
-                        std_val = float(std_val)
-                    except (ValueError, TypeError):
-                        std_val = 2.0
-                    std_str = int(std_val) if std_val == int(std_val) else std_val
-                    label = f"BOLL({req_period},{std_str})"
+                    p, _, std_str = _parse_bollinger_params(params)
+                    label = f"BOLL({p},{std_str})"
                 else:
                     label = f"{ind_type.capitalize()}({req_period})"
                 insufficient.append(build_insufficient_tag(label, period_abbr))
@@ -260,17 +365,7 @@ def screen_single_stock(
                 operator = cond.get("operator", "")
 
                 if ind_type == "bollinger":
-                    p = params.get("period", params.get("p", 20))
-                    std = params.get("std_dev", params.get("std", 2.0))
-                    try:
-                        p = int(p)
-                    except (ValueError, TypeError):
-                        p = 20
-                    try:
-                        std = float(std)
-                    except (ValueError, TypeError):
-                        std = 2.0
-                    std_str = int(std) if std == int(std) else std
+                    p, _, std_str = _parse_bollinger_params(params)
 
                     def map_boll_operand(op_val: Any) -> str:
                         if op_val == "close":
@@ -292,7 +387,14 @@ def screen_single_stock(
                 return f"{left_str}{operator}{right_str}"
 
             try:
-                if is_consecutive:
+                if is_boll_preset_crossover:
+                    indicator_met = _evaluate_bollinger_preset_crossover(
+                        eval_df=eval_df,
+                        preset_name=preset_name,
+                        range_n=range_n,
+                        is_consecutive=is_consecutive,
+                    )
+                elif is_consecutive:
                     target_slice = eval_df.iloc[-range_n:]
                     for _, row_data in target_slice.iterrows():
                         row_df = pd.DataFrame([row_data])
@@ -316,11 +418,18 @@ def screen_single_stock(
                 indicator_met = False
 
             if indicator_met:
-                preset_conditions = [
-                    str(v)
+                preset_conditions_raw = [
+                    str(v).strip()
                     for v in indicator.get("presets", [])
                     if str(v).strip() and str(v).strip() != "自訂"
                 ]
+                if ind_type == "bollinger":
+                    preset_conditions = [
+                        _format_bollinger_preset_label(v, params)
+                        for v in preset_conditions_raw
+                    ]
+                else:
+                    preset_conditions = preset_conditions_raw
                 condition_displays = [_format_condition_display(cond) for cond in conditions]
                 condition_text = " 且 ".join(preset_conditions or condition_displays)
                 if not condition_text:

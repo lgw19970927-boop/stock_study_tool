@@ -9,10 +9,20 @@ from typing import Optional
 import json
 import asyncio
 import logging
+from datetime import datetime
 
 from .service import screen_stocks, screen_single_stock
 from .indicators.service import resolve_analysis_dates
-from .models import ScreeningRequest, ScreeningResponse, StockResult
+from .models import (
+    ScreeningRequest,
+    ScreeningResponse,
+    StockResult,
+    StrategyCreateRequest,
+    StrategyUpdateRequest,
+    StrategyItem,
+    StrategyListResponse,
+)
+from ...lib.db import get_user_cursor
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -201,3 +211,208 @@ async def filter_stocks_stream(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+# ═══════════════════════════════════════════════════════════════════
+# API：策略管理（user_data.strategies）
+# ═══════════════════════════════════════════════════════════════════
+
+def _to_iso_datetime_str(value) -> Optional[str]:
+    if value is None:
+        return None
+    if hasattr(value, "strftime"):
+        return value.strftime("%Y-%m-%d %H:%M:%S")
+    return str(value)
+
+
+def _parse_strategy_configuration(raw_value) -> dict:
+    if isinstance(raw_value, dict):
+        return raw_value
+    if raw_value in (None, ""):
+        return {}
+
+    text = str(raw_value)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        logger.warning("Strategy configuration JSON parse failed, fallback to empty object")
+        return {}
+
+
+def _normalize_strategy_row(row: dict) -> dict:
+    return {
+        "id": int(row["id"]),
+        "name": str(row.get("name") or ""),
+        "description": row.get("description"),
+        "configuration": _parse_strategy_configuration(row.get("configuration")),
+        "is_active": bool(row.get("is_active", 1)),
+        "created_at": _to_iso_datetime_str(row.get("created_at")),
+        "updated_at": _to_iso_datetime_str(row.get("updated_at")),
+    }
+
+
+def _load_strategy_item(strategy_id: int, include_inactive: bool = False) -> Optional[dict]:
+    with get_user_cursor() as cursor:
+        if include_inactive:
+            cursor.execute(
+                """
+                SELECT id, name, description, is_active, created_at, updated_at, configuration
+                FROM strategies
+                WHERE id = %s
+                LIMIT 1
+                """,
+                (strategy_id,),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT id, name, description, is_active, created_at, updated_at, configuration
+                FROM strategies
+                WHERE id = %s AND is_active = 1
+                LIMIT 1
+                """,
+                (strategy_id,),
+            )
+        row = cursor.fetchone()
+    if not row:
+        return None
+    return _normalize_strategy_row(row)
+
+
+@router.get("/api/strategies", response_model=StrategyListResponse)
+def list_strategies(include_inactive: bool = Query(False)):
+    try:
+        with get_user_cursor() as cursor:
+            if include_inactive:
+                cursor.execute(
+                    """
+                    SELECT id, name, description, is_active, created_at, updated_at, configuration
+                    FROM strategies
+                    ORDER BY updated_at DESC, id DESC
+                    """
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT id, name, description, is_active, created_at, updated_at, configuration
+                    FROM strategies
+                    WHERE is_active = 1
+                    ORDER BY updated_at DESC, id DESC
+                    """
+                )
+            rows = cursor.fetchall()
+
+        items = [StrategyItem(**_normalize_strategy_row(row)) for row in rows]
+        return StrategyListResponse(total=len(items), strategies=items)
+    except Exception as e:
+        logger.error(f"讀取策略失敗: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"讀取策略失敗: {str(e)}")
+
+
+@router.post("/api/strategies", response_model=StrategyItem)
+def create_strategy(request_body: StrategyCreateRequest):
+    name = request_body.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="策略名稱不可為空")
+
+    try:
+        config_json = json.dumps(request_body.configuration, ensure_ascii=False)
+    except (TypeError, ValueError) as e:
+        raise HTTPException(status_code=400, detail=f"configuration JSON 格式錯誤: {e}")
+
+    try:
+        with get_user_cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO strategies (name, description, is_active, created_at, updated_at, configuration)
+                VALUES (%s, %s, 1, NOW(), NOW(), %s)
+                """,
+                (name, request_body.description, config_json),
+            )
+            strategy_id = int(cursor.lastrowid)
+
+        created = _load_strategy_item(strategy_id)
+        if not created:
+            raise HTTPException(status_code=500, detail="策略建立成功但讀取失敗")
+        return StrategyItem(**created)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"新增策略失敗: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"新增策略失敗: {str(e)}")
+
+
+@router.put("/api/strategies/{strategy_id}", response_model=StrategyItem)
+def update_strategy(strategy_id: int, request_body: StrategyUpdateRequest):
+    existing = _load_strategy_item(strategy_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="策略不存在")
+
+    name = existing["name"]
+    if request_body.name is not None:
+        name = request_body.name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="策略名稱不可為空")
+
+    description = existing["description"]
+    if request_body.description is not None:
+        description = request_body.description
+
+    configuration = existing["configuration"]
+    if request_body.configuration is not None:
+        configuration = request_body.configuration
+
+    try:
+        config_json = json.dumps(configuration, ensure_ascii=False)
+    except (TypeError, ValueError) as e:
+        raise HTTPException(status_code=400, detail=f"configuration JSON 格式錯誤: {e}")
+
+    try:
+        with get_user_cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE strategies
+                SET name = %s,
+                    description = %s,
+                    configuration = %s,
+                    updated_at = %s
+                WHERE id = %s AND is_active = 1
+                """,
+                (name, description, config_json, datetime.now(), strategy_id),
+            )
+
+        updated = _load_strategy_item(strategy_id)
+        if not updated:
+            raise HTTPException(status_code=404, detail="策略不存在或已刪除")
+        return StrategyItem(**updated)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"更新策略失敗: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"更新策略失敗: {str(e)}")
+
+
+@router.delete("/api/strategies/{strategy_id}")
+def delete_strategy(strategy_id: int):
+    try:
+        existing = _load_strategy_item(strategy_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="策略不存在")
+
+        with get_user_cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE strategies
+                SET is_active = 0,
+                    updated_at = %s
+                WHERE id = %s AND is_active = 1
+                """,
+                (datetime.now(), strategy_id),
+            )
+
+        return {"ok": True, "id": strategy_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"刪除策略失敗: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"刪除策略失敗: {str(e)}")

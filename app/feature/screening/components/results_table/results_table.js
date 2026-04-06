@@ -26,6 +26,7 @@ Object.assign(window.ScreeningPage, {
         window.state.lastResults = stocks;
         this._lastRenderStocks = stocks;
         this._lastRenderStats = statistics;
+        this._selectedStockIndex = null;
         const sortedStocks = this._sortStocks(stocks);
 
         // 清空舊 stock item
@@ -59,10 +60,16 @@ Object.assign(window.ScreeningPage, {
         }
 
         sortedStocks.forEach(stock => {
-            const changeToneClass = stock.change_percent >= 0
-                ? 'text-color-success bg-[rgba(63,185,80,0.1)]'
-                : 'text-color-danger bg-[rgba(248,81,73,0.1)]';
-            const changeSign = stock.change_percent >= 0 ? '+' : '';
+            const rawChangePercent = Number(stock.change_percent);
+            const numericChangePercent = Number.isFinite(rawChangePercent) ? rawChangePercent : 0;
+            const isZero = Object.is(numericChangePercent, 0) || Object.is(numericChangePercent, -0);
+            const displayChangePercent = isZero ? 0 : numericChangePercent;
+            const changeToneClass = isZero
+                ? 'text-text-secondary bg-[rgba(150,150,150,0.1)]'
+                : displayChangePercent > 0
+                    ? 'text-color-success bg-[rgba(63,185,80,0.1)]'
+                    : 'text-color-danger bg-[rgba(248,81,73,0.1)]';
+            const changeSign = displayChangePercent > 0 ? '+' : '';
 
             // 1. 整理所有標籤並去重
             const uniqueLabels = new Set();
@@ -112,15 +119,29 @@ Object.assign(window.ScreeningPage, {
 
             const item = document.createElement('div');
             item.className = 'stock-item grid min-w-[800px] cursor-pointer grid-cols-[100px_1fr_100px_100px_120px_100px] items-center gap-[var(--spacing-md)] border-l-[3px] border-l-transparent px-[var(--spacing-lg)] py-[var(--spacing-sm)] transition-[background] duration-fast hover:bg-bg-hover [animation:fadeIn_0.3s_ease_forwards]';
-            item.setAttribute('onclick', `window.ScreeningPage.onStockClick('${stock.symbol}')`);
+            item.dataset.symbol = stock.symbol;
             item.innerHTML = `
                 <div class="stock-symbol font-mono font-semibold text-accent-primary">${stock.symbol}</div>
                 <div class="stock-name overflow-hidden text-ellipsis whitespace-nowrap text-sm text-text-secondary">${stock.name}</div>
                 <div class="stock-price font-mono font-medium">${stock.price.toFixed(2)}</div>
-                <div class="stock-change rounded-sm px-2 py-0.5 text-center font-mono text-xs font-medium ${changeToneClass}">${changeSign}${stock.change_percent}%</div>
+                <div class="stock-change rounded-sm px-2 py-0.5 text-center font-mono text-xs font-medium ${changeToneClass}">${changeSign}${displayChangePercent}%</div>
                 <div class="stock-volume font-mono text-xs text-text-secondary">${stock.volume.toLocaleString()}</div>
                 <div class="stock-pattern flex gap-1">${finalTagsHTML}</div>
             `;
+
+            item.addEventListener('click', () => {
+                const items = [...document.querySelectorAll('#stockList .stock-item')];
+                items.forEach(el => {
+                    el.classList.remove('stock-item--selected');
+                    el.classList.remove('selected');
+                });
+
+                item.classList.add('stock-item--selected');
+                item.classList.add('selected');
+                window.ScreeningPage._selectedStockIndex = items.indexOf(item);
+                window.ScreeningPage.onStockClick(stock.symbol);
+            });
+
             stockList.appendChild(item);
         });
     },

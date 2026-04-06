@@ -10,27 +10,32 @@
 }
 
 .condition-row {
-    @apply flex flex-wrap items-center;
+    @apply flex items-center;
+    flex-wrap: nowrap;
     gap: 4px;
+    overflow: hidden;
 }
 
 .condition-row select {
-    flex: 1 1 70px;
-    min-width: 60px;
-    @apply p-1 bg-bg-primary border border-border-color text-text-primary rounded;
+    flex: 1 1 50px;
+    min-width: 40px;
+    padding: 2px 4px;
+    @apply bg-bg-primary border border-border-color text-text-primary rounded;
     font-size: 11px;
 }
 
 .condition-row input[type="number"] {
-    flex: 0 0 50px;
-    width: 50px;
-    @apply p-1 bg-bg-primary border border-border-color text-text-primary rounded;
+    flex: 0 1 40px;
+    min-width: 28px;
+    padding: 2px 4px;
+    @apply bg-bg-primary border border-border-color text-text-primary rounded;
     font-size: 11px;
 }
 
 .condition-row .btn-delete-row,
 .condition-row .ind-delete-row {
     flex: 0 0 auto;
+    flex-shrink: 0;
 }
 
 /* ===== Indicator Module Shared Styles (Wave 2) ===== */
@@ -178,17 +183,37 @@
     @apply text-[11px] text-text-muted;
 }
 
+.ind-summary-outer {
+    width: 100%;
+}
+
+.ind-summary-inner {
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
 .ind-summary-item {
-    @apply flex items-center justify-between border-b border-border-subtle py-3;
+    @apply flex items-center border-b border-border-subtle py-3;
+    justify-content: space-between;
+    width: 100%;
+    gap: 12px;
 }
 
 .ind-summary-text {
     @apply text-sm font-medium;
     color: #60a5fa;
+    flex-shrink: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .ind-summary-actions {
     @apply flex gap-2;
+    flex-shrink: 0;
 }
 
 .indicator-card.indicator-card--summary {
@@ -252,7 +277,8 @@
     background-color: var(--text-muted);
 }
 
-.stock-item.selected {
+.stock-item.selected,
+.stock-item.stock-item--selected {
     background: rgba(0, 212, 170, 0.1);
     border-left-color: var(--accent-primary);
 }
@@ -265,22 +291,36 @@
 }
 
 #filter-design-tab .checkbox-group {
-    @apply grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-}
-
-#filter-design-tab .checkbox-item {
+    display: flex;
+    justify-content: center;
     width: 100%;
-    white-space: normal;
 }
 
-#app-sidebar.sidebar--market-wide #filter-design-tab .checkbox-group {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+.market-checkbox-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    width: fit-content;
 }
 
-#app-sidebar.sidebar--market-wide #filter-design-tab .checkbox-item {
+#filter-design-tab .market-checkbox-inner .checkbox-item {
+    background: transparent;
+    border-color: transparent;
+    border-width: 0;
+    border-radius: 0;
+    padding-left: 0;
+    padding-right: 0;
+    width: auto;
     white-space: nowrap;
+    justify-content: flex-start;
+    box-shadow: none;
+}
+
+#filter-design-tab .market-checkbox-inner .checkbox-item:hover {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-primary);
 }
 
 @supports not (container-type: inline-size) {
@@ -295,6 +335,7 @@
 
 .checkbox-item {
     @apply flex items-center cursor-pointer bg-bg-tertiary border border-border-color rounded-sm;
+    justify-content: center;
     gap: var(--spacing-xs);
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: 0.75rem;
@@ -364,6 +405,26 @@
 .indicator-list {
     @apply flex flex-col;
     gap: var(--spacing-sm);
+}
+
+.indicator-list.indicator-list--summary-aligned {
+    --summary-align-width: 100%;
+}
+
+.indicator-list.indicator-list--summary-aligned .indicator-card.indicator-card--summary {
+    width: min(100%, var(--summary-align-width, 100%));
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.indicator-list.indicator-list--summary-aligned .ind-summary-outer {
+    width: 100%;
+}
+
+.indicator-list.indicator-list--summary-aligned .ind-summary-inner {
+    width: 100%;
+    max-width: none;
+    margin: 0;
 }
 
 .indicator-card {
@@ -632,13 +693,8 @@
 
 /* Mobile tweaks */
 @media (max-width: 450px) {
-    .condition-row {
-        @apply items-stretch;
-    }
-
     .btn-delete-row {
-        width: 100%;
-        text-align: center;
+        /* 單行模式下不強制全寬 */
     }
 }
 

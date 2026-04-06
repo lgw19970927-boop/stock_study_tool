@@ -233,18 +233,17 @@ def run_scheduler() -> None:
     )
     logger.info('✅ gap_scanner (Sun 03:00)')
 
-    # 每日備份
+    # user_data 備份：每 15 分鐘
     scheduler.add_job(
         backup_user_data,
-        'cron',
-        hour=23,
-        minute=55,
-        id='backup_user_data',
-        name='Daily User Data Backup (23:55)',
+        'interval',
+        minutes=15,
+        id='backup_user_data_frequent',
+        name='User Data Backup (every 15 min)',
         coalesce=True,
         max_instances=1,
     )
-    logger.info('✅ backup_user_data (Daily 23:55)')
+    logger.info('✅ backup_user_data_frequent (Every 15 min)')
 
     scheduler.add_job(
         backup_market_data,

@@ -30,7 +30,7 @@ window.SMAIndicator = {
                     <div class="config-label ind-config-label">連續次數</div>
                     <div class="ind-param-inline">
                         <span class="ind-unit-note">連續</span>
-                        <input type="number" class="number-input consecutive-n-input ind-input-60" value="" min="1" max="100" placeholder="">
+                        <input type="number" class="number-input consecutive-n-input ind-input-60" value="" min="1" max="250" placeholder="">
                         <span class="ind-unit-note">次</span>
                     </div>
                 </div>
@@ -121,7 +121,35 @@ window.SMAIndicator = {
 
     afterRender: function (card) {
         card.querySelectorAll('.condition-row').forEach(row => this._setupConditionRow(row));
+        this._bindConsecutiveInput(card);
         this.onPillStateChanged(card);
+    },
+
+    _bindConsecutiveInput: function (card) {
+        const nInput = card.querySelector('.consecutive-n-input');
+        if (!nInput || nInput.dataset.boundInputGuard === '1') return;
+
+        nInput.addEventListener('input', function () {
+            const raw = this.value.trim();
+            if (!raw) return;
+
+            let normalized = raw;
+            while (normalized && parseInt(normalized, 10) > 250) {
+                normalized = normalized.slice(0, -1);
+            }
+
+            if (normalized !== raw) {
+                this.value = normalized || '250';
+                return;
+            }
+
+            const parsed = parseInt(this.value, 10);
+            if (Number.isFinite(parsed) && parsed < 1) {
+                this.value = '1';
+            }
+        });
+
+        nInput.dataset.boundInputGuard = '1';
     },
 
     _getActiveText: function (card, groupName, fallback) {
@@ -199,7 +227,7 @@ window.SMAIndicator = {
         const nInput = card.querySelector('.consecutive-n-input');
         const rawN = parseInt(((nInput && nInput.value) || '').trim(), 10);
         const rangeN = rangeMode === '連續週期'
-            ? Math.max(1, Math.min(Number.isFinite(rawN) ? rawN : 1, 100))
+            ? Math.max(1, Math.min(Number.isFinite(rawN) ? rawN : 1, 250))
             : 1;
 
         const periodToTimeframe = {
@@ -290,9 +318,9 @@ window.SMAIndicator = {
 
         const configJson = JSON.stringify(config).replace(/"/g, '&quot;');
 
-        const summaryHTML = summaryLines.map((line, idx) => `
+        const itemsHTML = summaryLines.map((line, idx) => `
             <div class="indicator-summary-item ind-summary-item" data-config="${configJson}" data-line-index="${idx}">
-                <div class="summary-text ind-summary-text">${line}</div>
+                <div class="summary-text ind-summary-text" title="${line}">${line}</div>
                 <div class="summary-actions ind-summary-actions">
                      <button type="button" class="btn-icon btn-edit-summary" title="編輯">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -303,6 +331,12 @@ window.SMAIndicator = {
                 </div>
             </div>
         `).join('');
+
+        const summaryHTML = `
+            <div class="ind-summary-outer">
+                <div class="ind-summary-inner">${itemsHTML}</div>
+            </div>
+        `;
 
         card.innerHTML = summaryHTML;
         card.classList.add('indicator-card--summary');
@@ -329,7 +363,7 @@ window.SMAIndicator = {
             if (!isConsecutive) {
                 nInput.value = '';
             } else {
-                const n = Math.max(1, Math.min(parseInt(config.range_n || 1, 10) || 1, 100));
+                const n = Math.max(1, Math.min(parseInt(config.range_n || 1, 10) || 1, 250));
                 nInput.value = String(n);
             }
         }

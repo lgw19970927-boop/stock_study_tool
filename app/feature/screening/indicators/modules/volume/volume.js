@@ -87,15 +87,19 @@ window.VolumeIndicator = {
         const configJson = JSON.stringify(config).replace(/"/g, '&quot;');
 
         const summaryHTML = `
-            <div class="indicator-summary-item ind-summary-item" data-config="${configJson}">
-                <div class="summary-text ind-summary-text">VOL: ${displayStr}</div>
-                <div class="summary-actions ind-summary-actions">
-                     <button type="button" class="btn-icon btn-edit-summary" title="編輯">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                     </button>
-                     <button type="button" class="btn-icon btn-remove" onclick="this.closest('.indicator-card').remove()">
-                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                     </button>
+            <div class="ind-summary-outer">
+                <div class="ind-summary-inner">
+                    <div class="indicator-summary-item ind-summary-item" data-config="${configJson}">
+                        <div class="summary-text ind-summary-text" title="VOL: ${displayStr}">VOL: ${displayStr}</div>
+                        <div class="summary-actions ind-summary-actions">
+                             <button type="button" class="btn-icon btn-edit-summary" title="編輯">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                             </button>
+                             <button type="button" class="btn-icon btn-remove" title="刪除" onclick="window.ScreeningBlockIndicator.removeSummaryCondition(this)">
+                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                             </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;

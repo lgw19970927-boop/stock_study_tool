@@ -30,7 +30,7 @@ window.BollingerIndicator = {
                     <div class="config-label ind-config-label">連續次數</div>
                     <div class="ind-param-inline">
                         <span class="ind-unit-note">連續</span>
-                        <input type="number" class="number-input consecutive-n-input ind-input-60" value="" min="1" max="100" placeholder="">
+                        <input type="number" class="number-input consecutive-n-input ind-input-60" value="" min="1" max="250" placeholder="">
                         <span class="ind-unit-note">次</span>
                     </div>
                 </div>
@@ -153,7 +153,101 @@ window.BollingerIndicator = {
 
     afterRender: function (card) {
         card.querySelectorAll('.condition-row').forEach(row => this._setupConditionRow(row));
+        this._bindConsecutiveInput(card);
         this.onPillStateChanged(card);
+    },
+
+    _bindConsecutiveInput: function (card) {
+        const nInput = card.querySelector('.consecutive-n-input');
+        if (!nInput || nInput.dataset.boundInputGuard === '1') return;
+        const self = this;
+
+        nInput.addEventListener('input', function () {
+            const raw = this.value.trim();
+            if (!raw) {
+                self._syncPresetTooltips(card);
+                return;
+            }
+
+            let normalized = raw;
+            while (normalized && parseInt(normalized, 10) > 250) {
+                normalized = normalized.slice(0, -1);
+            }
+
+            if (normalized !== raw) {
+                this.value = normalized || '250';
+                self._syncPresetTooltips(card);
+                return;
+            }
+
+            const parsed = parseInt(this.value, 10);
+            if (Number.isFinite(parsed) && parsed < 1) {
+                this.value = '1';
+            }
+
+            self._syncPresetTooltips(card);
+        });
+
+        nInput.dataset.boundInputGuard = '1';
+    },
+
+    _getRangeN: function (card) {
+        const rangeMode = this._getActiveText(card, 'boll-range', '當前值');
+        if (rangeMode !== '連續週期') return 1;
+
+        const nInput = card.querySelector('.consecutive-n-input');
+        const rawN = parseInt(((nInput && nInput.value) || '').trim(), 10);
+        return Math.max(1, Math.min(Number.isFinite(rawN) ? rawN : 1, 250));
+    },
+
+    _formatPresetParamSuffix: function (period, stdDev) {
+        const parsedPeriod = parseInt(period, 10);
+        const parsedStd = parseFloat(stdDev);
+
+        const p = Number.isFinite(parsedPeriod) && parsedPeriod > 0 ? parsedPeriod : 20;
+        const std = Number.isFinite(parsedStd) ? parsedStd : 2;
+        const stdText = Number.isInteger(std) ? String(parseInt(std, 10)) : String(std);
+
+        return `(${p},${stdText})`;
+    },
+
+    _buildPresetTooltip: function (mode, rangeMode, rangeN) {
+        const presetMeta = {
+            'break-upper': { band: '上軌', direction: 'up' },
+            'break-middle-up': { band: '中軌', direction: 'up' },
+            'break-middle-down': { band: '中軌', direction: 'down' },
+            'break-lower': { band: '下軌', direction: 'down' }
+        };
+        const meta = presetMeta[mode];
+        if (!meta) return '';
+
+        const fromSide = meta.direction === 'up' ? '下方' : '上方';
+        const toAction = meta.direction === 'up' ? '突破至' : '跌破至';
+        const toSide = meta.direction === 'up' ? '上方' : '下方';
+
+        if (rangeMode !== '連續週期') {
+            return `前根收盤在${meta.band}${fromSide}，當根收盤${toAction}${meta.band}${toSide}`;
+        }
+
+        if (rangeN <= 1) {
+            return `前根收盤在${meta.band}${fromSide}，當根收盤${toAction}${meta.band}${toSide}（效果同「當前值」）`;
+        }
+
+        return `第 1 根${toAction}${meta.band}${toSide}，後 ${rangeN - 1} 根站穩${meta.band}${toSide}（共連續 ${rangeN} 根）`;
+    },
+
+    _syncPresetTooltips: function (card) {
+        const rangeMode = this._getActiveText(card, 'boll-range', '當前值');
+        const rangeN = this._getRangeN(card);
+
+        card.querySelectorAll('.config-pill-btn[data-group="boll-mode"]').forEach(btn => {
+            const mode = btn.dataset.mode;
+            if (mode === 'custom') {
+                btn.title = '';
+                return;
+            }
+            btn.title = this._buildPresetTooltip(mode, rangeMode, rangeN);
+        });
     },
 
     _getActiveText: function (card, groupName, fallback) {
@@ -194,31 +288,11 @@ window.BollingerIndicator = {
         const pInput = configContainer.querySelector('.param-p');
         const stdInput = configContainer.querySelector('.param-std');
         if (pInput && stdInput) {
-            if (showCustom) {
-                pInput.disabled = false;
-                stdInput.disabled = false;
-                if (configContainer.dataset.customPeriod) pInput.value = configContainer.dataset.customPeriod;
-                if (configContainer.dataset.customStd) stdInput.value = configContainer.dataset.customStd;
-                delete configContainer.dataset.customPeriod;
-                delete configContainer.dataset.customStd;
-            } else {
-                configContainer.dataset.customPeriod = pInput.value || '20';
-                configContainer.dataset.customStd = stdInput.value || '2';
-                pInput.value = '20';
-                stdInput.value = '2';
-                pInput.disabled = true;
-                stdInput.disabled = true;
-            }
+            pInput.disabled = false;
+            stdInput.disabled = false;
         }
 
-        const tooltipText = '預設 BOLL period=20、std_dev=2\n此為美股布林帶國際標準用法（John Bollinger 原始定義）';
-        card.querySelectorAll('.config-pill-btn[data-group="boll-mode"]').forEach(btn => {
-            if (btn.dataset.mode !== 'custom') {
-                btn.title = tooltipText;
-            } else {
-                btn.title = '';
-            }
-        });
+        this._syncPresetTooltips(card);
     },
 
     onPillStateChanged: function (card) {
@@ -233,7 +307,7 @@ window.BollingerIndicator = {
         const nInput = card.querySelector('.consecutive-n-input');
         const rawN = parseInt(((nInput && nInput.value) || '').trim(), 10);
         const rangeN = rangeMode === '連續週期'
-            ? Math.max(1, Math.min(Number.isFinite(rawN) ? rawN : 1, 100))
+            ? Math.max(1, Math.min(Number.isFinite(rawN) ? rawN : 1, 250))
             : 1;
 
         const periodToTimeframe = {
@@ -277,7 +351,7 @@ window.BollingerIndicator = {
             const preset = presetMapByMode[mode];
             presets.push(preset.name);
             backendConditions.push(preset.condition);
-            displayConditions.push(preset.name);
+            displayConditions.push(`${preset.name}${this._formatPresetParamSuffix(pVal, stdVal)}`);
         }
 
         if (mode === 'custom') {
@@ -374,9 +448,9 @@ window.BollingerIndicator = {
         };
         const configJson = JSON.stringify(config).replace(/"/g, '&quot;');
 
-        const summaryHTML = summaryLines.map((line, idx) => `
+        const itemsHTML = summaryLines.map((line, idx) => `
             <div class="indicator-summary-item ind-summary-item" data-config="${configJson}" data-line-index="${idx}">
-                <div class="summary-text ind-summary-text">${line}</div>
+                <div class="summary-text ind-summary-text" title="${line}">${line}</div>
                 <div class="summary-actions ind-summary-actions">
                      <button type="button" class="btn-icon btn-edit-summary" title="編輯">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -387,6 +461,12 @@ window.BollingerIndicator = {
                 </div>
             </div>
         `).join('');
+
+        const summaryHTML = `
+            <div class="ind-summary-outer">
+                <div class="ind-summary-inner">${itemsHTML}</div>
+            </div>
+        `;
 
         card.innerHTML = summaryHTML;
         card.classList.add('indicator-card--summary');
@@ -413,7 +493,7 @@ window.BollingerIndicator = {
             if (!isConsecutive) {
                 nInput.value = '';
             } else {
-                const n = Math.max(1, Math.min(parseInt(config.range_n || 1, 10) || 1, 100));
+                const n = Math.max(1, Math.min(parseInt(config.range_n || 1, 10) || 1, 250));
                 nInput.value = String(n);
             }
         }

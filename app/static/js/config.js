@@ -25,6 +25,9 @@ window.API_CONFIG = {
 
         // 型態辨識 SSE 串流（情況二/三階段二）
         PATTERN_STREAM: '/api/screening/pattern-recognition/stream',
+
+        // 策略管理 CRUD
+        STRATEGIES: '/api/strategies',
     },
 
     /**

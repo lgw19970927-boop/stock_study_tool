@@ -938,12 +938,20 @@ def _record_download_failure(cursor, symbol: str, interval: str, message: str) -
     )
 
 
-def download_chunk(cursor, tickers: list[str], interval: str, period, start, end) -> None:
-    """下載並寫入一個批次的股票資料（含自動重試）。"""
+def download_chunk(cursor, tickers: list[str], interval: str, period, start, end) -> bool:
+    """下載並寫入一個批次的股票資料（含自動重試）。
+
+    Returns:
+        bool: True 表示本批次中有任何 ticker 遭遇 YFRateLimitError，
+              呼叫端應停止推進 job_state checkpoint 以確保下次 resume 能重試這批資料。
+    """
     max_retries = config.RATE_LIMIT_CONFIG['retry_attempts']
     backoff = config.RATE_LIMIT_CONFIG['retry_backoff']
     timeout_seconds = int(config.RATE_LIMIT_CONFIG.get('download_timeout_seconds', 30))
     fallback_delay = float(config.RATE_LIMIT_CONFIG.get('single_ticker_fallback_delay_seconds', 0.35))
+
+    # 追蹤本批次是否有任何 ticker 遭遇 rate limit
+    chunk_had_rate_limit = False
 
     for attempt in range(max_retries):
         try:
@@ -956,6 +964,7 @@ def download_chunk(cursor, tickers: list[str], interval: str, period, start, end
                 return insert_ticker_data(cursor, sym, df, interval)
 
             def single_ticker_fallback() -> int:
+                nonlocal chunk_had_rate_limit
                 logger.warning(
                     f"Fallback to single ticker download for chunk size={len(tickers)} interval={interval}"
                 )
@@ -979,6 +988,10 @@ def download_chunk(cursor, tickers: list[str], interval: str, period, start, end
                         else:
                             fallback_valid_cnt += save_data(single_ticker, one_df)
                     except Exception as fallback_error:
+                        error_msg = str(fallback_error)
+                        # 偵測 YFRateLimitError（依訊息特徵判斷，相容不同 yfinance 版本）
+                        if 'ratelimit' in error_msg.lower() or 'too many requests' in error_msg.lower() or 'rate limited' in error_msg.lower():
+                            chunk_had_rate_limit = True
                         logger.warning(f"Fallback download failed for {single_ticker}: {fallback_error}")
                         _record_download_failure(cursor, single_ticker, interval, f"Fallback error: {fallback_error}")
 
@@ -1039,6 +1052,8 @@ def download_chunk(cursor, tickers: list[str], interval: str, period, start, end
                 logger.error(f"Batch failed after {max_retries} attempts: {e}")
                 for ticker in tickers:
                     _record_download_failure(cursor, ticker, interval, f"Batch error: {e}")
+
+    return chunk_had_rate_limit
 
 
 def sync_market_data(
@@ -1110,24 +1125,36 @@ def sync_market_data(
     try:
         with get_market_cursor() as cursor:
             start_i = start_chunk_idx * chunk_size
+            # advance_checkpoint: 一旦有任何 chunk 遭遇 rate limit，後續 chunk 即使成功
+            # 也不推進 checkpoint。確保下次 resume 能從第一個失敗的 chunk 重試。
+            # 重複下載已成功的 chunk 是安全的（MySQL ON DUPLICATE KEY UPDATE 冪等）。
+            advance_checkpoint = True
             for chunk_idx, i in enumerate(range(start_i, total, chunk_size), start=start_chunk_idx):
                 chunk = tickers[i:i + chunk_size]
                 progress = (i / total) * 100 if total else 100
                 logger.info(f"[Progress: {i}/{total} ({progress:.1f}%)] chunk={len(chunk)}")
 
-                download_chunk(cursor, chunk, interval, period, start, end)
+                chunk_had_rate_limit = download_chunk(cursor, chunk, interval, period, start, end)
 
-                last_ticker = chunk[-1]
-                last_chunk_idx = chunk_idx
-                _upsert_job_state(
-                    job_name,
-                    interval,
-                    'running',
-                    last_ticker,
-                    last_chunk_idx,
-                    start_dt,
-                    end_dt,
-                )
+                if chunk_had_rate_limit:
+                    advance_checkpoint = False
+                    logger.warning(
+                        f"Rate limit detected in chunk {chunk_idx}; "
+                        'checkpoint frozen to ensure retry on next run.'
+                    )
+
+                if advance_checkpoint:
+                    last_ticker = chunk[-1]
+                    last_chunk_idx = chunk_idx
+                    _upsert_job_state(
+                        job_name,
+                        interval,
+                        'running',
+                        last_ticker,
+                        last_chunk_idx,
+                        start_dt,
+                        end_dt,
+                    )
 
                 if i + chunk_size < total:
                     time.sleep(delay)

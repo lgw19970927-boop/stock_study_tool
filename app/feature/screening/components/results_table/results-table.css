@@ -74,7 +74,8 @@
     background: var(--bg-hover);
 }
 
-.stock-item.selected {
+.stock-item.selected,
+.stock-item.stock-item--selected {
     background: rgba(0, 212, 170, 0.1);
     border-left-color: var(--accent-primary);
 }

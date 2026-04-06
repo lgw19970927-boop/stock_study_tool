@@ -3,11 +3,106 @@
  * 負責策略的 CRUD 操作和列表渲染
  */
 window.StrategyManager = {
+    _isInitialized: false,
+
+    async init(forceReload = false) {
+        if (this._isInitialized && !forceReload) return;
+        try {
+            await this.reloadFromServer();
+            this._isInitialized = true;
+        } catch (error) {
+            this._isInitialized = false;
+            console.error('[StrategyManager] init failed:', error);
+            this.renderList();
+        }
+    },
+
+    _getStrategiesApiUrl(path = '') {
+        const base = window.API_CONFIG?.getURL?.('STRATEGIES')
+            || `${window.location.origin}/api/strategies`;
+        return `${base}${path}`;
+    },
+
+    async _extractErrorMessage(response) {
+        try {
+            const payload = await response.json();
+            return payload?.detail || payload?.message || JSON.stringify(payload);
+        } catch (_) {
+            try {
+                const text = await response.text();
+                return text || `HTTP ${response.status}`;
+            } catch (_) {
+                return `HTTP ${response.status}`;
+            }
+        }
+    },
+
+    async _apiRequest(method, url, body) {
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: body !== undefined ? JSON.stringify(body) : undefined
+        });
+
+        if (!response.ok) {
+            const detail = await this._extractErrorMessage(response);
+            throw new Error(detail || `HTTP ${response.status}`);
+        }
+
+        if (response.status === 204) return null;
+        const text = await response.text();
+        return text ? JSON.parse(text) : null;
+    },
+
+    _normalizeStrategyFromServer(item) {
+        const data = (item && item.configuration && typeof item.configuration === 'object')
+            ? item.configuration
+            : {};
+        const tsRaw = item?.updated_at || item?.created_at;
+        const tsMs = tsRaw ? Date.parse(tsRaw) : Date.now();
+
+        return {
+            id: String(item?.id ?? ''),
+            name: String(item?.name ?? ''),
+            timestamp: Number.isFinite(tsMs) ? tsMs : Date.now(),
+            descLines: this._generateDescriptionFromData(data),
+            data
+        };
+    },
+
+    async reloadFromServer() {
+        const payload = await this._apiRequest('GET', this._getStrategiesApiUrl());
+        const serverStrategies = Array.isArray(payload?.strategies) ? payload.strategies : [];
+        window.state.savedStrategies = serverStrategies.map(item => this._normalizeStrategyFromServer(item));
+
+        if (window.state.currentStrategyId !== null) {
+            const selectedId = String(window.state.currentStrategyId);
+            const stillExists = window.state.savedStrategies.some(s => String(s.id) === selectedId);
+            if (!stillExists) {
+                window.state.currentStrategyId = null;
+            }
+        }
+
+        this.renderList();
+    },
+
+    _resolveUniqueName(baseName, strategies) {
+        let newName = baseName;
+        let counter = 1;
+        while (strategies.some(s => s.name === newName)) {
+            newName = `${baseName}(${counter})`;
+            counter++;
+        }
+        return newName;
+    },
+
     /**
      * 保存策略（新增或覆蓋）
      * @param {boolean} overwrite - 是否覆蓋同名策略
      */
-    save(overwrite) {
+    async save(overwrite) {
         const nameInput = document.getElementById('strategyName');
         const name = nameInput ? nameInput.value.trim() : '';
 
@@ -33,47 +128,56 @@ window.StrategyManager = {
         // 4. 生成描述行
         const descLines = this._generateDescriptionFromData(filters);
 
-        // 5. 保存策略
+        // 5. 呼叫後端 API 持久化
         const strategies = window.state.savedStrategies || [];
+        const commonPayload = {
+            configuration: filters,
+            description: descLines.join('\n')
+        };
 
-        if (overwrite) {
-            const existingIndex = strategies.findIndex(s => s.name === name);
-            if (existingIndex !== -1) {
-                strategies[existingIndex].data = filters;
-                strategies[existingIndex].descLines = descLines;
-                strategies[existingIndex].timestamp = Date.now();
-                alert(`策略 "${name}" 已更新！`);
+        try {
+            if (overwrite) {
+                const existing = strategies.find(s => s.name === name);
+                if (existing) {
+                    await this._apiRequest(
+                        'PUT',
+                        this._getStrategiesApiUrl(`/${encodeURIComponent(existing.id)}`),
+                        {
+                            ...commonPayload,
+                            name: existing.name
+                        }
+                    );
+                    alert(`策略 "${existing.name}" 已更新！`);
+                } else {
+                    const newName = this._resolveUniqueName(name, strategies);
+                    await this._apiRequest(
+                        'POST',
+                        this._getStrategiesApiUrl(),
+                        {
+                            ...commonPayload,
+                            name: newName
+                        }
+                    );
+                    alert(`策略 "${newName}" 已儲存！`);
+                }
             } else {
-                this._saveAsNew(name, filters, descLines, strategies);
+                const newName = this._resolveUniqueName(name, strategies);
+                await this._apiRequest(
+                    'POST',
+                    this._getStrategiesApiUrl(),
+                    {
+                        ...commonPayload,
+                        name: newName
+                    }
+                );
+                alert(`策略 "${newName}" 已儲存！`);
             }
-        } else {
-            this._saveAsNew(name, filters, descLines, strategies);
+
+            await this.reloadFromServer();
+        } catch (error) {
+            console.error('[StrategyManager] save failed:', error);
+            alert(`策略儲存失敗：${error.message || error}`);
         }
-
-        window.state.savedStrategies = strategies;
-        this.renderList();
-    },
-
-    /**
-     * 內部方法：保存為新策略（處理名稱衝突）
-     * @private
-     */
-    _saveAsNew(baseName, filters, descLines, strategies) {
-        let newName = baseName;
-        let counter = 1;
-        while (strategies.some(s => s.name === newName)) {
-            newName = `${baseName}(${counter})`;
-            counter++;
-        }
-
-        strategies.push({
-            id: 'strat-' + Date.now(),
-            name: newName,
-            timestamp: Date.now(),
-            descLines: descLines,
-            data: filters
-        });
-        alert(`策略 "${newName}" 已儲存！`);
     },
 
     /**
@@ -136,12 +240,17 @@ window.StrategyManager = {
 
         let conditionLines = [];
         if (Array.isArray(indicator.presets) && indicator.presets.length > 0) {
-            conditionLines = indicator.presets.map(v => String(v));
+            if (type === 'bollinger') {
+                const params = indicator.parameters || indicator.params || {};
+                conditionLines = indicator.presets.map(v => this._formatBollPresetCondition(String(v), params));
+            } else {
+                conditionLines = indicator.presets.map(v => String(v));
+            }
         } else if (Array.isArray(indicator.custom) && indicator.custom.length > 0) {
             if (type === 'sma') {
                 conditionLines = indicator.custom.map(cfg => this._formatSmaCustomCondition(cfg));
             } else if (type === 'bollinger') {
-                conditionLines = indicator.custom.map(cfg => this._formatBollCustomCondition(cfg, indicator.parameters || {}));
+                conditionLines = indicator.custom.map(cfg => this._formatBollCustomCondition(cfg, indicator.parameters || indicator.params || {}));
             }
         } else if (Array.isArray(indicator.conditions) && indicator.conditions.length > 0) {
             conditionLines = indicator.conditions.map(cfg => this._formatBackendCondition(cfg));
@@ -188,6 +297,21 @@ window.StrategyManager = {
         return `${left}${op}${right}`;
     },
 
+    _formatBollPresetCondition(presetName, params) {
+        const pRaw = params && params.period !== undefined ? params.period : (params && params.p !== undefined ? params.p : 20);
+        const stdRaw = params && params.std_dev !== undefined ? params.std_dev : (params && params.std !== undefined ? params.std : 2);
+
+        const pNum = parseInt(pRaw, 10);
+        const stdNum = parseFloat(stdRaw);
+
+        const p = Number.isFinite(pNum) && pNum > 0 ? pNum : 20;
+        const std = Number.isFinite(stdNum)
+            ? (stdNum % 1 === 0 ? String(parseInt(stdNum, 10)) : String(stdNum))
+            : '2';
+
+        return `${String(presetName || '')}(${p},${std})`;
+    },
+
     _formatBackendCondition(cfg) {
         if (!cfg) return '';
         const left = cfg.left === 'close' ? '價格' : String(cfg.left || '');
@@ -201,7 +325,8 @@ window.StrategyManager = {
      * @param {string} id - 策略 ID
      */
     load(id) {
-        const strat = window.state.savedStrategies.find(s => s.id === id);
+        const targetId = String(id);
+        const strat = window.state.savedStrategies.find(s => String(s.id) === targetId);
         if (!strat) return;
 
         // 1. 恢復篩選條件
@@ -304,40 +429,54 @@ window.StrategyManager = {
      * 刪除策略
      * @param {string} id - 策略 ID
      */
-    delete(id) {
+    async delete(id) {
         if (!confirm('確定要刪除此策略嗎？')) return;
-        window.state.savedStrategies = window.state.savedStrategies.filter(s => s.id !== id);
-        this.renderList();
+
+        try {
+            await this._apiRequest(
+                'DELETE',
+                this._getStrategiesApiUrl(`/${encodeURIComponent(String(id))}`)
+            );
+
+            if (String(window.state.currentStrategyId) === String(id)) {
+                window.state.currentStrategyId = null;
+            }
+
+            await this.reloadFromServer();
+        } catch (error) {
+            console.error('[StrategyManager] delete failed:', error);
+            alert(`刪除策略失敗：${error.message || error}`);
+        }
     },
 
     /**
      * 複製策略
      * @param {string} id - 策略 ID
      */
-    copy(id) {
+    async copy(id) {
         const strategies = window.state.savedStrategies;
-        const target = strategies.find(s => s.id === id);
+        const target = strategies.find(s => String(s.id) === String(id));
         if (!target) return;
 
-        // 生成唯一名稱
-        let baseName = target.name;
-        let newName = baseName;
-        let counter = 1;
-        while (strategies.some(s => s.name === newName)) {
-            newName = `${baseName}(${counter})`;
-            counter++;
+        const newName = this._resolveUniqueName(target.name, strategies);
+        const filters = JSON.parse(JSON.stringify(target.data || {}));
+        const descLines = this._generateDescriptionFromData(filters);
+
+        try {
+            await this._apiRequest(
+                'POST',
+                this._getStrategiesApiUrl(),
+                {
+                    name: newName,
+                    configuration: filters,
+                    description: descLines.join('\n')
+                }
+            );
+            await this.reloadFromServer();
+        } catch (error) {
+            console.error('[StrategyManager] copy failed:', error);
+            alert(`複製策略失敗：${error.message || error}`);
         }
-
-        const newStrat = {
-            id: 'strat-' + Date.now(),
-            name: newName,
-            timestamp: Date.now(),
-            descLines: [...target.descLines],
-            data: JSON.parse(JSON.stringify(target.data))
-        };
-
-        strategies.unshift(newStrat); // Add to top
-        this.renderList();
     },
 
     /**
@@ -345,7 +484,10 @@ window.StrategyManager = {
      * @param {string} id - 策略 ID
      */
     select(id) {
-        window.state.currentStrategyId = window.state.currentStrategyId === id ? null : id;
+        const selectedId = String(id);
+        window.state.currentStrategyId = String(window.state.currentStrategyId) === selectedId
+            ? null
+            : selectedId;
         this.renderList();
     },
 
@@ -393,7 +535,7 @@ window.StrategyManager = {
                 return `<div class="${className}">${line}</div>`;
             }).join('');
 
-            const isActive = strat.id === window.state.currentStrategyId ? 'active' : '';
+            const isActive = String(strat.id) === String(window.state.currentStrategyId) ? 'active' : '';
 
             const card = document.createElement('div');
             card.className = `strategy-card ${isActive}`;
