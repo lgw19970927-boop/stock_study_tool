@@ -128,5 +128,5 @@
 
 /* ===== Content Area ===== */
 .content-area {
-    @apply flex flex-col overflow-hidden bg-bg-primary;
+    @apply flex flex-col overflow-y-auto overflow-x-hidden bg-bg-primary;
 }

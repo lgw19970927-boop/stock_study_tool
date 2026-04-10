@@ -10,23 +10,37 @@ Object.assign(window.ChartSettingsModal, {
     renderSettings() {
         const maToggle   = document.getElementById('ma-toggle');
         const bollToggle = document.getElementById('boll-toggle');
+        const volToggle  = document.getElementById('vol-toggle');
+        const rsiToggle  = document.getElementById('rsi-toggle');
         const container  = document.getElementById('settingsPanelContainer');
 
         if (!container) return;
 
         const showMA   = maToggle   && maToggle.checked;
         const showBOLL = bollToggle && bollToggle.checked;
+        const showVOL  = volToggle  && volToggle.checked;
+        const showRSI  = rsiToggle  && rsiToggle.checked;
 
         // ✅ Feature B: _renderTarget 指定時優先顯示對應頁籍（不論勾選狀態，支持預覽模式）
         const target = this._renderTarget;
+        if (target === 'MA') {
+            container.innerHTML = this.renderMASettings();
+            this.bindMAEvents();
+            return;
+        }
         if (target === 'BOLL') {
             container.innerHTML = this.renderBOLLSettings();
             this.bindBOLLEvents();
             return;
         }
-        if (target === 'MA') {
-            container.innerHTML = this.renderMASettings();
-            this.bindMAEvents();
+        if (target === 'VOL') {
+            container.innerHTML = this.renderVOLSettings();
+            this.bindVOLEvents();
+            return;
+        }
+        if (target === 'RSI') {
+            container.innerHTML = this.renderRSISettings();
+            this.bindRSIEvents();
             return;
         }
 
@@ -36,6 +50,12 @@ Object.assign(window.ChartSettingsModal, {
         } else if (showBOLL) {
             container.innerHTML = this.renderBOLLSettings();
             this.bindBOLLEvents();
+        } else if (showVOL) {
+            container.innerHTML = this.renderVOLSettings();
+            this.bindVOLEvents();
+        } else if (showRSI) {
+            container.innerHTML = this.renderRSISettings();
+            this.bindRSIEvents();
         } else {
             container.innerHTML = `
                 <div class="settings-placeholder">
@@ -344,13 +364,223 @@ Object.assign(window.ChartSettingsModal, {
         });
     },
 
+    // ========== VOL 設定 ==========
+
+    renderVOLSettings() {
+        const vol = this.tempSettings.VOL || this.defaultVOLConfig;
+        const line = vol.lines?.VOL1 || this.defaultVOLConfig.lines.VOL1;
+        const opacity = line.opacity ?? 100;
+
+        return `
+            <div class="settings-panel active">
+                <h3 class="settings-title">VOL: 成交量</h3>
+
+                <div class="settings-tabs">
+                    <button class="settings-tab-btn active" data-subtab="config" onclick="window.ChartSettingsModal._switchIndicatorSubTab('VOL','config')">指標設定</button>
+                    <button class="settings-tab-btn" data-subtab="intro" onclick="window.ChartSettingsModal._switchIndicatorSubTab('VOL','intro')">指標介紹</button>
+                </div>
+
+                <div id="volSubTabContent">
+                    <div class="settings-actions">
+                        <button class="btn btn-sm btn-ghost" id="btnResetVOL">重置</button>
+                    </div>
+
+                    <div class="sub-line-header sub-line-header--vol">
+                        <span>參數名稱</span>
+                        <span>線寬</span>
+                        <span>顏色</span>
+                        <span>不透明度(%)</span>
+                    </div>
+
+                    <div class="sub-line-row" data-line="VOL1">
+                        <label class="sub-line-label">
+                            <input type="checkbox" ${line.isEnabled !== false ? 'checked' : ''}
+                                   onchange="window.ChartSettingsModal.updateVOLLineEnabled(this.checked)">
+                            <span>VOL1</span>
+                        </label>
+                        <input type="number" value="${line.lineWidth || 9}" min="1" max="20"
+                               onchange="window.ChartSettingsModal.updateVOLLineWidth(this.value)">
+                        <button class="color-picker-btn" style="background: ${line.color || '#ef5350'};"
+                                onclick="window.ChartSettingsModal.openColorPickerForVOL()"></button>
+                        <div class="sub-opacity-wrap">
+                            <input type="range" value="${opacity}" min="0" max="100"
+                                   oninput="window.ChartSettingsModal.updateVOLOpacity(this.value)">
+                            <span class="opacity-value" id="volOpacityValue">${opacity}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    bindVOLEvents() {
+        const btnReset = document.getElementById('btnResetVOL');
+        if (btnReset) {
+            btnReset.addEventListener('click', () => {
+                if (confirm('確定要重置 VOL 配置嗎？')) {
+                    this.tempSettings.VOL = JSON.parse(JSON.stringify(this.defaultVOLConfig));
+                    this.renderSettings();
+                }
+            });
+        }
+    },
+
+    updateVOLLineEnabled(checked) {
+        if (this.tempSettings?.VOL?.lines?.VOL1) {
+            this.tempSettings.VOL.lines.VOL1.isEnabled = checked;
+        }
+    },
+
+    updateVOLLineWidth(value) {
+        if (this.tempSettings?.VOL?.lines?.VOL1) {
+            this.tempSettings.VOL.lines.VOL1.lineWidth = parseInt(value, 10) || 1;
+        }
+    },
+
+    updateVOLOpacity(value) {
+        if (this.tempSettings?.VOL?.lines?.VOL1) {
+            this.tempSettings.VOL.lines.VOL1.opacity = parseInt(value, 10) || 0;
+        }
+        const el = document.getElementById('volOpacityValue');
+        if (el) el.textContent = value;
+    },
+
+    openColorPickerForVOL() {
+        const line = this.tempSettings?.VOL?.lines?.VOL1;
+        if (!line) return;
+        this.openColorPicker(line.color || '#ef5350', (color) => {
+            line.color = color;
+            const btn = document.querySelector('.sub-line-row[data-line="VOL1"] .color-picker-btn');
+            if (btn) btn.style.background = color;
+        });
+    },
+
+    // ========== RSI 設定 ==========
+
+    renderRSISettings() {
+        const rsi = this.tempSettings.RSI || this.defaultRSIConfig;
+        const lineOrder = ['RSI1', 'RSI2', 'RSI3'];
+
+        const rows = lineOrder.map((key) => {
+            const line = rsi.lines?.[key] || this.defaultRSIConfig.lines[key];
+            const opacity = line.opacity ?? 100;
+            return `
+                <div class="rsi-line-row" data-line="${key}">
+                    <label class="rsi-period-label">移動平均周期</label>
+                    <input type="number" value="${line.period}" min="1" max="200"
+                           onchange="window.ChartSettingsModal.updateRSIPeriod('${key}', this.value)">
+                    <label class="sub-line-label">
+                        <input type="checkbox" ${line.isEnabled !== false ? 'checked' : ''}
+                               onchange="window.ChartSettingsModal.updateRSILineEnabled('${key}', this.checked)">
+                        <span>${key}</span>
+                    </label>
+                    <input type="number" value="${line.lineWidth || 1}" min="1" max="8"
+                           onchange="window.ChartSettingsModal.updateRSILineWidth('${key}', this.value)">
+                    <button class="color-picker-btn" style="background: ${line.color};"
+                            onclick="window.ChartSettingsModal.openColorPickerForRSI('${key}')"></button>
+                    <div class="sub-opacity-wrap">
+                        <input type="range" value="${opacity}" min="0" max="100"
+                               oninput="window.ChartSettingsModal.updateRSIOpacity('${key}', this.value)">
+                        <span class="opacity-value" id="rsiOpacityValue-${key}">${opacity}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="settings-panel active">
+                <h3 class="settings-title">RSI: 相對強弱指標</h3>
+
+                <div class="settings-tabs">
+                    <button class="settings-tab-btn active" data-subtab="config" onclick="window.ChartSettingsModal._switchIndicatorSubTab('RSI','config')">指標設定</button>
+                    <button class="settings-tab-btn" data-subtab="intro" onclick="window.ChartSettingsModal._switchIndicatorSubTab('RSI','intro')">指標介紹</button>
+                </div>
+
+                <div id="rsiSubTabContent">
+                    <div class="settings-actions">
+                        <button class="btn btn-sm btn-ghost" id="btnResetRSI">重置</button>
+                    </div>
+
+                    <div class="rsi-line-header">
+                        <span>參數名稱</span>
+                        <span>參數值</span>
+                        <span>指標線</span>
+                        <span>線寬</span>
+                        <span>顏色</span>
+                        <span>不透明度(%)</span>
+                    </div>
+
+                    <div class="rsi-line-list">
+                        ${rows}
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    bindRSIEvents() {
+        const btnReset = document.getElementById('btnResetRSI');
+        if (btnReset) {
+            btnReset.addEventListener('click', () => {
+                if (confirm('確定要重置 RSI 配置嗎？')) {
+                    this.tempSettings.RSI = JSON.parse(JSON.stringify(this.defaultRSIConfig));
+                    this.renderSettings();
+                }
+            });
+        }
+    },
+
+    updateRSIPeriod(lineKey, value) {
+        const line = this.tempSettings?.RSI?.lines?.[lineKey];
+        if (!line) return;
+        line.period = Math.max(1, parseInt(value, 10) || 1);
+    },
+
+    updateRSILineEnabled(lineKey, checked) {
+        const line = this.tempSettings?.RSI?.lines?.[lineKey];
+        if (!line) return;
+        line.isEnabled = checked;
+    },
+
+    updateRSILineWidth(lineKey, value) {
+        const line = this.tempSettings?.RSI?.lines?.[lineKey];
+        if (!line) return;
+        line.lineWidth = Math.max(1, parseInt(value, 10) || 1);
+    },
+
+    updateRSIOpacity(lineKey, value) {
+        const line = this.tempSettings?.RSI?.lines?.[lineKey];
+        if (!line) return;
+        line.opacity = parseInt(value, 10) || 0;
+        const el = document.getElementById(`rsiOpacityValue-${lineKey}`);
+        if (el) el.textContent = value;
+    },
+
+    openColorPickerForRSI(lineKey) {
+        const line = this.tempSettings?.RSI?.lines?.[lineKey];
+        if (!line) return;
+        this.openColorPicker(line.color, (color) => {
+            line.color = color;
+            const btn = document.querySelector(`.rsi-line-row[data-line="${lineKey}"] .color-picker-btn`);
+            if (btn) btn.style.background = color;
+        });
+    },
+
     // ========== Feature 1: 指標介紹 sub-tab ==========
 
     /**
      * 切換指標設定 / 指標介紹 sub-tab
      */
     _switchIndicatorSubTab(indicator, subtab) {
-        const contentId = indicator === 'MA' ? 'maSubTabContent' : 'bollSubTabContent';
+        const contentIdMap = {
+            MA: 'maSubTabContent',
+            BOLL: 'bollSubTabContent',
+            VOL: 'volSubTabContent',
+            RSI: 'rsiSubTabContent',
+        };
+        const contentId = contentIdMap[indicator];
+        if (!contentId) return;
+
         const panel = document.querySelector('.settings-panel.active');
         if (!panel) return;
 
@@ -363,7 +593,16 @@ Object.assign(window.ChartSettingsModal, {
         if (!contentEl) return;
 
         if (subtab === 'intro') {
-            contentEl.innerHTML = indicator === 'MA' ? this.renderMAIntro() : this.renderBOLLIntro();
+            const introMap = {
+                MA: this.renderMAIntro,
+                BOLL: this.renderBOLLIntro,
+                VOL: this.renderVOLIntro,
+                RSI: this.renderRSIIntro,
+            };
+            const introRenderer = introMap[indicator];
+            if (typeof introRenderer === 'function') {
+                contentEl.innerHTML = introRenderer.call(this);
+            }
         } else {
             // 重新渲染設定面板（恢復原始內容）
             this._renderTarget = indicator;
@@ -403,6 +642,43 @@ Object.assign(window.ChartSettingsModal, {
             </ul>
             <p>其中 σ(n) 為 n 期標準差，k 為股價特性參數（預設 2）。</p>
             <p>當價格觸及上軌，可能超買；觸及下軌，可能超賣。帶寬縮窄時往往預示大幅波動即將發生。</p>
+        </div>`;
+    },
+
+    /** VOL 指標介紹（依 volandrsi.md） */
+    renderVOLIntro() {
+        return `
+        <div class="intro-panel">
+            <h4>VOL（成交量）</h4>
+            <p>VOL（成交量）是最重要的指標之一。成交量指的是在一定時間內，某一證券或商品交易的數量或合約數，是市場活躍度的直接體現。</p>
+            <p>VOLUME 線畫法：</p>
+            <ul class="intro-list">
+                <li>若收盤價高過開盤價，成交量畫紅色空心實體。</li>
+                <li>否則畫綠色實心。</li>
+            </ul>
+        </div>`;
+    },
+
+    /** RSI 指標介紹（依 volandrsi.md） */
+    renderRSIIntro() {
+        return `
+        <div class="intro-panel">
+            <h4>RSI（相對強弱指標）</h4>
+            <p>RSI（Relative Strength Index）是相當常用的技術指標。它衡量多空力量的消長，反映股價變動中的上漲天數、下跌天數、上漲幅度與下跌幅度。</p>
+            <p>在長期市場中，RSI 多數時間落在 30 到 70 區間，40 到 60 最常見；高於 80 或低於 20 的機會較少，高於 90 或低於 10 更少見。</p>
+            <p>應用法則：</p>
+            <ul class="intro-list">
+                <li>RSI 比 K 線、美國線更容易觀察型態，可配合支撐線與阻力線判讀走勢。</li>
+                <li>RSI 可依頭肩頂、頭肩底、三角形等型態作為買賣訊號。</li>
+                <li>RSI 在 50 以下偏弱勢，50 以上偏強勢；在 50 以下的準確性通常較高。</li>
+                <li>6 日 RSI 值 85 以上視為超買，15 以下視為超賣；85 附近形成 W 底可視為買點參考。</li>
+                <li>盤整時 RSI 一底比一底高，代表多頭勢強；反之一底比一底低則為賣出時機。</li>
+                <li>股價創新高且 RSI 同步創高，後市偏強；若 RSI 未創高，反轉機率提高。</li>
+                <li>股價創新低且 RSI 同步創低，後市偏弱；若 RSI 未創低，反轉機率提高。</li>
+                <li>股價三度創高但 RSI 峰值轉弱，可能接近天價；股價創新低但 RSI 底值轉強，可能接近底價。</li>
+                <li>虛弱回轉若出現在 70 以上或 30 以下，常是較強烈的反轉訊號。</li>
+            </ul>
+            <p>提醒：在強勢上漲或急跌市場，RSI 進入超買/超賣區後仍可能持續鈍化，建議搭配其他技術分析工具一起判讀。</p>
         </div>`;
     }
 });

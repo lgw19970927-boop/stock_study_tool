@@ -3,6 +3,15 @@
     @apply flex-1 flex flex-col;
     padding: var(--spacing-md) var(--spacing-lg);
     min-height: 0;
+    overflow: visible;
+}
+
+.chart-container.chart-container--with-subcharts {
+    flex: 0 0 auto;
+}
+
+.chart-container.chart-container--with-subcharts .chart-wrapper {
+    flex: 0 0 auto;
 }
 
 .chart-header {
@@ -13,18 +22,33 @@
 .chart-title {
     @apply flex items-baseline;
     gap: var(--spacing-sm);
+    min-width: 0;
+    flex: 1; /* Bug5 Fix: 允許 title 區塊在 header 中伸展，sidebar 收起後可用寬度才會釋放給公司名稱 */
 }
 
 .chart-symbol {
     @apply text-xl font-bold text-accent-primary font-mono;
+    flex-shrink: 0;
 }
 
 .chart-name {
     @apply text-sm text-text-secondary;
 }
 
+.chart-stock-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* Bug5 Fix: 移除固定 max-width（vw 基底，不隨 sidebar 收起而變化）
+       改為 flex:1 讓元素在 chart-title 彈性容器內自然伸縮 */
+    flex: 1 1 0;
+    min-width: 0;
+}
+
 .chart-controls {
     @apply flex items-center gap-4;
+    flex-shrink: 0;
+    min-width: 0;
 }
 
 /* Shared chart control toggles (moved from strategy-manager import dependency) */
@@ -140,7 +164,7 @@ body.is-chart-viewport-fullscreen {
     overflow: hidden;
 }
 
-/* Custom in-page fullscreen — covers the viewport without using the native API */
+/* Backward-compatible selector (legacy target: chart-wrapper) */
 .chart-wrapper.chart-viewport-fullscreen {
     position: fixed;
     inset: 0;
@@ -152,12 +176,112 @@ body.is-chart-viewport-fullscreen {
     background: #131722;
 }
 
+/* Current fullscreen target: chart-container (包含 header + wrapper + 副圖) */
+.chart-container.chart-viewport-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    margin: 0;
+    padding: 12px 16px 16px;
+    border-radius: 0;
+    background: #10141d;
+    overflow-y: auto;
+}
+
+.chart-container.chart-viewport-fullscreen .chart-wrapper {
+    flex: 1 1 auto;
+}
+
 #chart {
     @apply w-full h-full;
 }
 
 .chart-overlay-indicator {
     @apply pointer-events-none absolute left-2 top-2 z-10;
+}
+
+.sub-chart-control-bars {
+    position: absolute;
+    inset: 0;
+    z-index: 16;
+    pointer-events: none;
+}
+
+.sub-chart-ctrl-bar {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 22px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    color: rgba(255, 255, 255, 0.82);
+    white-space: nowrap;
+    pointer-events: auto;
+}
+
+.sub-ctrl-btn {
+    border: none;
+    background: transparent;
+    color: rgba(220, 226, 240, 0.82);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+}
+
+.sub-ctrl-btn:hover {
+    color: #ffffff;
+}
+
+.sub-ctrl-label {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.sub-ctrl-values {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: rgba(220, 226, 240, 0.95);
+}
+
+.sub-line-token {
+    cursor: pointer;
+    color: rgba(220, 226, 240, 0.95);
+    transition: color 120ms ease, opacity 120ms ease;
+}
+
+.sub-line-token:hover {
+    color: #ffffff;
+}
+
+.sub-line-token.is-disabled {
+    opacity: 0.45;
+}
+
+.sub-line-token.is-disabled:hover {
+    opacity: 0.72;
+}
+
+.sub-ctrl-expand {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sub-icon-expand,
+.sub-icon-collapse {
+    display: inline-flex;
 }
 
 .chart-overlay-annotation {
@@ -183,6 +307,33 @@ body.is-chart-viewport-fullscreen {
     @apply flex;
     gap: var(--spacing-lg);
     padding-top: var(--spacing-md);
+}
+
+.chart-bottom-resize-handle {
+    position: relative;
+    margin-top: 6px;
+    height: 10px;
+    border-radius: 999px;
+    cursor: row-resize;
+}
+
+.chart-bottom-resize-handle::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 4px;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 2px;
+    border-radius: 999px;
+    background: rgba(126, 136, 155, 0.42);
+    transition: background-color 120ms ease, width 120ms ease;
+}
+
+.chart-bottom-resize-handle:hover::before,
+.chart-bottom-resize-handle.is-dragging::before {
+    width: 84px;
+    background: rgba(172, 187, 213, 0.72);
 }
 
 .legend-item {

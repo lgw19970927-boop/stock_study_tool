@@ -187,10 +187,13 @@ window.IndicatorTopBar = {
         const state = window.state?.chartIndicators;
         if (!state) return;
 
+        let changed = false;
+
         if (type === 'MA' && state.MA && state.MA.lines) {
             const ma = state.MA.lines.find(m => m.period === identifier);
             if (ma) {
                 ma.isEnabled = !ma.isEnabled;
+                changed = true;
                 // 同步 modal checkbox
                 const cb = document.querySelector(`.ma-line-item[data-period="${identifier}"] input[type="checkbox"]`);
                 if (cb) cb.checked = ma.isEnabled;
@@ -199,13 +202,20 @@ window.IndicatorTopBar = {
             const line = state.BOLL.lines[identifier];
             if (line) {
                 line.isEnabled = !line.isEnabled;
+                changed = true;
                 const cb = document.querySelector(`.boll-line-config[data-line="${identifier}"] input[type="checkbox"]`);
                 if (cb) cb.checked = line.isEnabled;
             }
         }
 
+        if (!changed) return;
+
+        if (window.ChartSettingsModal) {
+            window.ChartSettingsModal.saveToLocalStorage();
+        }
+
         if (window.ChartController) {
-            window.ChartController.renderIndicatorsFromState();
+            window.ChartController.toggleMainIndicatorLineVisibility(type, identifier);
         }
         this.render();
     }

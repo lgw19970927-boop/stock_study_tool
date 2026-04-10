@@ -1,0 +1,1902 @@
+{
+  "meta": {
+    "startedAt": "2026-04-10T21:57:39.807Z",
+    "baseUrl": "http://localhost/screening",
+    "headless": true,
+    "pxTolerance": 2,
+    "ratioTolerance": 0.01,
+    "finishedAt": "2026-04-10T21:57:57.377Z"
+  },
+  "symbols": [
+    "AA",
+    "AAA",
+    "AAAA"
+  ],
+  "cases": [
+    {
+      "name": "Bug2_no_drag",
+      "checks": [
+        {
+          "name": "step1 vs step3 RSI panePx stable",
+          "pass": true,
+          "actual": 138,
+          "expected": 138,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "step1 vs step3 RSI.saved stable",
+          "pass": true,
+          "actual": 147,
+          "expected": 147,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "step2 vs step0 VOL panePx stable",
+          "pass": true,
+          "actual": 137,
+          "expected": 137,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "step2 vs step0 RSI panePx stable",
+          "pass": true,
+          "actual": 138,
+          "expected": 138,
+          "diff": 0,
+          "tolerance": 2
+        }
+      ],
+      "snapshots": [
+        {
+          "label": "Bug2_no_drag step0 baseline",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 205
+            },
+            {
+              "i": 1,
+              "px": 137
+            },
+            {
+              "i": 2,
+              "px": 138
+            }
+          ],
+          "panePxSum": 480,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 219,
+          "VOL": {
+            "saved": 147,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 147,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 210,
+              "expectedTop": 207,
+              "diff": 3
+            },
+            "RSI": {
+              "actualTop": 349,
+              "expectedTop": 344,
+              "diff": 5
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:43.669Z"
+        },
+        {
+          "label": "Bug2_no_drag step1 close_VOL",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 345
+            },
+            {
+              "i": 1,
+              "px": 138
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 366,
+          "VOL": {
+            "saved": 147,
+            "paneIdx": 0,
+            "enabled": false
+          },
+          "RSI": {
+            "saved": 147,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "controlBars": {
+            "RSI": {
+              "actualTop": 348,
+              "expectedTop": 347,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:43.966Z"
+        },
+        {
+          "label": "Bug2_no_drag step2 reopen_VOL",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 207
+            },
+            {
+              "i": 1,
+              "px": 137
+            },
+            {
+              "i": 2,
+              "px": 138
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 219,
+          "VOL": {
+            "saved": 147,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 147,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 212,
+              "expectedTop": 209,
+              "diff": 3
+            },
+            "RSI": {
+              "actualTop": 351,
+              "expectedTop": 346,
+              "diff": 5
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:44.266Z"
+        },
+        {
+          "label": "Bug2_no_drag step3 close_VOL_again",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 345
+            },
+            {
+              "i": 1,
+              "px": 138
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 366,
+          "VOL": {
+            "saved": 147,
+            "paneIdx": 0,
+            "enabled": false
+          },
+          "RSI": {
+            "saved": 147,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "controlBars": {
+            "RSI": {
+              "actualTop": 348,
+              "expectedTop": 347,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:44.550Z"
+        }
+      ]
+    },
+    {
+      "name": "Bug2_pre_drag",
+      "checks": [
+        {
+          "name": "step1 vs step3 RSI panePx stable",
+          "pass": true,
+          "actual": 80,
+          "expected": 80,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "step1 vs step3 RSI.saved stable",
+          "pass": true,
+          "actual": 85,
+          "expected": 85,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "step2 vs step0 VOL panePx stable",
+          "pass": true,
+          "actual": 165,
+          "expected": 166,
+          "diff": -1,
+          "tolerance": 2
+        },
+        {
+          "name": "step2 vs step0 RSI panePx stable",
+          "pass": true,
+          "actual": 80,
+          "expected": 80,
+          "diff": 0,
+          "tolerance": 2
+        }
+      ],
+      "snapshots": [
+        {
+          "label": "Bug2_pre_drag step0 baseline",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 236
+            },
+            {
+              "i": 1,
+              "px": 166
+            },
+            {
+              "i": 2,
+              "px": 80
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 251,
+          "VOL": {
+            "saved": 177,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 85,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 239,
+              "expectedTop": 238,
+              "diff": 1
+            },
+            "RSI": {
+              "actualTop": 405,
+              "expectedTop": 404,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:45.407Z"
+        },
+        {
+          "label": "Bug2_pre_drag step1 close_VOL",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 403
+            },
+            {
+              "i": 1,
+              "px": 80
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 428,
+          "VOL": {
+            "saved": 177,
+            "paneIdx": 0,
+            "enabled": false
+          },
+          "RSI": {
+            "saved": 85,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "controlBars": {
+            "RSI": {
+              "actualTop": 406,
+              "expectedTop": 405,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:45.717Z"
+        },
+        {
+          "label": "Bug2_pre_drag step2 reopen_VOL",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 237
+            },
+            {
+              "i": 1,
+              "px": 165
+            },
+            {
+              "i": 2,
+              "px": 80
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 251,
+          "VOL": {
+            "saved": 177,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 85,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 241,
+              "expectedTop": 239,
+              "diff": 2
+            },
+            "RSI": {
+              "actualTop": 407,
+              "expectedTop": 404,
+              "diff": 3
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:46.020Z"
+        },
+        {
+          "label": "Bug2_pre_drag step3 close_VOL_again",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 403
+            },
+            {
+              "i": 1,
+              "px": 80
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 428,
+          "VOL": {
+            "saved": 177,
+            "paneIdx": 0,
+            "enabled": false
+          },
+          "RSI": {
+            "saved": 85,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "controlBars": {
+            "RSI": {
+              "actualTop": 406,
+              "expectedTop": 405,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:46.317Z"
+        }
+      ]
+    },
+    {
+      "name": "Bug3_no_drag",
+      "checks": [
+        {
+          "name": "expand RSI keeps main height",
+          "pass": true,
+          "actual": 208,
+          "expected": 208,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "expand VOL keeps main height",
+          "pass": true,
+          "actual": 208,
+          "expected": 208,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse RSI returns to baseline main panePx",
+          "pass": true,
+          "actual": 208,
+          "expected": 208,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse RSI returns to baseline VOL panePx",
+          "pass": true,
+          "actual": 138,
+          "expected": 137,
+          "diff": 1,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse RSI returns to baseline RSI panePx",
+          "pass": true,
+          "actual": 136,
+          "expected": 137,
+          "diff": -1,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse VOL returns to baseline main panePx",
+          "pass": true,
+          "actual": 208,
+          "expected": 208,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse VOL returns to baseline VOL panePx",
+          "pass": true,
+          "actual": 139,
+          "expected": 137,
+          "diff": 2,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse VOL returns to baseline RSI panePx",
+          "pass": true,
+          "actual": 135,
+          "expected": 137,
+          "diff": -2,
+          "tolerance": 2
+        }
+      ],
+      "snapshots": [
+        {
+          "label": "Bug3_no_drag step0 baseline",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 208
+            },
+            {
+              "i": 1,
+              "px": 137
+            },
+            {
+              "i": 2,
+              "px": 137
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 219,
+          "VOL": {
+            "saved": 147,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 147,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 214,
+              "expectedTop": 210,
+              "diff": 4
+            },
+            "RSI": {
+              "actualTop": 354,
+              "expectedTop": 347,
+              "diff": 7
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:46.783Z"
+        },
+        {
+          "label": "Bug3_no_drag step1 expand_RSI",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 208
+            },
+            {
+              "i": 1,
+              "px": 275
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 221,
+          "VOL": {
+            "saved": 147,
+            "paneIdx": 0,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 147,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "controlBars": {
+            "RSI": {
+              "actualTop": 325,
+              "expectedTop": 210,
+              "diff": 115
+            }
+          },
+          "expanded": "RSI",
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:47.016Z"
+        },
+        {
+          "label": "Bug3_no_drag step2 collapse_RSI",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 208
+            },
+            {
+              "i": 1,
+              "px": 138
+            },
+            {
+              "i": 2,
+              "px": 136
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 221,
+          "VOL": {
+            "saved": 146,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 146,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 210,
+              "expectedTop": 210,
+              "diff": 0
+            },
+            "RSI": {
+              "actualTop": 347,
+              "expectedTop": 348,
+              "diff": -1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:47.274Z"
+        },
+        {
+          "label": "Bug3_no_drag step3 expand_VOL",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 208
+            },
+            {
+              "i": 1,
+              "px": 275
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 221,
+          "VOL": {
+            "saved": 146,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 146,
+            "paneIdx": 0,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 286,
+              "expectedTop": 210,
+              "diff": 76
+            }
+          },
+          "expanded": "VOL",
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:47.501Z"
+        },
+        {
+          "label": "Bug3_no_drag step4 collapse_VOL",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 208
+            },
+            {
+              "i": 1,
+              "px": 139
+            },
+            {
+              "i": 2,
+              "px": 135
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 221,
+          "VOL": {
+            "saved": 147,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 145,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 210,
+              "expectedTop": 210,
+              "diff": 0
+            },
+            "RSI": {
+              "actualTop": 348,
+              "expectedTop": 349,
+              "diff": -1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:47.750Z"
+        }
+      ]
+    },
+    {
+      "name": "Bug3_pre_drag",
+      "checks": [
+        {
+          "name": "expand RSI keeps main height",
+          "pass": true,
+          "actual": 235,
+          "expected": 235,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "expand VOL keeps main height",
+          "pass": true,
+          "actual": 235,
+          "expected": 235,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse RSI returns to baseline main panePx",
+          "pass": true,
+          "actual": 235,
+          "expected": 235,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse RSI returns to baseline VOL panePx",
+          "pass": true,
+          "actual": 168,
+          "expected": 168,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse RSI returns to baseline RSI panePx",
+          "pass": true,
+          "actual": 79,
+          "expected": 79,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse VOL returns to baseline main panePx",
+          "pass": true,
+          "actual": 235,
+          "expected": 235,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse VOL returns to baseline VOL panePx",
+          "pass": true,
+          "actual": 169,
+          "expected": 168,
+          "diff": 1,
+          "tolerance": 2
+        },
+        {
+          "name": "collapse VOL returns to baseline RSI panePx",
+          "pass": true,
+          "actual": 78,
+          "expected": 79,
+          "diff": -1,
+          "tolerance": 2
+        }
+      ],
+      "snapshots": [
+        {
+          "label": "Bug3_pre_drag step0 baseline",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 235
+            },
+            {
+              "i": 1,
+              "px": 168
+            },
+            {
+              "i": 2,
+              "px": 79
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 250,
+          "VOL": {
+            "saved": 179,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 84,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 238,
+              "expectedTop": 237,
+              "diff": 1
+            },
+            "RSI": {
+              "actualTop": 406,
+              "expectedTop": 405,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:48.606Z"
+        },
+        {
+          "label": "Bug3_pre_drag step1 expand_RSI",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 235
+            },
+            {
+              "i": 1,
+              "px": 248
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 250,
+          "VOL": {
+            "saved": 179,
+            "paneIdx": 0,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 84,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "controlBars": {
+            "RSI": {
+              "actualTop": 301,
+              "expectedTop": 237,
+              "diff": 64
+            }
+          },
+          "expanded": "RSI",
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:48.863Z"
+        },
+        {
+          "label": "Bug3_pre_drag step2 collapse_RSI",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 235
+            },
+            {
+              "i": 1,
+              "px": 168
+            },
+            {
+              "i": 2,
+              "px": 79
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 250,
+          "VOL": {
+            "saved": 179,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 84,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 236,
+              "expectedTop": 237,
+              "diff": -1
+            },
+            "RSI": {
+              "actualTop": 403,
+              "expectedTop": 405,
+              "diff": -2
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:49.120Z"
+        },
+        {
+          "label": "Bug3_pre_drag step3 expand_VOL",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 235
+            },
+            {
+              "i": 1,
+              "px": 248
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 250,
+          "VOL": {
+            "saved": 179,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 84,
+            "paneIdx": 0,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 300,
+              "expectedTop": 237,
+              "diff": 63
+            }
+          },
+          "expanded": "VOL",
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:49.356Z"
+        },
+        {
+          "label": "Bug3_pre_drag step4 collapse_VOL",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 235
+            },
+            {
+              "i": 1,
+              "px": 169
+            },
+            {
+              "i": 2,
+              "px": 78
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 250,
+          "VOL": {
+            "saved": 179,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 84,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 236,
+              "expectedTop": 237,
+              "diff": -1
+            },
+            "RSI": {
+              "actualTop": 403,
+              "expectedTop": 406,
+              "diff": -3
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:49.599Z"
+        }
+      ]
+    },
+    {
+      "name": "Bug4_no_drag_switch_stock",
+      "checks": [
+        {
+          "name": "A->B savedHeight VOL.saved",
+          "pass": true,
+          "actual": 147,
+          "expected": 147,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B savedHeight RSI.saved",
+          "pass": true,
+          "actual": 147,
+          "expected": 147,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C savedHeight VOL.saved",
+          "pass": true,
+          "actual": 147,
+          "expected": 147,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C savedHeight RSI.saved",
+          "pass": true,
+          "actual": 147,
+          "expected": 147,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B panePx main panePx",
+          "pass": true,
+          "actual": 207,
+          "expected": 206,
+          "diff": 1,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B panePx VOL panePx",
+          "pass": true,
+          "actual": 138,
+          "expected": 138,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B panePx RSI panePx",
+          "pass": true,
+          "actual": 137,
+          "expected": 138,
+          "diff": -1,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C panePx main panePx",
+          "pass": true,
+          "actual": 207,
+          "expected": 206,
+          "diff": 1,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C panePx VOL panePx",
+          "pass": true,
+          "actual": 138,
+          "expected": 138,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C panePx RSI panePx",
+          "pass": true,
+          "actual": 137,
+          "expected": 138,
+          "diff": -1,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B pane ratio main ratio",
+          "pass": true,
+          "actual": 0.42946058091286304,
+          "expected": 0.42738589211618255,
+          "diff": 0.002075,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A->B pane ratio VOL ratio",
+          "pass": true,
+          "actual": 0.2863070539419087,
+          "expected": 0.2863070539419087,
+          "diff": 0,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A->B pane ratio RSI ratio",
+          "pass": true,
+          "actual": 0.2842323651452282,
+          "expected": 0.2863070539419087,
+          "diff": -0.002075,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A->C pane ratio main ratio",
+          "pass": true,
+          "actual": 0.42946058091286304,
+          "expected": 0.42738589211618255,
+          "diff": 0.002075,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A->C pane ratio VOL ratio",
+          "pass": true,
+          "actual": 0.2863070539419087,
+          "expected": 0.2863070539419087,
+          "diff": 0,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A->C pane ratio RSI ratio",
+          "pass": true,
+          "actual": 0.2842323651452282,
+          "expected": 0.2863070539419087,
+          "diff": -0.002075,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A VOL control bar aligned",
+          "pass": true,
+          "actual": 210,
+          "expected": 208,
+          "diff": 2,
+          "tolerance": 4
+        },
+        {
+          "name": "A RSI control bar aligned",
+          "pass": true,
+          "actual": 349,
+          "expected": 346,
+          "diff": 3,
+          "tolerance": 4
+        },
+        {
+          "name": "B VOL control bar aligned",
+          "pass": true,
+          "actual": 210,
+          "expected": 209,
+          "diff": 1,
+          "tolerance": 4
+        },
+        {
+          "name": "B RSI control bar aligned",
+          "pass": true,
+          "actual": 348,
+          "expected": 347,
+          "diff": 1,
+          "tolerance": 4
+        },
+        {
+          "name": "C VOL control bar aligned",
+          "pass": true,
+          "actual": 210,
+          "expected": 209,
+          "diff": 1,
+          "tolerance": 4
+        },
+        {
+          "name": "C RSI control bar aligned",
+          "pass": true,
+          "actual": 348,
+          "expected": 347,
+          "diff": 1,
+          "tolerance": 4
+        }
+      ],
+      "snapshots": [
+        {
+          "label": "Bug4_no_drag_switch_stock step0 AA",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 206
+            },
+            {
+              "i": 1,
+              "px": 138
+            },
+            {
+              "i": 2,
+              "px": 138
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 219,
+          "VOL": {
+            "saved": 147,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 147,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 210,
+              "expectedTop": 208,
+              "diff": 2
+            },
+            "RSI": {
+              "actualTop": 349,
+              "expectedTop": 346,
+              "diff": 3
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:50.917Z"
+        },
+        {
+          "label": "Bug4_no_drag_switch_stock step1 AA_to_AAA",
+          "symbol": "AAA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 207
+            },
+            {
+              "i": 1,
+              "px": 138
+            },
+            {
+              "i": 2,
+              "px": 137
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 219,
+          "VOL": {
+            "saved": 147,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 147,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 210,
+              "expectedTop": 209,
+              "diff": 1
+            },
+            "RSI": {
+              "actualTop": 348,
+              "expectedTop": 347,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:51.181Z"
+        },
+        {
+          "label": "Bug4_no_drag_switch_stock step2 AAA_to_AAAA",
+          "symbol": "AAAA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 207
+            },
+            {
+              "i": 1,
+              "px": 138
+            },
+            {
+              "i": 2,
+              "px": 137
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 219,
+          "VOL": {
+            "saved": 147,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 147,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 210,
+              "expectedTop": 209,
+              "diff": 1
+            },
+            "RSI": {
+              "actualTop": 348,
+              "expectedTop": 347,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:51.399Z"
+        }
+      ]
+    },
+    {
+      "name": "Bug4_pre_drag_switch_stock",
+      "checks": [
+        {
+          "name": "A->B savedHeight VOL.saved",
+          "pass": true,
+          "actual": 178,
+          "expected": 178,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B savedHeight RSI.saved",
+          "pass": true,
+          "actual": 85,
+          "expected": 85,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C savedHeight VOL.saved",
+          "pass": true,
+          "actual": 178,
+          "expected": 178,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C savedHeight RSI.saved",
+          "pass": true,
+          "actual": 85,
+          "expected": 85,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B panePx main panePx",
+          "pass": true,
+          "actual": 235,
+          "expected": 235,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B panePx VOL panePx",
+          "pass": true,
+          "actual": 168,
+          "expected": 167,
+          "diff": 1,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B panePx RSI panePx",
+          "pass": true,
+          "actual": 79,
+          "expected": 80,
+          "diff": -1,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C panePx main panePx",
+          "pass": true,
+          "actual": 235,
+          "expected": 235,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C panePx VOL panePx",
+          "pass": true,
+          "actual": 167,
+          "expected": 167,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C panePx RSI panePx",
+          "pass": true,
+          "actual": 80,
+          "expected": 80,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B pane ratio main ratio",
+          "pass": true,
+          "actual": 0.487551867219917,
+          "expected": 0.487551867219917,
+          "diff": 0,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A->B pane ratio VOL ratio",
+          "pass": true,
+          "actual": 0.34854771784232363,
+          "expected": 0.34647302904564314,
+          "diff": 0.002075,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A->B pane ratio RSI ratio",
+          "pass": true,
+          "actual": 0.16390041493775934,
+          "expected": 0.16597510373443983,
+          "diff": -0.002075,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A->C pane ratio main ratio",
+          "pass": true,
+          "actual": 0.487551867219917,
+          "expected": 0.487551867219917,
+          "diff": 0,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A->C pane ratio VOL ratio",
+          "pass": true,
+          "actual": 0.34647302904564314,
+          "expected": 0.34647302904564314,
+          "diff": 0,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A->C pane ratio RSI ratio",
+          "pass": true,
+          "actual": 0.16597510373443983,
+          "expected": 0.16597510373443983,
+          "diff": 0,
+          "tolerance": 0.01
+        },
+        {
+          "name": "A VOL control bar aligned",
+          "pass": true,
+          "actual": 238,
+          "expected": 237,
+          "diff": 1,
+          "tolerance": 4
+        },
+        {
+          "name": "A RSI control bar aligned",
+          "pass": true,
+          "actual": 405,
+          "expected": 404,
+          "diff": 1,
+          "tolerance": 4
+        },
+        {
+          "name": "B VOL control bar aligned",
+          "pass": true,
+          "actual": 237,
+          "expected": 237,
+          "diff": 0,
+          "tolerance": 4
+        },
+        {
+          "name": "B RSI control bar aligned",
+          "pass": true,
+          "actual": 404,
+          "expected": 405,
+          "diff": -1,
+          "tolerance": 4
+        },
+        {
+          "name": "C VOL control bar aligned",
+          "pass": true,
+          "actual": 238,
+          "expected": 237,
+          "diff": 1,
+          "tolerance": 4
+        },
+        {
+          "name": "C RSI control bar aligned",
+          "pass": true,
+          "actual": 405,
+          "expected": 404,
+          "diff": 1,
+          "tolerance": 4
+        }
+      ],
+      "snapshots": [
+        {
+          "label": "Bug4_pre_drag_switch_stock step0 AA",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 235
+            },
+            {
+              "i": 1,
+              "px": 167
+            },
+            {
+              "i": 2,
+              "px": 80
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 250,
+          "VOL": {
+            "saved": 178,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 85,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 238,
+              "expectedTop": 237,
+              "diff": 1
+            },
+            "RSI": {
+              "actualTop": 405,
+              "expectedTop": 404,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:53.106Z"
+        },
+        {
+          "label": "Bug4_pre_drag_switch_stock step1 AA_to_AAA",
+          "symbol": "AAA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 235
+            },
+            {
+              "i": 1,
+              "px": 168
+            },
+            {
+              "i": 2,
+              "px": 79
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 250,
+          "VOL": {
+            "saved": 178,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 85,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 237,
+              "expectedTop": 237,
+              "diff": 0
+            },
+            "RSI": {
+              "actualTop": 404,
+              "expectedTop": 405,
+              "diff": -1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:53.400Z"
+        },
+        {
+          "label": "Bug4_pre_drag_switch_stock step2 AAA_to_AAAA",
+          "symbol": "AAAA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 235
+            },
+            {
+              "i": 1,
+              "px": 167
+            },
+            {
+              "i": 2,
+              "px": 80
+            }
+          ],
+          "panePxSum": 482,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 250,
+          "VOL": {
+            "saved": 178,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": 85,
+            "paneIdx": 2,
+            "enabled": true
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 238,
+              "expectedTop": 237,
+              "diff": 1
+            },
+            "RSI": {
+              "actualTop": 405,
+              "expectedTop": 404,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:53.615Z"
+        }
+      ]
+    },
+    {
+      "name": "Bug4_single_sub_drag_switch_stock",
+      "checks": [
+        {
+          "name": "A->B VOL.saved stable",
+          "pass": true,
+          "actual": 202,
+          "expected": 202,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C VOL.saved stable",
+          "pass": true,
+          "actual": 202,
+          "expected": 202,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B VOL panePx stable",
+          "pass": true,
+          "actual": 190,
+          "expected": 190,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C VOL panePx stable",
+          "pass": true,
+          "actual": 190,
+          "expected": 190,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->B main panePx stable",
+          "pass": true,
+          "actual": 293,
+          "expected": 293,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A->C main panePx stable",
+          "pass": true,
+          "actual": 293,
+          "expected": 293,
+          "diff": 0,
+          "tolerance": 2
+        },
+        {
+          "name": "A VOL control bar aligned",
+          "pass": true,
+          "actual": 296,
+          "expected": 295,
+          "diff": 1,
+          "tolerance": 4
+        },
+        {
+          "name": "B VOL control bar aligned",
+          "pass": true,
+          "actual": 296,
+          "expected": 295,
+          "diff": 1,
+          "tolerance": 4
+        },
+        {
+          "name": "C VOL control bar aligned",
+          "pass": true,
+          "actual": 296,
+          "expected": 295,
+          "diff": 1,
+          "tolerance": 4
+        }
+      ],
+      "snapshots": [
+        {
+          "label": "Bug4_single_sub_drag_switch_stock step0 AA",
+          "symbol": "AA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 293
+            },
+            {
+              "i": 1,
+              "px": 190
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 311,
+          "VOL": {
+            "saved": 202,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": null,
+            "paneIdx": 0,
+            "enabled": false
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 296,
+              "expectedTop": 295,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:55.266Z"
+        },
+        {
+          "label": "Bug4_single_sub_drag_switch_stock step1 AA_to_AAA",
+          "symbol": "AAA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 293
+            },
+            {
+              "i": 1,
+              "px": 190
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 311,
+          "VOL": {
+            "saved": 202,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": null,
+            "paneIdx": 0,
+            "enabled": false
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 296,
+              "expectedTop": 295,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:55.551Z"
+        },
+        {
+          "label": "Bug4_single_sub_drag_switch_stock step2 AAA_to_AAAA",
+          "symbol": "AAAA",
+          "panePx": [
+            {
+              "i": 0,
+              "px": 293
+            },
+            {
+              "i": 1,
+              "px": 190
+            }
+          ],
+          "panePxSum": 483,
+          "wrapperPx": 513,
+          "totalContH": 513,
+          "baseMH": 311,
+          "VOL": {
+            "saved": 202,
+            "paneIdx": 1,
+            "enabled": true
+          },
+          "RSI": {
+            "saved": null,
+            "paneIdx": 0,
+            "enabled": false
+          },
+          "controlBars": {
+            "VOL": {
+              "actualTop": 296,
+              "expectedTop": 295,
+              "diff": 1
+            }
+          },
+          "expanded": null,
+          "rendering": false,
+          "capturedAt": "2026-04-10T21:57:55.766Z"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalCases": 7,
+    "totalChecks": 77,
+    "failedChecks": 0,
+    "passed": true,
+    "caseSummaries": [
+      {
+        "name": "Bug2_no_drag",
+        "totalChecks": 4,
+        "failedChecks": 0,
+        "passed": true
+      },
+      {
+        "name": "Bug2_pre_drag",
+        "totalChecks": 4,
+        "failedChecks": 0,
+        "passed": true
+      },
+      {
+        "name": "Bug3_no_drag",
+        "totalChecks": 8,
+        "failedChecks": 0,
+        "passed": true
+      },
+      {
+        "name": "Bug3_pre_drag",
+        "totalChecks": 8,
+        "failedChecks": 0,
+        "passed": true
+      },
+      {
+        "name": "Bug4_no_drag_switch_stock",
+        "totalChecks": 22,
+        "failedChecks": 0,
+        "passed": true
+      },
+      {
+        "name": "Bug4_pre_drag_switch_stock",
+        "totalChecks": 22,
+        "failedChecks": 0,
+        "passed": true
+      },
+      {
+        "name": "Bug4_single_sub_drag_switch_stock",
+        "totalChecks": 9,
+        "failedChecks": 0,
+        "passed": true
+      }
+    ]
+  }
+}

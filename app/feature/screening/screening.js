@@ -35,8 +35,30 @@ window.state = {
                 upper:  { color: '#808080', lineWidth: 1, opacity: 100, isEnabled: true, series: null },
                 lower:  { color: '#00ffff', lineWidth: 1, opacity: 100, isEnabled: true, series: null }
             }
-        }
-    }
+        },
+        VOL: {
+            isGlobalEnabled: false,
+            paneIndex: null,
+            isExpanded: false,
+            savedHeight: null,
+            lines: {
+                VOL1: { color: '#ef5350', lineWidth: 9, opacity: 100, isEnabled: true, series: null, lastValue: null }
+            }
+        },
+        RSI: {
+            isGlobalEnabled: false,
+            paneIndex: null,
+            isExpanded: false,
+            savedHeight: null,
+            lines: {
+                RSI1: { period: 6,  color: '#ff9800', lineWidth: 1, opacity: 100, isEnabled: true, series: null, lastValue: null },
+                RSI2: { period: 12, color: '#00bcd4', lineWidth: 1, opacity: 100, isEnabled: true, series: null, lastValue: null },
+                RSI3: { period: 24, color: '#e91e63', lineWidth: 1, opacity: 100, isEnabled: true, series: null, lastValue: null }
+            }
+        },
+        subChartOrder: []
+    },
+    expandedSubChart: null
 };
 
 window.ScreeningPage = {
@@ -83,6 +105,8 @@ window.ScreeningPage = {
         this.initSidebarResize();
         // Feature4: 上下分割拖拉調整
         this.initVerticalResize();
+        // Feature5: 圖表底部拖拉調整整體高度
+        this.initChartBottomResize();
 
         // 欄位排序標題初始化
         this._initSortHeaders();
@@ -641,8 +665,9 @@ window.ScreeningPage = {
 
     initFullscreen: function () {
         const btn = document.getElementById('btnFullscreen');
+        const container = document.getElementById('chartContainer');
         const wrapper = document.getElementById('chartWrapper');
-        if (!btn || !wrapper) return;
+        if (!btn || !wrapper || !container) return;
 
         const updateIcons = (isFull) => {
             const iconIn  = document.getElementById('iconFullscreen');
@@ -653,39 +678,93 @@ window.ScreeningPage = {
             if (iconOut) {
                 iconOut.classList.toggle('is-hidden', !isFull);
             }
+            btn.title = isFull ? '退出全螢幕' : '全螢幕顯示';
         };
 
         const resizeChart = () => {
             if (window.ChartController && window.ChartController.chart) {
                 setTimeout(() => {
                     const el = document.getElementById('chartWrapper');
-                    if (el) window.ChartController.chart.applyOptions({
-                        width: el.clientWidth,
-                        height: el.clientHeight
-                    });
-                }, 50);
+                    const isFull = container.classList.contains('chart-viewport-fullscreen');
+                    if (el) {
+                        // Bug 8 Fix: in fullscreen, clear the inline height so CSS flex:1 takes over
+                        if (isFull) {
+                            el.style.removeProperty('height');
+                            el.style.removeProperty('min-height');
+                        }
+                        const h = el.clientHeight || el.offsetHeight || (isFull ? window.innerHeight - 80 : 420);
+                        if (typeof window.ChartController.chart.resize === 'function') {
+                            window.ChartController.chart.resize(el.clientWidth, h);
+                        } else {
+                            window.ChartController.chart.applyOptions({
+                                width: el.clientWidth,
+                                height: h,
+                            });
+                        }
+                        // Update the controller's authoritative height so _updateSubChartPaneHeights
+                        // uses the new fullscreen dimensions instead of the old stored value.
+                        if (isFull && h > 0) {
+                            window.ChartController._totalContainerHeight = h;
+                            window.ChartController._manualChartHeight = null;
+                        }
+                    }
+                    if (window.SubChartControlBar) {
+                        window.SubChartControlBar.updateLayout();
+                    }
+                    if (window.ChartController && typeof window.ChartController.syncSubChartLayout === 'function') {
+                        window.ChartController.syncSubChartLayout();
+                    }
+                }, 80);
             }
         };
 
         const setFullscreenState = (isFull) => {
-            wrapper.classList.toggle('chart-viewport-fullscreen', isFull);
+            // R3-2: Save height when transitioning INTO fullscreen (not already fullscreen)
+            if (isFull && !container.classList.contains('chart-viewport-fullscreen') && window.ChartController) {
+                const ctrl = window.ChartController;
+                ctrl._preFullscreenHeight =
+                    ctrl._totalContainerHeight
+                    || ctrl._manualChartHeight
+                    || ctrl._defaultTotalHeight
+                    || (document.getElementById('chartWrapper')?.getBoundingClientRect().height || null);
+            }
+            container.classList.toggle('chart-viewport-fullscreen', isFull);
             document.body.classList.toggle('is-chart-viewport-fullscreen', isFull);
             updateIcons(isFull);
+            // R3-2: on exit, restore the wrapper to pre-fullscreen dimensions
+            if (!isFull && window.ChartController) {
+                const ctrl = window.ChartController;
+                const el = document.getElementById('chartWrapper');
+                const savedH = ctrl._preFullscreenHeight;
+                if (el && savedH) {
+                    ctrl._totalContainerHeight = savedH;
+                    ctrl._manualChartHeight = savedH;
+                    el.style.height = `${savedH}px`;
+                    el.style.minHeight = `${savedH}px`;
+                } else if (el) {
+                    // Never manually dragged: clear heights so CSS flex takes over naturally
+                    ctrl._totalContainerHeight = null;
+                    ctrl._manualChartHeight = null;
+                    el.style.removeProperty('height');
+                    el.style.removeProperty('min-height');
+                }
+                ctrl._preFullscreenHeight = null; // consume to prevent stale reuse
+            }
             resizeChart();
         };
 
         btn.addEventListener('click', () => {
-            setFullscreenState(!wrapper.classList.contains('chart-viewport-fullscreen'));
+            setFullscreenState(!container.classList.contains('chart-viewport-fullscreen'));
         });
 
         // Allow Escape key to exit viewport fullscreen
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && wrapper.classList.contains('chart-viewport-fullscreen')) {
+            if (e.key === 'Escape' && container.classList.contains('chart-viewport-fullscreen')) {
                 setFullscreenState(false);
             }
         });
 
-        setFullscreenState(wrapper.classList.contains('chart-viewport-fullscreen'));
+        setFullscreenState(container.classList.contains('chart-viewport-fullscreen'));
     },
 
     // ───────────────────────────────────────────────────────────
@@ -808,10 +887,20 @@ window.ScreeningPage = {
                 if (window.ChartController && window.ChartController.chart) {
                     const chartWrapper = document.getElementById('chartWrapper');
                     if (chartWrapper) {
-                        window.ChartController.chart.applyOptions({
-                            width: chartWrapper.clientWidth,
-                            height: chartWrapper.clientHeight
-                        });
+                        if (typeof window.ChartController.chart.resize === 'function') {
+                            window.ChartController.chart.resize(chartWrapper.clientWidth, chartWrapper.clientHeight);
+                        } else {
+                            window.ChartController.chart.applyOptions({
+                                width: chartWrapper.clientWidth,
+                                height: chartWrapper.clientHeight
+                            });
+                        }
+                        if (window.SubChartControlBar) {
+                            window.SubChartControlBar.updateLayout();
+                        }
+                        if (window.ChartController && typeof window.ChartController.syncSubChartLayout === 'function') {
+                            window.ChartController.syncSubChartLayout();
+                        }
                     }
                 }
             };
@@ -824,6 +913,57 @@ window.ScreeningPage = {
             };
             document.addEventListener('mousemove', onMove);
             document.addEventListener('mouseup', onUp);
+        });
+    },
+
+    initChartBottomResize: function () {
+        const handle = document.getElementById('chartBottomResizeHandle');
+        const chartWrapper = document.getElementById('chartWrapper');
+        const chartContainer = document.getElementById('chartContainer');
+        if (!handle || !chartWrapper || !chartContainer) return;
+
+        handle.addEventListener('mousedown', (e) => {
+            const startY = e.clientY;
+            const startH = chartWrapper.getBoundingClientRect().height;
+            handle.classList.add('is-dragging');
+            document.body.style.cursor = 'row-resize';
+            document.body.style.userSelect = 'none';
+
+            const onMove = (ev) => {
+                const delta = ev.clientY - startY;
+                const maxHeight = Math.max(420, window.innerHeight * 1.4);
+                const nextHeight = Math.max(260, Math.min(maxHeight, startH + delta));
+
+                if (window.ChartController && typeof window.ChartController.setChartHeightByDrag === 'function') {
+                    window.ChartController.setChartHeightByDrag(nextHeight);
+                } else if (window.ChartController && window.ChartController.chart) {
+                    chartWrapper.style.height = `${nextHeight}px`;
+                    chartWrapper.style.minHeight = `${nextHeight}px`;
+                    if (typeof window.ChartController.chart.resize === 'function') {
+                        window.ChartController.chart.resize(chartWrapper.clientWidth, nextHeight);
+                    } else {
+                        window.ChartController.chart.applyOptions({
+                            width: chartWrapper.clientWidth,
+                            height: nextHeight,
+                        });
+                    }
+                    if (window.SubChartControlBar) {
+                        window.SubChartControlBar.updateLayout();
+                    }
+                }
+            };
+
+            const onUp = () => {
+                handle.classList.remove('is-dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+            e.preventDefault();
         });
     },
 

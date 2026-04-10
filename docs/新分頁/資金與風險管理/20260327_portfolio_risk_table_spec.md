@@ -127,7 +127,7 @@
 **公式 F-1：建議股數**
 
 $$
-\text{建議股數} = \text{INT}\!\left(\frac{\dfrac{\text{Capital\%}}{100} \times \text{Capital} \times \max\!\left(1,\ \dfrac{\text{MaxRisk\%}}{|\text{平均停損\%}|}\right)}{\text{買入均價}}\right)
+\text{建議股數} = \text{INT}\!\left(\frac{\text{Capital\%} \times \text{Capital} \times \max\!\left(1,\ \dfrac{\text{MaxRisk\%}}{|\text{平均停損\%}|}\right)}{\text{買入均價}}\right)
 $$
 
 - `INT()`：無條件捨去（只能買整股）
@@ -217,7 +217,7 @@ $$
 **公式 F-6：實際損益金額**
 
 $$
-\text{損益金額} = \frac{\text{平均損益\%}}{100} \times \text{建議股數} \times \text{買入均價}
+\text{損益金額} = \text{平均損益\%} \times \text{建議股數} \times \text{買入均價}
 $$
 
 - 前提：平均損益% ≠ `--` 且建議股數 ≠ `--`
@@ -238,8 +238,8 @@ $$
 $$
 \text{帳戶貢獻\%} =
 \begin{cases}
-\dfrac{\text{平均停損\%}}{100} \times \text{控風倉位\%} & \text{if 無出場資料（規劃中）} \\[6pt]
-\dfrac{\text{平均損益\%}}{100} \times \text{控風倉位\%} & \text{if 有出場資料（持倉/已結案）}
+\text{平均停損\%} \times \text{控風倉位\%} & \text{if 無出場資料（規劃中）} \\
+\text{平均損益\%} \times \text{控風倉位\%} & \text{if 有出場資料（持倉/已結案）}
 \end{cases}
 $$
 
@@ -385,7 +385,7 @@ $$
 | 概覽卡片 | 彙總公式 |
 |:---|:---|
 | 帳戶總風險 | $\sum$ 各列帳戶貢獻%（依狀態：規劃 → 停損貢獻；持倉/已結案 → 損益貢獻）|
-| 全失敗停損總金額 | $\sum$ 各列（平均停損% ÷ 100 × 控風倉位% ÷ 100 × Capital）|
+| 全失敗停損總金額 | $\sum$ 各列（平均停損% × 控風倉位% × Capital）|
 | 停損後剩餘資金 | Capital + 全失敗停損總金額（注意停損金額為負值）|
 | 資金使用率 | $\sum$ 各列控風倉位% |
 

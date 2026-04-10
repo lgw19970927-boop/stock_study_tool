@@ -1,9 +1,9 @@
         <!-- K線圖區域 -->
-        <div class="chart-container">
+        <div class="chart-container" id="chartContainer">
             <div class="chart-header">
                 <div class="chart-title">
                     <span class="chart-symbol" id="chartSymbol">--</span>
-                    <span class="chart-name" id="chartName">請選擇股票</span>
+                    <span class="chart-name chart-stock-name" id="chartName">請選擇股票</span>
                 </div>
                 <div class="chart-controls">
                     <!-- 時間週期切換 -->
@@ -43,18 +43,26 @@
                                 </path>
                             </svg>
                         </button>
-                        <button type="button" id="btnFullscreen" class="btn-icon" title="全螢幕">
-                            <svg id="iconFullscreen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <button type="button" id="btnFullscreen" class="btn-icon" title="全螢幕顯示">
+                            <svg id="iconFullscreen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 3 3 3 3 9"></polyline>
                                 <polyline points="15 3 21 3 21 9"></polyline>
-                                <polyline points="9 21 3 21 3 15"></polyline>
+                                <polyline points="3 15 3 21 9 21"></polyline>
+                                <polyline points="15 21 21 21 21 15"></polyline>
+                                <line x1="3" y1="3" x2="10" y2="10"></line>
                                 <line x1="21" y1="3" x2="14" y2="10"></line>
                                 <line x1="3" y1="21" x2="10" y2="14"></line>
+                                <line x1="21" y1="21" x2="14" y2="14"></line>
                             </svg>
-                            <svg id="iconFullscreenExit" class="is-hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="4 14 10 14 10 20"></polyline>
-                                <polyline points="20 10 14 10 14 4"></polyline>
-                                <line x1="10" y1="14" x2="3" y2="21"></line>
+                            <svg id="iconFullscreenExit" class="is-hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="10 10 3 10 3 3"></polyline>
+                                <polyline points="14 10 21 10 21 3"></polyline>
+                                <polyline points="10 14 3 14 3 21"></polyline>
+                                <polyline points="14 14 21 14 21 21"></polyline>
+                                <line x1="3" y1="3" x2="10" y2="10"></line>
                                 <line x1="21" y1="3" x2="14" y2="10"></line>
+                                <line x1="3" y1="21" x2="10" y2="14"></line>
+                                <line x1="21" y1="21" x2="14" y2="14"></line>
                             </svg>
                         </button>
                     </div>
@@ -66,15 +74,18 @@
                         <path d="M3 3v18h18" />
                         <path d="M18 9l-5 5-4-4-3 3" />
                     </svg>
-                    <p>選擇股票以顯示 K 線圖</p>
+                    <p>選擇股票以顯示圖表</p>
                 </div>
                 <div id="chart"></div>
                 <!-- Feature D: 懸浮窗 overlay -->
                 <div id="chartTooltip" class="chart-tooltip is-hidden"></div>
                 <!-- Feature B: 指標控制列 overlay -->
                 <div id="indicatorTopBar" class="chart-overlay-indicator"></div>
+                <!-- 副圖控制列 overlay -->
+                <div id="subChartControlBars" class="sub-chart-control-bars"></div>
                 <!-- Feature C: 型態標註 SVG overlay -->
                 <svg id="patternAnnotationSVG" class="chart-overlay-annotation" xmlns="http://www.w3.org/2000/svg"></svg>
             </div>
+            <div id="chartBottomResizeHandle" class="chart-bottom-resize-handle" title="拖拉調整圖表整體高度"></div>
             <div class="chart-legend" id="chartLegend"></div>
         </div>

@@ -33,8 +33,8 @@ var ChartSettingsModalTemplate = `
             <!-- 左側：指標列表 -->
             <div class="chart-modal-sidebar">
                 <!-- 主圖指標 -->
-                <div class="indicator-category">
-                    <div class="category-header">
+                <div class="indicator-category" data-category="main" data-collapsed="false">
+                    <div class="category-header" role="button" tabindex="0">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                             <path d="M2 4 L6 8 L10 4 Z"></path>
                         </svg>
@@ -81,21 +81,33 @@ var ChartSettingsModalTemplate = `
                 </div>
 
                 <!-- 副圖指標 -->
-                <div class="indicator-category">
-                    <div class="category-header">
+                <div class="indicator-category" data-category="sub" data-collapsed="false">
+                    <div class="category-header" role="button" tabindex="0">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                             <path d="M2 4 L6 8 L10 4 Z"></path>
                         </svg>
                         副圖
                     </div>
                     <div class="indicator-items">
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>換手率</span>
+                        <div class="indicator-item chart-sidebar-item" data-indicator="vol">
+                            <input type="checkbox" id="vol-toggle">
+                            <span>VOL</span>
                         </div>
                         <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
                             <input type="checkbox" disabled>
-                            <span>MI</span>
+                            <span>MACD</span>
+                        </div>
+                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
+                            <input type="checkbox" disabled>
+                            <span>KDJ</span>
+                        </div>
+                        <div class="indicator-item chart-sidebar-item" data-indicator="rsi">
+                            <input type="checkbox" id="rsi-toggle">
+                            <span>RSI</span>
+                        </div>
+                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
+                            <input type="checkbox" disabled>
+                            <span>ARBR</span>
                         </div>
                     </div>
                 </div>

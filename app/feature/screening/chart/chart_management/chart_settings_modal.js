@@ -45,6 +45,28 @@ window.ChartSettingsModal = {
         }
     },
 
+    defaultVOLConfig: {
+        isGlobalEnabled: false,
+        paneIndex: null,
+        isExpanded: false,
+        savedHeight: null,
+        lines: {
+            VOL1: { color: '#ef5350', lineWidth: 9, opacity: 100, isEnabled: true, lastValue: null }
+        }
+    },
+
+    defaultRSIConfig: {
+        isGlobalEnabled: false,
+        paneIndex: null,
+        isExpanded: false,
+        savedHeight: null,
+        lines: {
+            RSI1: { period: 6,  color: '#ff9800', lineWidth: 1, opacity: 100, isEnabled: true, lastValue: null },
+            RSI2: { period: 12, color: '#00bcd4', lineWidth: 1, opacity: 100, isEnabled: true, lastValue: null },
+            RSI3: { period: 24, color: '#e91e63', lineWidth: 1, opacity: 100, isEnabled: true, lastValue: null }
+        }
+    },
+
     // 當前 top-level Tab
     _activeTab: 'indicators',
 
@@ -82,6 +104,33 @@ window.ChartSettingsModal = {
     _axisConfig:    null,
     _patternConfig: null,
     _colorBackup:   null, // 切換至收盤價線時的顏色備份
+
+    _normalizeSubChartOrder(order, volEnabled, rsiEnabled) {
+        const normalized = Array.isArray(order)
+            ? order.filter((name) => name === 'VOL' || name === 'RSI')
+            : [];
+
+        const result = normalized.filter((name) => {
+            if (name === 'VOL') return !!volEnabled;
+            if (name === 'RSI') return !!rsiEnabled;
+            return false;
+        });
+
+        if (volEnabled && !result.includes('VOL')) result.push('VOL');
+        if (rsiEnabled && !result.includes('RSI')) result.push('RSI');
+        return result;
+    },
+
+    _updateSubChartOrder(indicator, checked) {
+        if (!this.tempSettings) return;
+        if (!Array.isArray(this.tempSettings.subChartOrder)) {
+            this.tempSettings.subChartOrder = [];
+        }
+
+        const next = this.tempSettings.subChartOrder.filter((name) => name !== indicator);
+        if (checked) next.push(indicator);
+        this.tempSettings.subChartOrder = next;
+    },
 
     /**
      * 初始化彈窗事件
@@ -128,25 +177,56 @@ window.ChartSettingsModal = {
         if (sidebar) {
             sidebar.addEventListener('click', (e) => {
                 const item = e.target.closest('.indicator-item[data-indicator]');
+                const indicatorIdMap = {
+                    'ma-toggle': 'MA',
+                    'boll-toggle': 'BOLL',
+                    'vol-toggle': 'VOL',
+                    'rsi-toggle': 'RSI',
+                };
 
                 if (e.target.matches('input[type="checkbox"]:not([disabled])')) {
                     // 準確點擊 checkbox：更新 isGlobalEnabled 並重繪設定面板
-                    const ind = e.target.id === 'ma-toggle'   ? 'MA'
-                              : e.target.id === 'boll-toggle' ? 'BOLL'
-                              : null;
+                    const ind = indicatorIdMap[e.target.id] || null;
                     if (ind && this.tempSettings && this.tempSettings[ind]) {
-                        this.tempSettings[ind].isGlobalEnabled = e.target.checked;
+                        const checked = e.target.checked;
+                        this.tempSettings[ind].isGlobalEnabled = checked;
+                        if (ind === 'VOL' || ind === 'RSI') {
+                            this._updateSubChartOrder(ind, checked);
+                        }
                     }
                     this._renderTarget = ind; // 不論是否勾選都導覽到該指標設定
                     this.renderSettings();
                 } else if (item) {
                     // 點擊指標列（非 checkbox 本身）：預覽模式，導覽至設定但不更動勾選
                     const ind = (item.dataset.indicator || '').toUpperCase();
-                    if (ind === 'MA' || ind === 'BOLL') {
+                    if (ind === 'MA' || ind === 'BOLL' || ind === 'VOL' || ind === 'RSI') {
                         this._renderTarget = ind;
                         this.renderSettings();
                     }
                 }
+            });
+
+            // 主圖/副圖分類摺疊
+            sidebar.addEventListener('click', (e) => {
+                const header = e.target.closest('.indicator-category .category-header');
+                if (!header) return;
+                const category = header.closest('.indicator-category');
+                if (!category || category.classList.contains('pattern-sidebar-section')) return;
+
+                const collapsed = category.dataset.collapsed === 'true';
+                category.dataset.collapsed = collapsed ? 'false' : 'true';
+            });
+
+            sidebar.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                const header = e.target.closest('.indicator-category .category-header');
+                if (!header) return;
+                const category = header.closest('.indicator-category');
+                if (!category || category.classList.contains('pattern-sidebar-section')) return;
+                e.preventDefault();
+
+                const collapsed = category.dataset.collapsed === 'true';
+                category.dataset.collapsed = collapsed ? 'false' : 'true';
             });
         }
 
@@ -181,6 +261,9 @@ window.ChartSettingsModal = {
         // ✅ SSOT: 從新結構讀取到 tempSettings
         const maState   = window.state.chartIndicators.MA;
         const bollState = window.state.chartIndicators.BOLL;
+        const volState  = window.state.chartIndicators.VOL;
+        const rsiState  = window.state.chartIndicators.RSI;
+        const orderState = window.state.chartIndicators.subChartOrder;
 
         this.tempSettings = {
             MA: {
@@ -202,7 +285,51 @@ window.ChartSettingsModal = {
                         k, { color: v.color, lineWidth: v.lineWidth, opacity: v.opacity, isEnabled: v.isEnabled }
                     ]))
                 )) : null
-            } : null
+            } : null,
+            VOL: volState ? {
+                isGlobalEnabled: !!volState.isGlobalEnabled,
+                paneIndex: null,
+                isExpanded: !!volState.isExpanded,
+                savedHeight: volState.savedHeight ?? null,
+                lines: {
+                    VOL1: {
+                        color: volState.lines?.VOL1?.color || this.defaultVOLConfig.lines.VOL1.color,
+                        lineWidth: volState.lines?.VOL1?.lineWidth || this.defaultVOLConfig.lines.VOL1.lineWidth,
+                        opacity: volState.lines?.VOL1?.opacity ?? this.defaultVOLConfig.lines.VOL1.opacity,
+                        isEnabled: volState.lines?.VOL1?.isEnabled !== false,
+                    }
+                }
+            } : null,
+            RSI: rsiState ? {
+                isGlobalEnabled: !!rsiState.isGlobalEnabled,
+                paneIndex: null,
+                isExpanded: !!rsiState.isExpanded,
+                savedHeight: rsiState.savedHeight ?? null,
+                lines: {
+                    RSI1: {
+                        period: rsiState.lines?.RSI1?.period || this.defaultRSIConfig.lines.RSI1.period,
+                        color: rsiState.lines?.RSI1?.color || this.defaultRSIConfig.lines.RSI1.color,
+                        lineWidth: rsiState.lines?.RSI1?.lineWidth || this.defaultRSIConfig.lines.RSI1.lineWidth,
+                        opacity: rsiState.lines?.RSI1?.opacity ?? this.defaultRSIConfig.lines.RSI1.opacity,
+                        isEnabled: rsiState.lines?.RSI1?.isEnabled !== false,
+                    },
+                    RSI2: {
+                        period: rsiState.lines?.RSI2?.period || this.defaultRSIConfig.lines.RSI2.period,
+                        color: rsiState.lines?.RSI2?.color || this.defaultRSIConfig.lines.RSI2.color,
+                        lineWidth: rsiState.lines?.RSI2?.lineWidth || this.defaultRSIConfig.lines.RSI2.lineWidth,
+                        opacity: rsiState.lines?.RSI2?.opacity ?? this.defaultRSIConfig.lines.RSI2.opacity,
+                        isEnabled: rsiState.lines?.RSI2?.isEnabled !== false,
+                    },
+                    RSI3: {
+                        period: rsiState.lines?.RSI3?.period || this.defaultRSIConfig.lines.RSI3.period,
+                        color: rsiState.lines?.RSI3?.color || this.defaultRSIConfig.lines.RSI3.color,
+                        lineWidth: rsiState.lines?.RSI3?.lineWidth || this.defaultRSIConfig.lines.RSI3.lineWidth,
+                        opacity: rsiState.lines?.RSI3?.opacity ?? this.defaultRSIConfig.lines.RSI3.opacity,
+                        isEnabled: rsiState.lines?.RSI3?.isEnabled !== false,
+                    }
+                }
+            } : null,
+            subChartOrder: Array.isArray(orderState) ? orderState.slice() : []
         };
 
         // 如果沒有任何設定，使用預設值
@@ -212,6 +339,18 @@ window.ChartSettingsModal = {
         if (!this.tempSettings.BOLL || !this.tempSettings.BOLL.lines) {
             this.tempSettings.BOLL = JSON.parse(JSON.stringify(this.defaultBOLLConfig));
         }
+        if (!this.tempSettings.VOL || !this.tempSettings.VOL.lines) {
+            this.tempSettings.VOL = JSON.parse(JSON.stringify(this.defaultVOLConfig));
+        }
+        if (!this.tempSettings.RSI || !this.tempSettings.RSI.lines) {
+            this.tempSettings.RSI = JSON.parse(JSON.stringify(this.defaultRSIConfig));
+        }
+
+        this.tempSettings.subChartOrder = this._normalizeSubChartOrder(
+            this.tempSettings.subChartOrder,
+            this.tempSettings.VOL.isGlobalEnabled,
+            this.tempSettings.RSI.isGlobalEnabled
+        );
 
         // 初始化其他 Tab 設定（從 localStorage 或預設值）
         this._generalConfig = this._generalConfig || JSON.parse(JSON.stringify(this.defaultGeneralConfig));
@@ -221,9 +360,13 @@ window.ChartSettingsModal = {
         // 設定左側勾選狀態
         const maToggle   = document.getElementById('ma-toggle');
         const bollToggle = document.getElementById('boll-toggle');
+        const volToggle  = document.getElementById('vol-toggle');
+        const rsiToggle  = document.getElementById('rsi-toggle');
 
         if (maToggle)   maToggle.checked   = this.tempSettings.MA.isGlobalEnabled && this.tempSettings.MA.lines.length > 0;
         if (bollToggle) bollToggle.checked = !!(this.tempSettings.BOLL && this.tempSettings.BOLL.isGlobalEnabled);
+        if (volToggle)  volToggle.checked  = !!(this.tempSettings.VOL && this.tempSettings.VOL.isGlobalEnabled);
+        if (rsiToggle)  rsiToggle.checked  = !!(this.tempSettings.RSI && this.tempSettings.RSI.isGlobalEnabled);
 
         // ✅ Feature B: target 指定時，強制顯示對應設定頁
         if (target === 'BOLL') {
@@ -234,13 +377,23 @@ window.ChartSettingsModal = {
             if (maToggle) maToggle.checked = true;
             if (this.tempSettings.MA) this.tempSettings.MA.isGlobalEnabled = true;
             this._renderTarget = 'MA';
+        } else if (target === 'VOL') {
+            if (volToggle) volToggle.checked = true;
+            if (this.tempSettings.VOL) this.tempSettings.VOL.isGlobalEnabled = true;
+            this._updateSubChartOrder('VOL', true);
+            this._renderTarget = 'VOL';
+        } else if (target === 'RSI') {
+            if (rsiToggle) rsiToggle.checked = true;
+            if (this.tempSettings.RSI) this.tempSettings.RSI.isGlobalEnabled = true;
+            this._updateSubChartOrder('RSI', true);
+            this._renderTarget = 'RSI';
         } else {
             this._renderTarget = null;
         }
 
         // 渲染右側設定面板
         // 有 MA/BOLL target 時顯示指標管理；一般開啟預設顯示「常規設定」Tab
-        if (target === 'MA' || target === 'BOLL') {
+        if (target === 'MA' || target === 'BOLL' || target === 'VOL' || target === 'RSI') {
             this._switchModalTab('indicators');
         } else {
             this._switchModalTab('general');
@@ -557,6 +710,8 @@ window.ChartSettingsModal = {
         // ✅ SSOT: 寫入新結構到 window.state.chartIndicators
         const maToggle   = document.getElementById('ma-toggle');
         const bollToggle = document.getElementById('boll-toggle');
+        const volToggle  = document.getElementById('vol-toggle');
+        const rsiToggle  = document.getElementById('rsi-toggle');
 
         window.state.chartIndicators.MA = {
             isGlobalEnabled: !!(maToggle && maToggle.checked),
@@ -593,6 +748,74 @@ window.ChartSettingsModal = {
                     }
                 });
             }
+        }
+
+        const volChecked = !!(volToggle && volToggle.checked);
+        const rsiChecked = !!(rsiToggle && rsiToggle.checked);
+
+        const tVol = this.tempSettings.VOL || JSON.parse(JSON.stringify(this.defaultVOLConfig));
+        window.state.chartIndicators.VOL = {
+            isGlobalEnabled: volChecked,
+            paneIndex: null,
+            isExpanded: false,
+            savedHeight: tVol.savedHeight ?? null,
+            lines: {
+                VOL1: {
+                    color: tVol.lines?.VOL1?.color || this.defaultVOLConfig.lines.VOL1.color,
+                    lineWidth: tVol.lines?.VOL1?.lineWidth || this.defaultVOLConfig.lines.VOL1.lineWidth,
+                    opacity: tVol.lines?.VOL1?.opacity ?? this.defaultVOLConfig.lines.VOL1.opacity,
+                    isEnabled: tVol.lines?.VOL1?.isEnabled !== false,
+                    series: null,
+                    lastValue: null,
+                }
+            }
+        };
+
+        const tRSI = this.tempSettings.RSI || JSON.parse(JSON.stringify(this.defaultRSIConfig));
+        window.state.chartIndicators.RSI = {
+            isGlobalEnabled: rsiChecked,
+            paneIndex: null,
+            isExpanded: false,
+            savedHeight: tRSI.savedHeight ?? null,
+            lines: {
+                RSI1: {
+                    period: tRSI.lines?.RSI1?.period || this.defaultRSIConfig.lines.RSI1.period,
+                    color: tRSI.lines?.RSI1?.color || this.defaultRSIConfig.lines.RSI1.color,
+                    lineWidth: tRSI.lines?.RSI1?.lineWidth || this.defaultRSIConfig.lines.RSI1.lineWidth,
+                    opacity: tRSI.lines?.RSI1?.opacity ?? this.defaultRSIConfig.lines.RSI1.opacity,
+                    isEnabled: tRSI.lines?.RSI1?.isEnabled !== false,
+                    series: null,
+                    lastValue: null,
+                },
+                RSI2: {
+                    period: tRSI.lines?.RSI2?.period || this.defaultRSIConfig.lines.RSI2.period,
+                    color: tRSI.lines?.RSI2?.color || this.defaultRSIConfig.lines.RSI2.color,
+                    lineWidth: tRSI.lines?.RSI2?.lineWidth || this.defaultRSIConfig.lines.RSI2.lineWidth,
+                    opacity: tRSI.lines?.RSI2?.opacity ?? this.defaultRSIConfig.lines.RSI2.opacity,
+                    isEnabled: tRSI.lines?.RSI2?.isEnabled !== false,
+                    series: null,
+                    lastValue: null,
+                },
+                RSI3: {
+                    period: tRSI.lines?.RSI3?.period || this.defaultRSIConfig.lines.RSI3.period,
+                    color: tRSI.lines?.RSI3?.color || this.defaultRSIConfig.lines.RSI3.color,
+                    lineWidth: tRSI.lines?.RSI3?.lineWidth || this.defaultRSIConfig.lines.RSI3.lineWidth,
+                    opacity: tRSI.lines?.RSI3?.opacity ?? this.defaultRSIConfig.lines.RSI3.opacity,
+                    isEnabled: tRSI.lines?.RSI3?.isEnabled !== false,
+                    series: null,
+                    lastValue: null,
+                }
+            }
+        };
+
+        window.state.chartIndicators.subChartOrder = this._normalizeSubChartOrder(
+            this.tempSettings.subChartOrder,
+            volChecked,
+            rsiChecked
+        );
+
+        if (window.state.expandedSubChart && !window.state.chartIndicators.subChartOrder.includes(window.state.expandedSubChart)) {
+            window.state.expandedSubChart = null;
         }
 
         // ✅ 保存到 localStorage
@@ -643,7 +866,18 @@ window.ChartSettingsModal = {
                 return;
             }
             const settings = {
-                MA:   window.state.chartIndicators.MA,
+                MA: window.state.chartIndicators.MA
+                    ? {
+                        isGlobalEnabled: !!window.state.chartIndicators.MA.isGlobalEnabled,
+                        lines: (window.state.chartIndicators.MA.lines || []).map((ma) => ({
+                            period: ma.period,
+                            color: ma.color,
+                            lineWidth: ma.lineWidth,
+                            opacity: ma.opacity,
+                            isEnabled: ma.isEnabled !== false,
+                        })),
+                    }
+                    : null,
                 BOLL: window.state.chartIndicators.BOLL
                     ? { isGlobalEnabled: window.state.chartIndicators.BOLL.isGlobalEnabled,
                         period: window.state.chartIndicators.BOLL.period,
@@ -654,6 +888,57 @@ window.ChartSettingsModal = {
                             )
                         )}
                     : null,
+                VOL: window.state.chartIndicators.VOL
+                    ? {
+                        isGlobalEnabled: !!window.state.chartIndicators.VOL.isGlobalEnabled,
+                        paneIndex: null,
+                        isExpanded: !!window.state.chartIndicators.VOL.isExpanded,
+                        savedHeight: window.state.chartIndicators.VOL.savedHeight ?? null,
+                        lines: {
+                            VOL1: {
+                                color: window.state.chartIndicators.VOL.lines?.VOL1?.color || this.defaultVOLConfig.lines.VOL1.color,
+                                lineWidth: window.state.chartIndicators.VOL.lines?.VOL1?.lineWidth || this.defaultVOLConfig.lines.VOL1.lineWidth,
+                                opacity: window.state.chartIndicators.VOL.lines?.VOL1?.opacity ?? this.defaultVOLConfig.lines.VOL1.opacity,
+                                isEnabled: window.state.chartIndicators.VOL.lines?.VOL1?.isEnabled !== false,
+                            }
+                        }
+                    }
+                    : null,
+                RSI: window.state.chartIndicators.RSI
+                    ? {
+                        isGlobalEnabled: !!window.state.chartIndicators.RSI.isGlobalEnabled,
+                        paneIndex: null,
+                        isExpanded: !!window.state.chartIndicators.RSI.isExpanded,
+                        savedHeight: window.state.chartIndicators.RSI.savedHeight ?? null,
+                        lines: {
+                            RSI1: {
+                                period: window.state.chartIndicators.RSI.lines?.RSI1?.period || this.defaultRSIConfig.lines.RSI1.period,
+                                color: window.state.chartIndicators.RSI.lines?.RSI1?.color || this.defaultRSIConfig.lines.RSI1.color,
+                                lineWidth: window.state.chartIndicators.RSI.lines?.RSI1?.lineWidth || this.defaultRSIConfig.lines.RSI1.lineWidth,
+                                opacity: window.state.chartIndicators.RSI.lines?.RSI1?.opacity ?? this.defaultRSIConfig.lines.RSI1.opacity,
+                                isEnabled: window.state.chartIndicators.RSI.lines?.RSI1?.isEnabled !== false,
+                            },
+                            RSI2: {
+                                period: window.state.chartIndicators.RSI.lines?.RSI2?.period || this.defaultRSIConfig.lines.RSI2.period,
+                                color: window.state.chartIndicators.RSI.lines?.RSI2?.color || this.defaultRSIConfig.lines.RSI2.color,
+                                lineWidth: window.state.chartIndicators.RSI.lines?.RSI2?.lineWidth || this.defaultRSIConfig.lines.RSI2.lineWidth,
+                                opacity: window.state.chartIndicators.RSI.lines?.RSI2?.opacity ?? this.defaultRSIConfig.lines.RSI2.opacity,
+                                isEnabled: window.state.chartIndicators.RSI.lines?.RSI2?.isEnabled !== false,
+                            },
+                            RSI3: {
+                                period: window.state.chartIndicators.RSI.lines?.RSI3?.period || this.defaultRSIConfig.lines.RSI3.period,
+                                color: window.state.chartIndicators.RSI.lines?.RSI3?.color || this.defaultRSIConfig.lines.RSI3.color,
+                                lineWidth: window.state.chartIndicators.RSI.lines?.RSI3?.lineWidth || this.defaultRSIConfig.lines.RSI3.lineWidth,
+                                opacity: window.state.chartIndicators.RSI.lines?.RSI3?.opacity ?? this.defaultRSIConfig.lines.RSI3.opacity,
+                                isEnabled: window.state.chartIndicators.RSI.lines?.RSI3?.isEnabled !== false,
+                            }
+                        }
+                    }
+                    : null,
+                subChartOrder: Array.isArray(window.state.chartIndicators.subChartOrder)
+                    ? window.state.chartIndicators.subChartOrder.slice()
+                    : [],
+                expandedSubChart: window.state.expandedSubChart || null,
                 // Features 2-4: 保存新設定
                 generalConfig: this._generalConfig || null,
                 axisConfig:    this._axisConfig    || null,
@@ -682,6 +967,10 @@ window.ChartSettingsModal = {
                     isGlobalEnabled: true,
                     lines: JSON.parse(JSON.stringify(this.defaultMAConfig)).map(m => ({ ...m, series: null }))
                 };
+                window.state.chartIndicators.VOL = JSON.parse(JSON.stringify(this.defaultVOLConfig));
+                window.state.chartIndicators.RSI = JSON.parse(JSON.stringify(this.defaultRSIConfig));
+                window.state.chartIndicators.subChartOrder = [];
+                window.state.expandedSubChart = null;
                 console.log('[ChartSettingsModal] 首次載入，套用預設 MA 配置');
                 return;
             }
@@ -723,6 +1012,83 @@ window.ChartSettingsModal = {
                     };
                 }
             }
+
+            if (settings.VOL && settings.VOL.lines?.VOL1) {
+                const v = settings.VOL;
+                window.state.chartIndicators.VOL = {
+                    isGlobalEnabled: !!v.isGlobalEnabled,
+                    paneIndex: null,
+                    isExpanded: !!v.isExpanded,
+                    savedHeight: v.savedHeight ?? null,
+                    lines: {
+                        VOL1: {
+                            color: v.lines.VOL1.color || this.defaultVOLConfig.lines.VOL1.color,
+                            lineWidth: v.lines.VOL1.lineWidth || this.defaultVOLConfig.lines.VOL1.lineWidth,
+                            opacity: v.lines.VOL1.opacity ?? this.defaultVOLConfig.lines.VOL1.opacity,
+                            isEnabled: v.lines.VOL1.isEnabled !== false,
+                            series: null,
+                            lastValue: null,
+                        }
+                    }
+                };
+            } else {
+                window.state.chartIndicators.VOL = JSON.parse(JSON.stringify(this.defaultVOLConfig));
+            }
+
+            if (settings.RSI && settings.RSI.lines) {
+                const r = settings.RSI;
+                const d = this.defaultRSIConfig.lines;
+                window.state.chartIndicators.RSI = {
+                    isGlobalEnabled: !!r.isGlobalEnabled,
+                    paneIndex: null,
+                    isExpanded: !!r.isExpanded,
+                    savedHeight: r.savedHeight ?? null,
+                    lines: {
+                        RSI1: {
+                            period: r.lines.RSI1?.period || d.RSI1.period,
+                            color: r.lines.RSI1?.color || d.RSI1.color,
+                            lineWidth: r.lines.RSI1?.lineWidth || d.RSI1.lineWidth,
+                            opacity: r.lines.RSI1?.opacity ?? d.RSI1.opacity,
+                            isEnabled: r.lines.RSI1?.isEnabled !== false,
+                            series: null,
+                            lastValue: null,
+                        },
+                        RSI2: {
+                            period: r.lines.RSI2?.period || d.RSI2.period,
+                            color: r.lines.RSI2?.color || d.RSI2.color,
+                            lineWidth: r.lines.RSI2?.lineWidth || d.RSI2.lineWidth,
+                            opacity: r.lines.RSI2?.opacity ?? d.RSI2.opacity,
+                            isEnabled: r.lines.RSI2?.isEnabled !== false,
+                            series: null,
+                            lastValue: null,
+                        },
+                        RSI3: {
+                            period: r.lines.RSI3?.period || d.RSI3.period,
+                            color: r.lines.RSI3?.color || d.RSI3.color,
+                            lineWidth: r.lines.RSI3?.lineWidth || d.RSI3.lineWidth,
+                            opacity: r.lines.RSI3?.opacity ?? d.RSI3.opacity,
+                            isEnabled: r.lines.RSI3?.isEnabled !== false,
+                            series: null,
+                            lastValue: null,
+                        }
+                    }
+                };
+            } else {
+                window.state.chartIndicators.RSI = JSON.parse(JSON.stringify(this.defaultRSIConfig));
+            }
+
+            const volEnabled = !!window.state.chartIndicators.VOL?.isGlobalEnabled;
+            const rsiEnabled = !!window.state.chartIndicators.RSI?.isGlobalEnabled;
+            window.state.chartIndicators.subChartOrder = this._normalizeSubChartOrder(
+                settings.subChartOrder,
+                volEnabled,
+                rsiEnabled
+            );
+
+            const expanded = settings.expandedSubChart;
+            window.state.expandedSubChart = window.state.chartIndicators.subChartOrder.includes(expanded)
+                ? expanded
+                : null;
 
             console.log('[ChartSettingsModal] 已從 localStorage 載入設定');
 

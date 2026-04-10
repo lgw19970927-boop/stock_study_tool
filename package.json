@@ -5,10 +5,12 @@
   "scripts": {
     "build:css": "postcss app/static/css/input.css -o app/static/css/tailwind.output.css",
     "watch:css": "postcss app/static/css/input.css -o app/static/css/tailwind.output.css --watch",
-    "build:css:prod": "postcss app/static/css/input.css -o app/static/css/tailwind.output.css --env production"
+    "build:css:prod": "postcss app/static/css/input.css -o app/static/css/tailwind.output.css --env production",
+    "test:chart-height:auto": "node tests/e2e/chart_height_bug234_auto.mjs"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",
+    "playwright": "^1.59.1",
     "postcss": "^8.4.38",
     "postcss-cli": "^11.0.0",
     "postcss-import": "^16.1.0",
