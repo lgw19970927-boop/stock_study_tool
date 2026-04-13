@@ -295,6 +295,11 @@ window.DisplayRangeSelector = {
         document.body.appendChild(overlay);
         this._addModalEl = overlay;
 
+        // 拖移支援
+        const addContainer = overlay.querySelector('.add-range-container');
+        const addHeader = overlay.querySelector('.add-range-header');
+        this._makeDraggable(addContainer, addHeader);
+
         const unitSel = overlay.querySelector('#addRangeUnit');
         const valueSel = overlay.querySelector('#addRangeValue');
         const tfSel = overlay.querySelector('#addRangeTF');
@@ -445,6 +450,41 @@ window.DisplayRangeSelector = {
     },
 
     /* ===== 工具 ===== */
+
+    /**
+     * 拖移支援（複用 ChartSettingsModal 相同邏輯）
+     */
+    _makeDraggable(containerEl, handleEl) {
+        let isDragging = false;
+        let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+        handleEl.style.cursor = 'move';
+        handleEl.addEventListener('mousedown', (e) => {
+            if (e.button !== 0 || e.target.closest('button')) return;
+            isDragging = true;
+            containerEl.classList.add('is-dragging');
+            const rect = containerEl.getBoundingClientRect();
+            containerEl.style.position = 'fixed';
+            containerEl.style.margin = '0';
+            containerEl.style.left = rect.left + 'px';
+            containerEl.style.top = rect.top + 'px';
+            startX = e.clientX; startY = e.clientY;
+            startLeft = rect.left; startTop = rect.top;
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const newLeft = Math.max(0, Math.min(window.innerWidth - containerEl.offsetWidth, startLeft + e.clientX - startX));
+            const newTop = Math.max(0, Math.min(window.innerHeight - containerEl.offsetHeight, startTop + e.clientY - startY));
+            containerEl.style.left = newLeft + 'px';
+            containerEl.style.top = newTop + 'px';
+        });
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            containerEl.classList.remove('is-dragging');
+        });
+    },
 
     _findMatchingRange(durationLabel, tf) {
         const all = [...this._PRESETS, ...this._customRanges];

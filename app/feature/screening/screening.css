@@ -799,6 +799,19 @@
     @apply flex justify-end gap-2 border-t border-border-color px-5 py-3;
 }
 
+/* Drag support for CSV / Add-Range modals (mirrors chart-modal.css .is-dragging) */
+.csv-export-container.is-dragging,
+.add-range-container.is-dragging {
+    user-select: none;
+    opacity: 0.94;
+    animation: none;
+}
+
+.csv-export-header,
+.add-range-header {
+    cursor: move;
+}
+
 /* ===== Display Range Selector ===== */
 .display-range-wrapper {
     @apply relative;

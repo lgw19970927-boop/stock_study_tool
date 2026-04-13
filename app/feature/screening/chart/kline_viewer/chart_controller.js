@@ -478,8 +478,8 @@ window.ChartController = {
         const endDateStr = window.state?.filters?.analysis_end_date || '';
 
         if (!endDateStr) {
-            // 快捷按鈕模式：end_date = 今天，效果等同 setVisibleRangeToLastYear
-            this.setVisibleRangeToLastYear(chartData);
+            // 快捷按鈕模式：end_date = 今天，依 DisplayRangeSelector 設定範圍
+            this.setVisibleRangeByDuration(chartData);
             return;
         }
 
@@ -487,14 +487,22 @@ window.ChartController = {
         const endTimestamp = new Date(endDateStr + 'T00:00:00').getTime() / 1000;
         if (isNaN(endTimestamp)) {
             console.warn('[ChartController] setVisibleRangeToAnalysisEndDate: 無效日期，使用 fallback');
-            this.setVisibleRangeToLastYear(chartData);
+            this.setVisibleRangeByDuration(chartData);
+            return;
+        }
+
+        // 規則 5: 範圍長度取 DisplayRangeSelector 當前 duration（而非固定 1 年）
+        const drs = window.DisplayRangeSelector;
+        const dur = drs ? drs.getCurrentRange()?.duration : null;
+
+        // 「全部」→ fitContent，不受 analysis_end_date 約束
+        if (dur && dur.unit === 'all') {
+            console.log('[ChartController] setVisibleRangeToAnalysisEndDate: duration=all → fitContent');
+            this.chart.timeScale().fitContent();
             return;
         }
 
         const oneYearInSeconds = 365 * 24 * 60 * 60;
-        // 規則 5: 範圍長度取 DisplayRangeSelector 當前 duration（而非固定 1 年）
-        const drs = window.DisplayRangeSelector;
-        const dur = drs ? drs.getCurrentRange()?.duration : null;
         const rangeSec = (dur && drs._rangeDurationToSeconds(dur) !== Infinity)
             ? drs._rangeDurationToSeconds(dur) : oneYearInSeconds;
         const fromTimestamp = endTimestamp - rangeSec;
@@ -508,7 +516,7 @@ window.ChartController = {
             });
         } catch (e) {
             console.warn('[ChartController] setVisibleRange 失敗，使用 fallback:', e);
-            this.setVisibleRangeToLastYear(chartData);
+            this.setVisibleRangeByDuration(chartData);
         }
     },
 
