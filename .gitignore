@@ -23,3 +23,7 @@ node_modules/
 package-lock.json
 stock_study_tool_old
 stock_study_tool_veryold
+.tmp_debug
+.vscode
+debug_chunks.txt
+debug.txt

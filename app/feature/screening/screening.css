@@ -734,6 +734,189 @@
     margin: 0;
 }
 
+/* ===== CSV Export Modal ===== */
+.csv-export-overlay {
+    @apply fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-[4px];
+    animation: fadeIn 0.2s ease;
+}
+
+.csv-export-container {
+    @apply flex w-[420px] max-w-[90vw] flex-col rounded-lg border border-border-color bg-bg-elevated shadow-lg;
+    animation: slideUp 0.25s ease;
+}
+
+.csv-export-header {
+    @apply flex items-center justify-between border-b border-border-color px-5 py-3;
+}
+
+.csv-export-title {
+    @apply text-base font-semibold text-text-primary;
+}
+
+.csv-export-body {
+    @apply flex flex-col gap-3 px-5 py-4;
+}
+
+.csv-export-prompt {
+    @apply text-sm text-text-secondary;
+}
+
+.csv-export-option {
+    @apply flex cursor-pointer items-start gap-3 rounded-md border border-border-color p-3 transition-all;
+    flex-wrap: wrap;
+}
+
+.csv-export-option:hover {
+    border-color: var(--text-muted);
+    background: var(--bg-hover);
+}
+
+.csv-export-option--selected {
+    border-color: var(--accent-primary);
+    background: rgba(0, 212, 170, 0.06);
+}
+
+.csv-export-option input[type="radio"] {
+    @apply mt-0.5 shrink-0 cursor-pointer accent-accent-primary;
+}
+
+.csv-export-option-title {
+    @apply text-sm font-medium text-text-primary;
+    flex: 1 1 calc(100% - 2rem);
+}
+
+.csv-export-option-desc {
+    @apply text-xs text-text-muted;
+    flex: 1 1 100%;
+    padding-left: calc(1rem + 12px); /* align with title text */
+}
+
+.csv-export-preview {
+    @apply text-xs text-text-muted;
+}
+
+.csv-export-footer {
+    @apply flex justify-end gap-2 border-t border-border-color px-5 py-3;
+}
+
+/* ===== Display Range Selector ===== */
+.display-range-wrapper {
+    @apply relative;
+}
+
+.display-range-btn {
+    @apply flex items-center gap-1 rounded-md border border-border-color bg-bg-tertiary px-3 py-1 text-xs font-medium text-text-primary transition-all;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.display-range-btn:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.display-range-btn svg {
+    @apply transition-transform;
+}
+
+.display-range-label {
+    pointer-events: none;
+}
+
+/* Dropdown */
+.display-range-dropdown {
+    @apply absolute right-0 z-50 mt-1 flex flex-col rounded-md border border-border-color bg-bg-elevated py-1 shadow-lg;
+    min-width: 160px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.dr-item {
+    @apply flex cursor-pointer items-center gap-2 px-3 py-1.5 text-xs text-text-primary transition-colors;
+}
+
+.dr-item:hover {
+    background: var(--bg-hover);
+}
+
+.dr-check {
+    @apply inline-block w-4 text-center text-accent-primary;
+    font-size: 0.75rem;
+}
+
+.dr-item-text {
+    @apply flex-1;
+}
+
+.dr-delete {
+    @apply ml-1 border-0 bg-transparent p-0 text-xs text-text-muted opacity-70 transition-opacity;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.dr-delete:hover {
+    opacity: 1;
+    color: var(--color-danger);
+}
+
+.dr-divider {
+    @apply my-1 border-t border-border-color;
+}
+
+.dr-item--add {
+    color: var(--accent-primary);
+}
+
+.dr-item--add:hover {
+    background: rgba(0, 212, 170, 0.08);
+}
+
+/* Add Range Modal */
+.add-range-container {
+    @apply flex w-[380px] max-w-[90vw] flex-col rounded-lg border border-border-color bg-bg-elevated shadow-lg;
+    animation: slideUp 0.25s ease;
+}
+
+.add-range-header {
+    @apply flex items-center justify-between border-b border-border-color px-5 py-3;
+}
+
+.add-range-body {
+    @apply flex flex-col gap-4 px-5 py-4;
+}
+
+.add-range-row {
+    @apply flex items-center gap-2;
+}
+
+.add-range-label {
+    @apply shrink-0 text-sm text-text-secondary;
+    min-width: 70px;
+}
+
+.add-range-select {
+    @apply rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-sm text-text-primary;
+    min-width: 60px;
+}
+
+.add-range-select--wide {
+    min-width: 120px;
+    flex: 1;
+}
+
+.add-range-input {
+    @apply w-16 rounded-sm border border-border-color bg-bg-primary px-2 py-1 text-center text-sm text-text-primary;
+}
+
+.add-range-unit-text {
+    @apply text-sm text-text-secondary;
+}
+
+.add-range-error {
+    @apply text-xs;
+    color: var(--color-danger);
+}
+
 #filter-design-tab .checkbox-item input[type="checkbox"]:checked {
     background-color: #5cecbd;
     /* The green color */

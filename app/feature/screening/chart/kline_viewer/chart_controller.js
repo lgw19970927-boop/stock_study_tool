@@ -417,11 +417,12 @@ window.ChartController = {
             }
 
             // ✅ Feature A: 依觸發方式決定初始視角
-            // fromFilterClick=true → 對齊 analysis_end_date；否則維持當前視角（切換 timeframe 等）
+            // fromFilterClick=true → 對齊 analysis_end_date（範圍長度取 DisplayRangeSelector）；
+            // 否則依 DisplayRangeSelector 當前選擇的 duration 決定可見範圍
             if (opts.fromFilterClick) {
                 this.setVisibleRangeToAnalysisEndDate(chartData);
             } else {
-                this.setVisibleRangeToLastYear(chartData);
+                this.setVisibleRangeByDuration(chartData);
             }
 
             // 切換股票後重新套用座標軸（在渲染副圖前套用，確保 mirrorSeries 在副圖重建前就緒）
@@ -491,7 +492,12 @@ window.ChartController = {
         }
 
         const oneYearInSeconds = 365 * 24 * 60 * 60;
-        const fromTimestamp = endTimestamp - oneYearInSeconds;
+        // 規則 5: 範圍長度取 DisplayRangeSelector 當前 duration（而非固定 1 年）
+        const drs = window.DisplayRangeSelector;
+        const dur = drs ? drs.getCurrentRange()?.duration : null;
+        const rangeSec = (dur && drs._rangeDurationToSeconds(dur) !== Infinity)
+            ? drs._rangeDurationToSeconds(dur) : oneYearInSeconds;
+        const fromTimestamp = endTimestamp - rangeSec;
 
         console.log(`[ChartController] setVisibleRangeToAnalysisEndDate: ${new Date(fromTimestamp * 1000).toISOString().split('T')[0]} → ${endDateStr}`);
 
@@ -537,6 +543,46 @@ window.ChartController = {
     },
 
     /**
+     * 依 DisplayRangeSelector 當前選擇的 duration 設定可視範圍
+     * duration.unit='all' → fitContent()
+     * @param {Array} chartData - K 線數據
+     */
+    setVisibleRangeByDuration(chartData) {
+        if (!chartData || chartData.length === 0) return;
+
+        const drs = window.DisplayRangeSelector;
+        const dur = drs ? drs.getCurrentRange()?.duration : null;
+
+        // 全部 → fitContent
+        if (dur && dur.unit === 'all') {
+            this.chart.timeScale().fitContent();
+            return;
+        }
+
+        const rangeSec = dur ? drs._rangeDurationToSeconds(dur) : 365 * 86400;
+        if (rangeSec === Infinity) {
+            this.chart.timeScale().fitContent();
+            return;
+        }
+
+        const lastBar = chartData[chartData.length - 1];
+        let lastTime = lastBar.time;
+        if (typeof lastTime === 'string') {
+            lastTime = new Date(lastTime + ' 00:00:00').getTime() / 1000;
+        }
+        const from = lastTime - rangeSec;
+
+        console.log(`[ChartController] setVisibleRangeByDuration: ${rangeSec / 86400} days from end`);
+
+        try {
+            this.chart.timeScale().setVisibleRange({ from, to: lastTime });
+        } catch (e) {
+            console.warn('[ChartController] setVisibleRangeByDuration failed, fallback:', e);
+            this.setVisibleRangeToLastYear(chartData);
+        }
+    },
+
+    /**
      * 同步時間週期選擇器 UI
      * @param {string} interval - 時間週期 (1d, 1W, 1M 等)
      */
@@ -560,6 +606,11 @@ window.ChartController = {
             btn.addEventListener('click', (e) => {
                 const interval = e.target.dataset.tf;
                 const currentSymbol = document.getElementById('chartSymbol').textContent;
+
+                // 規則 2: 同步更新顯示範圍下拉標籤
+                if (window.DisplayRangeSelector) {
+                    window.DisplayRangeSelector.syncFromTimeframeButton(interval);
+                }
 
                 // 如果當前有顯示股票，重新載入數據
                 if (currentSymbol && currentSymbol !== '--') {

@@ -27,6 +27,7 @@ Object.assign(window.ScreeningPage, {
         this._lastRenderStocks = stocks;
         this._lastRenderStats = statistics;
         this._selectedStockIndex = null;
+        this._syncExportButtonState();
         const sortedStocks = this._sortStocks(stocks);
 
         // 清空舊 stock item
@@ -196,6 +197,155 @@ Object.assign(window.ScreeningPage, {
                 col.classList.remove('sorted');
             }
         });
+    },
+
+    // ── CSV 匯出 ──────────────────────────────────────────
+
+    _bindExportCSV: function () {
+        const btn = document.getElementById('btnExportCSV');
+        if (!btn) return;
+        btn.addEventListener('click', () => this._showExportModal());
+    },
+
+    /** 篩選結束後啟用按鈕，篩選中 / 無資料時禁用 */
+    _syncExportButtonState: function () {
+        const btn = document.getElementById('btnExportCSV');
+        if (!btn) return;
+        const hasResults = window.state.lastResults && window.state.lastResults.length > 0;
+        btn.disabled = !hasResults;
+        btn.title = hasResults ? '匯出篩選結果為 CSV 檔案' : '尚無篩選結果';
+    },
+
+    _showExportModal: function () {
+        const results = window.state.lastResults;
+        if (!results || results.length === 0) return;
+
+        // 移除可能殘留的模態
+        const old = document.getElementById('csvExportModal');
+        if (old) old.remove();
+
+        const count = results.length;
+        const overlay = document.createElement('div');
+        overlay.id = 'csvExportModal';
+        overlay.className = 'csv-export-overlay';
+        overlay.innerHTML = `
+            <div class="csv-export-container">
+                <div class="csv-export-header">
+                    <span class="csv-export-title">匯出 CSV</span>
+                    <button type="button" class="btn-modal-close" data-action="close">&times;</button>
+                </div>
+                <div class="csv-export-body">
+                    <p class="csv-export-prompt">請選擇匯出內容：</p>
+                    <label class="csv-export-option csv-export-option--selected">
+                        <input type="radio" name="csvMode" value="full" checked>
+                        <span class="csv-export-option-title">完整篩選結果</span>
+                        <span class="csv-export-option-desc">含股票代碼、公司名稱、現價、漲跌幅、成交量、篩選標籤等所有欄位</span>
+                    </label>
+                    <label class="csv-export-option">
+                        <input type="radio" name="csvMode" value="ticker">
+                        <span class="csv-export-option-title">僅匯出股票代碼 (Ticker)</span>
+                        <span class="csv-export-option-desc">僅包含篩選結果的股票代碼清單</span>
+                    </label>
+                    <p class="csv-export-preview">預覽：共 ${count} 筆資料</p>
+                </div>
+                <div class="csv-export-footer">
+                    <button type="button" class="btn btn-ghost btn-sm" data-action="close">取消</button>
+                    <button type="button" class="btn btn-primary btn-sm" data-action="export">匯出並儲存</button>
+                </div>
+            </div>`;
+
+        document.body.appendChild(overlay);
+
+        // 選項高亮切換
+        overlay.querySelectorAll('input[name="csvMode"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                overlay.querySelectorAll('.csv-export-option').forEach(o => o.classList.remove('csv-export-option--selected'));
+                radio.closest('.csv-export-option').classList.add('csv-export-option--selected');
+            });
+        });
+
+        // 關閉
+        overlay.querySelectorAll('[data-action="close"]').forEach(el => {
+            el.addEventListener('click', () => overlay.remove());
+        });
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+        // 匯出
+        overlay.querySelector('[data-action="export"]').addEventListener('click', () => {
+            const mode = overlay.querySelector('input[name="csvMode"]:checked').value;
+            this._exportCSV(mode);
+            overlay.remove();
+        });
+    },
+
+    _exportCSV: function (mode) {
+        const results = window.state.lastResults;
+        if (!results || results.length === 0) return;
+
+        let csvContent = '\uFEFF'; // UTF-8 BOM for Excel
+        const now = new Date();
+        const ts = now.getFullYear().toString()
+            + String(now.getMonth() + 1).padStart(2, '0')
+            + String(now.getDate()).padStart(2, '0')
+            + '_' + String(now.getHours()).padStart(2, '0')
+            + String(now.getMinutes()).padStart(2, '0')
+            + String(now.getSeconds()).padStart(2, '0');
+
+        if (mode === 'ticker') {
+            csvContent += 'Symbol\r\n';
+            results.forEach(s => { csvContent += s.symbol + '\r\n'; });
+            this._downloadCSV(csvContent, `screening_tickers_${ts}.csv`);
+        } else {
+            csvContent += 'Symbol,Name,Price,Change%,Volume,Matched_Indicators,Matched_Patterns\r\n';
+            results.forEach(s => {
+                const name = this._csvEscape(s.name || '');
+                const price = (s.price ?? 0).toFixed(2);
+                const change = (s.change_percent > 0 ? '+' : '') + (s.change_percent ?? 0) + '%';
+                const volume = s.volume ?? 0;
+                const indicators = (s.matched_indicators || []).join('|');
+                const patterns = (s.patterns_found || []).map(p => p.display_name).join('|');
+                csvContent += `${s.symbol},${name},${price},${change},${volume},${this._csvEscape(indicators)},${this._csvEscape(patterns)}\r\n`;
+            });
+            this._downloadCSV(csvContent, `screening_results_${ts}.csv`);
+        }
+    },
+
+    /** RFC 4180: 含逗號/引號/換行時用雙引號包裹 */
+    _csvEscape: function (val) {
+        const str = String(val);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+    },
+
+    _downloadCSV: async function (csvContent, filename) {
+        // 優先使用 File System Access API（Chrome/Edge）
+        if (window.showSaveFilePicker) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{ description: 'CSV Files', accept: { 'text/csv': ['.csv'] } }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(csvContent);
+                await writable.close();
+                return;
+            } catch (e) {
+                if (e.name === 'AbortError') return; // 使用者取消
+                // fallback 到 <a download>
+            }
+        }
+        // Fallback: <a download> 方式
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     },
 
     // Helper: Generate Mock OHLC Data

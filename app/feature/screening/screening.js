@@ -96,6 +96,10 @@ window.ScreeningPage = {
             window.ChartController.init();
             window.ChartController.bindTimeframeButtons();
         }
+        // ✅ 顯示範圍下拉選單
+        if (window.DisplayRangeSelector) {
+            window.DisplayRangeSelector.init();
+        }
 
         // Feature1: 全螢幕功能
         this.initFullscreen();
@@ -110,6 +114,8 @@ window.ScreeningPage = {
 
         // 欄位排序標題初始化
         this._initSortHeaders();
+        // CSV 匯出按鈕綁定
+        this._bindExportCSV();
         // 初始狀態：隱藏 scrollbar
         const stockListInit = document.getElementById('stockList');
         if (stockListInit) stockListInit.classList.add('state-idle');
