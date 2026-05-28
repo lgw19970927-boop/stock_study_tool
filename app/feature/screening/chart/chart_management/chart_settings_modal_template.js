@@ -49,34 +49,6 @@ var ChartSettingsModalTemplate = `
                             <input type="checkbox" id="boll-toggle">
                             <span>BOLL</span>
                         </div>
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>EMA</span>
-                        </div>
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>SAR</span>
-                        </div>
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>CDP</span>
-                        </div>
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>IC</span>
-                        </div>
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>KC</span>
-                        </div>
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>神奇九轉</span>
-                        </div>
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>VWAP</span>
-                        </div>
                     </div>
                 </div>
 
@@ -93,21 +65,9 @@ var ChartSettingsModalTemplate = `
                             <input type="checkbox" id="vol-toggle">
                             <span>VOL</span>
                         </div>
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>MACD</span>
-                        </div>
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>KDJ</span>
-                        </div>
                         <div class="indicator-item chart-sidebar-item" data-indicator="rsi">
                             <input type="checkbox" id="rsi-toggle">
                             <span>RSI</span>
-                        </div>
-                        <div class="indicator-item chart-sidebar-item chart-sidebar-item--disabled disabled">
-                            <input type="checkbox" disabled>
-                            <span>ARBR</span>
                         </div>
                     </div>
                 </div>
