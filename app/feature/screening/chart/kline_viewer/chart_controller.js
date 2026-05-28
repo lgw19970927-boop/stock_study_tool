@@ -1780,20 +1780,7 @@ window.ChartController = {
                 const bubble = document.createElement('div');
                 bubble.id = 'pane-sep-tooltip';
                 bubble.style.cssText = [
-                    'position:absolute',
-                    'pointer-events:none',
-                    'z-index:9990',
-                    'background:rgba(30,34,45,0.92)',
-                    'color:#d1d4dc',
-                    'font-size:11px',
-                    'padding:3px 8px',
-                    'border-radius:4px',
-                    'white-space:nowrap',
-                    'display:none',
-                    'top:0',
                     'left:50%',
-                    'transform:translateX(-50%)',
-                    'border:1px solid rgba(120,126,142,0.4)',
                 ].join(';');
                 chartWrapper.appendChild(bubble);
 
@@ -1827,11 +1814,11 @@ window.ChartController = {
                     });
                     hit.addEventListener('mouseenter', () => {
                         bubble.textContent = label;
-                        bubble.style.display = 'block';
-                        bubble.style.top = `${Math.round(offsetY - 20)}px`;
+                        bubble.style.setProperty('--pane-sep-bubble-top', `${Math.round(offsetY - 20)}px`);
+                        bubble.classList.add('is-visible');
                     });
                     hit.addEventListener('mouseleave', () => {
-                        bubble.style.display = 'none';
+                        bubble.classList.remove('is-visible');
                     });
                     chartWrapper.appendChild(hit);
                 }

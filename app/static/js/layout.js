@@ -22,15 +22,6 @@
             </svg>`
         },
         {
-            id: 'backtesting',
-            label: '模擬交易回測',
-            url: '/backtesting',
-            // K線圖 icon
-            icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>`
-        },
-        {
             id: 'risk_management',
             label: '資金與風險管理',
             url: '/risk-management',
@@ -42,7 +33,7 @@
         },
     ];
 
-    let openTabs = ['screening', 'backtesting', 'risk_management'];
+    let openTabs = ['screening', 'risk_management'];
     let activeTab = 'screening';
     let sidebarOpen = true;
     let isInitialized = false;

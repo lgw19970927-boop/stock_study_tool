@@ -27,3 +27,6 @@ stock_study_tool_veryold
 .vscode
 debug_chunks.txt
 debug.txt
+
+# tests/ 輸出物/暫存
+tests/*.txt

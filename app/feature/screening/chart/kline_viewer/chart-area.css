@@ -411,3 +411,24 @@ body.is-chart-viewport-fullscreen {
 .chart-tooltip-value.up   { color: #26a69a; }
 .chart-tooltip-value.down { color: #ef5350; }
 .chart-tooltip-value.to-do { color: #555; font-style: italic; }
+
+/* ===== 分隔線拖拉提示 Bubble ===== */
+#pane-sep-tooltip {
+    display: none;
+    position: absolute;
+    pointer-events: none;
+    z-index: 9990;
+    background: rgba(30, 34, 45, 0.92);
+    color: #d1d4dc;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    border: 1px solid rgba(120, 126, 142, 0.4);
+    top: var(--pane-sep-bubble-top, 0px);
+}
+
+#pane-sep-tooltip.is-visible {
+    display: block;
+}

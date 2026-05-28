@@ -1,0 +1,45 @@
+name: CI — Unit & Guard Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'app/**'
+      - 'tests/**'
+      - 'env/**'
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit-guard:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+
+      - name: Install dependencies
+        run: |
+          pip install pytest pandas numpy pydantic mysql-connector-python
+
+      - name: Run unit & guard tests
+        run: |
+          pytest -m "unit or guard" --tb=short -q
+
+      - name: Run lint (ruff)
+        run: |
+          pip install ruff
+          ruff check app/ tests/ --select E,F,W --ignore E501
