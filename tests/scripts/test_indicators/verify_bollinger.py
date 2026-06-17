@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import pandas as pd
 import numpy as np
@@ -26,7 +26,6 @@ def verify():
     standard_df["BB_LOWER"] = standard_df["BB_MIDDLE"] - std_0 * 2.0
     
     # 比對結果
-    last_idx = -1
     print("=== 專案目前計算邏輯 (Pandas 預設樣本標準差 ddof=1) ===")
     print(f"UPPER:  {project_df['BB_UPPER'].iloc[-1]:.4f}")
     print(f"MIDDLE: {project_df['BB_MIDDLE'].iloc[-1]:.4f}")
