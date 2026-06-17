@@ -1,6 +1,5 @@
 """tests/core/conftest.py — 核心基礎設施測試專用 fixture"""
 import pytest
-from unittest.mock import patch
 
 
 @pytest.fixture

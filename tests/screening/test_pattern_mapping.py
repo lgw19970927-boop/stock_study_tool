@@ -2,7 +2,6 @@
 import pytest
 
 from app.feature.screening.pattern.pattern_mapping import (
-    YOLO_TO_FRONTEND,
     map_yolo_to_frontend,
     get_display_name,
 )

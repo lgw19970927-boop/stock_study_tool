@@ -7,8 +7,7 @@ app/feature/screening/indicators/service.py
 SMA / Bollinger 計算邏輯已拆至各自的模組檔案，此處重新 export 保持對外 API 不變。
 """
 import pandas as pd
-import numpy as np
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple
 from datetime import date, timedelta
 import logging
 

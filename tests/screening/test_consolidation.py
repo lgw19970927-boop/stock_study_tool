@@ -1,6 +1,5 @@
 """tests/screening/test_consolidation.py — 盤整辨識函式單元測試"""
 import pytest
-import numpy as np
 
 from app.feature.screening.pattern.service import (
     _evaluate_consolidation_chunk,

@@ -1,7 +1,5 @@
 """tests/core/test_config.py — config.py 單元測試"""
 import pytest
-import os
-from unittest.mock import patch, mock_open
 
 from app.config import (
     get_config,

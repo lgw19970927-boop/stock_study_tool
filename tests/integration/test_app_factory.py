@@ -1,7 +1,7 @@
 """tests/integration/test_app_factory.py — create_app() 整合測試"""
 import pytest
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 pytestmark = pytest.mark.integration
 

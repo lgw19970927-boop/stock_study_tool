@@ -1,12 +1,10 @@
-﻿"""
+"""
 Pattern Recognition Service
 核心型態辨識邏輯：
 - YOLO 推理（W底、頭肩頂底、三角收斂）
 - 規則法（盤整區，無 YOLO 模型支援）
 """
-import io
-import sys
-import os
+
 import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
@@ -39,7 +37,7 @@ def get_yolo_model():
         from ultralytics import YOLO
         logger.info(f"載入 YOLO 模型：{MODEL_PATH}")
         _yolo_model = YOLO(str(MODEL_PATH))
-        
+
         # 確保模型載入 GPU (如果可用)
         if torch.cuda.is_available():
             logger.info("檢測到 CUDA，將 YOLO 移至 GPU，啟用加速")
@@ -83,10 +81,10 @@ def resolve_analysis_dates(
 # ═══════════════════════════════════════════════════════════════════
 INTERVAL_TO_DB = {
     "1D":   "1d",
-    "1W":   "1d",    
-    "1M":   "1d",    
-    "1H":   "1h",    
-    "4H":   "1h",    
+    "1W":   "1d",
+    "1M":   "1d",
+    "1H":   "1h",
+    "4H":   "1h",
     "1min": "1m",
     "3min": "3m",
     "5min": "5m",
@@ -149,10 +147,10 @@ def fetch_stock_prices(
             """
             cursor.execute(query, (symbol, db_interval, start_date, end_dt_str))
             rows = cursor.fetchall()
-            
+
         if not rows:
             return []
-            
+
         # JSON 序列化需要確保 datetime 物件能正確轉字串，讓前方 pandas 可以吃
         for r in rows:
             if hasattr(r["time"], "strftime"):
@@ -342,7 +340,7 @@ def _detect_with_yolo(
     spec.loader.exec_module(chart_gen)
     generate_chart_image = chart_gen.generate_chart_image
 
-    conf_threshold = sensitivity / 100.0   
+    conf_threshold = sensitivity / 100.0
     WINDOW_SIZE = max(max_bars + 20, 150)
     OVERLAP     = WINDOW_SIZE // 3
     total       = len(prices)

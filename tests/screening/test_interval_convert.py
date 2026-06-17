@@ -4,7 +4,6 @@ import pytest
 from app.feature.screening.indicators.service import (
     interval_to_db_format,
     needs_resample,
-    INTERVAL_TO_DB,
     RESAMPLE_RULES,
 )
 

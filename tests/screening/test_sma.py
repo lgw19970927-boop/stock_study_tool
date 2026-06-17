@@ -1,7 +1,6 @@
 """tests/screening/test_sma.py — calculate_sma() 單元測試"""
 import pytest
 import pandas as pd
-import numpy as np
 
 from app.feature.screening.indicators.modules.sma.sma import calculate_sma
 

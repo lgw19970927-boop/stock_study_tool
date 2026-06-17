@@ -1,7 +1,6 @@
 """tests/screening/test_bollinger.py — calculate_bollinger_bands() 單元測試"""
 import pytest
 import pandas as pd
-import numpy as np
 
 from app.feature.screening.indicators.modules.bollinger.bollinger import calculate_bollinger_bands
 

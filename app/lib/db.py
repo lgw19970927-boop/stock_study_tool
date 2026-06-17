@@ -6,7 +6,7 @@ MySQL 連線工具 — 仿 petshop lib/db.py 設計
 from contextlib import contextmanager
 from typing import Generator
 
-import mysql.connector
+
 from mysql.connector import pooling
 from mysql.connector.connection import MySQLConnection
 from mysql.connector.cursor import MySQLCursor
@@ -40,7 +40,7 @@ def init_db(config) -> None:
     }
     _config["market_db"] = config.MYSQL_MARKET_DB
     _config["user_db"]   = config.MYSQL_USER_DB
-    
+
     # 建立 Market DB 連線池。
     # 注意：FastAPI 多 worker 時，每個 worker 都會建立自己的 pool。
     # 因此 pool_size 需要保守，避免總連線數超過 MySQL max_connections。
@@ -51,7 +51,7 @@ def init_db(config) -> None:
         **{k: v for k, v in _config.items() if k not in ("market_db", "user_db")},
         database=_config["market_db"]
     )
-    
+
     # 建立 User DB 連線池
     _user_pool = pooling.MySQLConnectionPool(
         pool_name="user_pool",

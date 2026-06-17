@@ -139,7 +139,7 @@ def resample_data(df: pd.DataFrame, target_timeframe: str) -> pd.DataFrame:
 # 單支股票篩選
 # ==========================================
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 def screen_single_stock(
     symbol: str,
@@ -156,7 +156,7 @@ def screen_single_stock(
         # 1. 計算所需的最大 K 棒數量與安全起始日
         max_period = 20  # 預設最低要求
         needs_warmup = False
-        
+
         for indicator in indicators:
             ind_type = indicator.get("type", "unknown").lower()
             params = indicator.get("parameters", indicator.get("params", {}))
@@ -165,7 +165,7 @@ def screen_single_stock(
                 req_period = int(req_period)
             except (ValueError, TypeError):
                 req_period = 20
-                
+
             # 檢查條件中是否有像是 MA60 的要求
             conditions = indicator.get("conditions", [])
             for cond in conditions:
@@ -176,22 +176,22 @@ def screen_single_stock(
                             req_period = max(req_period, int(val[2:]))
                         except ValueError:
                             pass
-            
+
             max_period = max(max_period, req_period)
-            
+
             # EMA, MACD, RSI 需要額外熱身期來平滑計算
             if ind_type in ["ema", "macd", "rsi"]:
                 needs_warmup = True
-                
+
         # 加總熱身期
         total_required_bars = max_period + (100 if needs_warmup else 30)
-        
+
         # 1. 決定查詢週期（週線/月線從日線重採樣）
         query_timeframe = (
             "1d" if timeframe in ["1w", "1wk", "1M", "1mo", "Weekly", "Monthly"]
             else timeframe
         )
-        
+
         # 根據 timeframe 與所需 K 棒換算回日曆天數 (安全起見放寬倍數)
         if query_timeframe == "1d":
             if timeframe in ["1w", "1wk", "Weekly"]:
@@ -202,7 +202,7 @@ def screen_single_stock(
                 calendar_days_back = total_required_bars * 1.5 + 10
         else:
             calendar_days_back = total_required_bars * 1.5 + 10
-            
+
         # 計算安全起始日 (若有自訂 start_date 則取其早者)
         end_ref = pd.to_datetime(end_date) if end_date else pd.to_datetime('today')
         computed_safe_start = (end_ref - timedelta(days=calendar_days_back)).strftime('%Y-%m-%d')
@@ -233,7 +233,7 @@ def screen_single_stock(
                 last_record_date = last_record_date.split(" ")[0]
             else:
                 last_record_date = last_record_date.strftime('%Y-%m-%d')
-                
+
             try:
                 bm_dt = pd.to_datetime(reference_date)
                 lr_dt = pd.to_datetime(last_record_date)

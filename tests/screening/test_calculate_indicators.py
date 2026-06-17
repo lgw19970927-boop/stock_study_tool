@@ -1,6 +1,5 @@
 """tests/screening/test_calculate_indicators.py — calculate_indicators() 單元測試"""
 import pytest
-import pandas as pd
 
 from app.feature.screening.indicators.service import calculate_indicators
 

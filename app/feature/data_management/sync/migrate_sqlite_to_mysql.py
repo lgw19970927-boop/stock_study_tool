@@ -1,4 +1,4 @@
-﻿"""
+"""
 App/Feature/data_sync/data_sync/migrate_sqlite_to_mysql.py
 一次性遷移腳本 — SQLite → MySQL
 
@@ -20,13 +20,11 @@ App/Feature/data_sync/data_sync/migrate_sqlite_to_mysql.py
 
 import sqlite3
 import logging
-import os
 import sys
 from pathlib import Path
 from datetime import datetime
 
 import mysql.connector
-from mysql.connector import Error as MySQLError
 
 # ─── 路徑設定 ─────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -71,7 +69,7 @@ def migrate_market_data(mysql_cfg: dict) -> None:
         logger.error(f"找不到 SQLite 檔案：{MARKET_DB_PATH}")
         raise FileNotFoundError(MARKET_DB_PATH)
 
-    logger.info(f"開始遷移 market_data.db → MySQL market_data schema")
+    logger.info("開始遷移 market_data.db → MySQL market_data schema")
     sqlite_conn = sqlite3.connect(str(MARKET_DB_PATH))
     sqlite_conn.row_factory = sqlite3.Row
 
@@ -247,7 +245,7 @@ def migrate_user_data(mysql_cfg: dict) -> None:
         logger.warning(f"找不到 SQLite 檔案：{USER_DB_PATH}，跳過 user_data 遷移")
         return
 
-    logger.info(f"開始遷移 user_data.db → MySQL user_data schema")
+    logger.info("開始遷移 user_data.db → MySQL user_data schema")
     sqlite_conn = sqlite3.connect(str(USER_DB_PATH))
     sqlite_conn.row_factory = sqlite3.Row
 
