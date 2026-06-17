@@ -33,7 +33,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pytest pandas numpy pydantic mysql-connector-python
+          pip install pytest pandas numpy pydantic mysql-connector-python fastapi requests uvicorn[standard]
 
       - name: Run unit & guard tests
         run: |
