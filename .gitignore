@@ -11,7 +11,9 @@ __pycache__/
 Thumbs.db
 reference/extracted/
 *.zip
+# SQL 備份/匯出檔忽略，但保留 env/mysql/ 下的 schema 檔
 *.sql
+!env/mysql/*.sql
 app/feature/screening/pattern/models/.cache/
 app/feature/screening/pattern/models/*.pt
 
