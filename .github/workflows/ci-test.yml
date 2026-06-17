@@ -7,8 +7,10 @@ on:
       - 'app/**'
       - 'tests/**'
       - 'env/**'
+      - '.github/workflows/**'
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   unit-guard:
