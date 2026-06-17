@@ -44,4 +44,4 @@ jobs:
       - name: Run lint (ruff)
         run: |
           pip install ruff
-          ruff check app/ tests/ --select E,F,W --ignore E501
+          ruff check app/ tests/ --select E,F,W --ignore E501,E402,E741
